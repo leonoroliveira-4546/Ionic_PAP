@@ -1,0 +1,7 @@
+{
+  "name": "temApp",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react-vite"
+}
