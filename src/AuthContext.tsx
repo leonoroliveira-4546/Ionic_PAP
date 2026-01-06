@@ -1,0 +1,64 @@
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+
+interface User {
+    _id: string;
+    username: string;
+    profilePic: string;
+    password: string;
+    email: string;
+    type: string;
+    dojo: string;
+}
+
+interface AuthContextType {
+    user: User;
+    isAuthenticated: () => boolean;
+    Login: (userData: any) => void;
+    logout: () => void;
+}
+
+const AuthContext = createContext<AuthContextType | null>(null);
+
+interface AuthProviderProps {
+    children: ReactNode;
+}
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+    const [user, setUser] = useState(() => {
+        const savedUser = localStorage.getItem("user");
+        return savedUser ? JSON.parse(savedUser) : null;
+    });
+
+    useEffect(() => {
+        if (user) {
+            localStorage.setItem("user", JSON.stringify(user));
+        } else {
+            localStorage.removeItem("user");
+        }
+    }, [user]);
+
+    const Login = (userData: User) => {
+        setUser(userData);
+        localStorage.setItem("user",JSON.stringify(userData));
+    };
+
+    const logout = () => {
+        setUser(null);
+    };
+
+    const isAuthenticated = () => !!user;
+
+    return (
+        <AuthContext.Provider value={{ user, Login, logout, isAuthenticated}}>
+            {children}
+        </AuthContext.Provider>
+    );
+};
+
+export const useAuth = (): AuthContextType => {
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error("useAuth must be used within an AuthProvider");
+    }
+    return context;
+};
