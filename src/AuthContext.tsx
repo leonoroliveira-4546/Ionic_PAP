@@ -12,7 +12,7 @@ interface User {
 
 interface AuthContextType {
     user: User;
-    isAuthenticated: () => boolean;
+    // isAuthenticated: () => boolean;
     Login: (userData: any) => void;
     logout: () => void;
 }
@@ -46,10 +46,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(null);
     };
 
-    const isAuthenticated = () => !!user;
+    // const isAuthenticated = () => !!user;
 
     return (
-        <AuthContext.Provider value={{ user, Login, logout, isAuthenticated}}>
+        <AuthContext.Provider value={{ user, Login, logout}}>
             {children}
         </AuthContext.Provider>
     );
