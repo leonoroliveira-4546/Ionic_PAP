@@ -1,37 +1,37 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { IonPage, IonContent, IonInput, IonButton, IonItem} from "@ionic/react";
 import { useAuth } from "../../AuthContext";
-// import authApi from "../../hooks/authApi";
+import authApi from "../../hooks/authApi";
 import { useHistory } from "react-router-dom";
 
 const Login: React.FC = () => {
   const { user, Login } = useAuth();
-  // const { login } = authApi(user, Login);
+  const { login } = authApi(user, Login);
   const history = useHistory();
   const [credentials, setCredentials] = useState({
-    username: "",
+    email: "",
     password: ""
   });
 
-  const handleChange = (field: "username" | "password", value: string | null | undefined) => {
+  const goTo = (path: string) => {
+    history.push(path);
+  };
+
+  const handleChange = (field: "email" | "password", value: string | null | undefined) => {
     setCredentials(prev => ({
       ...prev,
       [field]: value || "",
     }));
   };
 
-  // const handleLogin = async () => {
-  //   const result = await login(credentials);
+  const handleLogin = async () => {
+    const result = await login(credentials);
 
-  //   if (result.success && result.data.token) {
-  //     history.push("/home");
-  //   } else {
-  //     console.error('Erro ao fazer login');
-  //   }
-  // };
-
-  const goTo = (path: string) => {
-    history.push(path);
+    if (result.success && result.data.token) {
+      goTo('/')
+    } else {
+      console.error(result.error);
+    }
   };
 
   return (
@@ -43,11 +43,11 @@ const Login: React.FC = () => {
           </div>
           <IonItem>
             <IonInput 
-              label="Username" 
+              label="Email" 
               labelPlacement="floating" 
               fill="solid" 
-              value={credentials.username}
-              onIonInput={(e) => handleChange('username', e.detail.value)}
+              value={credentials.email}
+              onIonInput={(e) => handleChange('email', e.detail.value)}
             />
           </IonItem>
           <IonItem>
@@ -59,7 +59,7 @@ const Login: React.FC = () => {
               onIonInput={(e) => handleChange('password', e.detail.value)}
             />
           </IonItem>
-          <IonButton>
+          <IonButton onClick={handleLogin}>
             Entrar
           </IonButton>
         </div>
