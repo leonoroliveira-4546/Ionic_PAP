@@ -36,6 +36,7 @@ import '@ionic/react/css/palettes/dark.system.css';
 
 /* Theme variables */
 import './theme/variables.css';
+import Temp from './pages/temp';
 
 setupIonicReact();
 
@@ -57,6 +58,8 @@ const InnerApp: React.FC = () => {
           {/* Rotas públicas */}
           <Route exact path='/' component={Home}/>
           <Route exact path='/login' component={Login}/>
+
+          <Route exact path='/temp' component={Temp}/>
         </IonRouterOutlet>
       </IonReactRouter>
     </IonApp>

@@ -1,0 +1,125 @@
+/* 🌈 FUNDO TOTAL (Opção 3 - fundo claro) */
+.login-content {
+  --background: linear-gradient(
+    135deg,
+    #fffdf5 0%,   /* creme claro */
+    #ffd18b 50%,  /* amarelo suave mais marcante */
+    #fd8772 100%  /* laranja avermelhado leve */
+  );
+}
+
+/* CONTAINER DA TELA */
+.page {
+  min-height: 100vh;
+  padding: 32px 26px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 🔰 LOGO */
+.logo {
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: 0.5px;
+  color: #ae0202; /* vermelho escuro para destaque */
+  margin-bottom: 40px;
+}
+
+/* 📝 TÍTULO */
+.title {
+  font-size: 32px;
+  font-weight: 800;
+  color: #3a0000; /* quase preto com tom vermelho */
+  margin-bottom: 50px;
+}
+
+/* 📥 INPUTS */
+.inputs {
+  margin-bottom: 40px;
+}
+
+/* INPUT SEM FUNDO */
+.input-line {
+  --background: transparent;
+  margin-bottom: 32px;
+}
+
+.input-line ion-label {
+  font-size: 14px;
+  color: #3a0000;
+  font-weight: 500;
+}
+
+.input-line ion-input {
+  color: #2b0000;
+  font-size: 16px;
+}
+
+/* LINHA DO INPUT */
+.input-line::after {
+  content: "";
+  display: block;
+  height: 1px;
+  background: rgba(60, 0, 0, 0.2); /* mais suave para combinar com fundo claro */
+  margin-top: 8px;
+}
+
+/* 🔘 BOTÃO (principal - preto da opção 3) */
+.login-btn {
+  margin: 20px auto 10px;
+  width: 220px;
+  height: 52px;
+
+  --border-radius: 28px;
+  --background: linear-gradient(90deg, #000000, #2b2b2b); /* degradê suave de preto */
+  --box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+  --color: #ffffff; /* TEXTO DO BOTÃO */
+
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+/* HOVER / ACTIVE */
+.login-btn:hover {
+  filter: brightness(1.1);
+}
+
+.login-btn:active {
+  transform: scale(0.96);
+}
+
+/* 🔗 FORGOT */
+.forgot {
+  text-align: center;
+  font-size: 14px;
+  color: #ae0202; /* vermelho para contraste */
+  opacity: 0.9;
+  margin-bottom: auto;
+  transition: opacity 0.2s ease;
+}
+
+.forgot:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+/* 🧷 SIGNUP EM BAIXO */
+.signup {
+  text-align: center;
+  font-size: 14px;
+  color: #3a0000;
+}
+
+/* DESTACA SIGN UP */
+.signup span {
+  color: #ae0202; /* amarelo claro da opção 3 */
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s ease, text-decoration 0.2s ease;
+}
+
+.signup span:hover {
+  opacity: 0.85;
+  text-decoration: underline;
+}
