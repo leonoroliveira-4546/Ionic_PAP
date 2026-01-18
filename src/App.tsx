@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from './AuthContext';
 
 import Home from './pages/Home';
 import Login from './pages/publics_pages/Login';
+import InicialPage from './pages/publics_pages/InicialPage';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -56,10 +57,13 @@ const InnerApp: React.FC = () => {
       <IonReactRouter>
         <IonRouterOutlet>
           {/* Rotas públicas */}
-          <Route exact path='/' component={Home}/>
+          <Route exact path='/' component={InicialPage}/>
           <Route exact path='/login' component={Login}/>
 
           <Route exact path='/temp' component={Temp}/>
+
+          {/* Rotas privadas */}
+          <Route exact path='/home' component={Home}/>
         </IonRouterOutlet>
       </IonReactRouter>
     </IonApp>
