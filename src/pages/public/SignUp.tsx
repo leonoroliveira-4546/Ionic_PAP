@@ -72,7 +72,7 @@ const Signup: React.FC = () => {
 
   return (
     <IonPage className="signup-page">
-      <IonContent fullscreen>
+      <IonContent fullscreen className="content">
 
         <IonAlert
           isOpen={showAlert}
@@ -82,150 +82,145 @@ const Signup: React.FC = () => {
           onDidDismiss={() => setShowAlert(false)}
         />
 
-        <div className="signup-wrapper">
-          <div className="login-container">
+        <div className="login-container">
 
-            {/* STEP 1 — Tipo */}
-            {step === 1 && (
-              <>
-                <h2>Que tipo de conta você quer criar?</h2>
+          {/* STEP 1 — Tipo */}
+          {step === 1 && (
+            <>
+              <h1 className="title">Criar conta</h1>
+              <p className="subtitle">Escolha o tipo de conta que deseja criar</p>
 
-                <IonButton expand="block" onClick={() => {
-                  handleChange("type", "athlete");
-                  setStep(2);
-                }}>
-                  Atleta
-                </IonButton>
+              <IonButton expand="block" onClick={() => {
+                handleChange("type", "athlete");
+                setStep(2);
+              }} className="btn">
+                Atleta
+              </IonButton>
 
-                <IonButton expand="block" onClick={() => {
-                  handleChange("type", "responsavel");
-                  setStep(3);
-                }}>
-                  Responsável
-                </IonButton>
+              <IonButton expand="block" onClick={() => {
+                handleChange("type", "responsavel");
+                setStep(3);
+              }} className="btn-outline">
+                Responsável
+              </IonButton>
 
-                <IonButton expand="block" onClick={() => {
-                  handleChange("type", "sensei");
-                  setStep(2);
-                }}>
-                  Sensei
-                </IonButton>
-              </>
-            )}
+              <IonButton expand="block" onClick={() => {
+                handleChange("type", "sensei");
+                setStep(2);
+              }} className="btn-outline">
+                Sensei
+              </IonButton>
+            </>
+          )}
 
-            {/* STEP 2 — Dados específicos */}
-            {step === 2 && credentials.type === "athlete" && (
-              <>
-                <h2>Dados do Atleta</h2>
+          {/* STEP 2 — Atleta */}
+          {step === 2 && credentials.type === "athlete" && (
+            <>
+              <h1 className="title">Dados do atleta</h1>
 
-                <IonItem>
-                  <IonLabel position="stacked">Data de nascimento</IonLabel>
+              <div className="inputs">
+                <IonItem className="input-line">
+                  <IonLabel>Data de nascimento</IonLabel>
                   <IonDatetime
                     presentation="date"
                     onIonChange={e =>
-                      handleChange("birthDate", typeof e.detail.value === "string" ? e.detail.value : "")
+                      handleChange(
+                        "birthDate",
+                        typeof e.detail.value === "string" ? e.detail.value : ""
+                      )
                     }
                   />
                 </IonItem>
 
-                <IonItem>
+                <IonItem className="input-line">
                   <IonInput
                     label="Dojo ID (opcional)"
                     labelPlacement="floating"
                     value={credentials.dojoId}
-                    onIonInput={e =>
-                      handleChange("dojoId", e.detail.value)
-                    }
+                    onIonInput={e => handleChange("dojoId", e.detail.value)}
                   />
                 </IonItem>
 
-                <IonItem>
+                <IonItem className="input-line">
                   <IonInput
                     label="Responsável (se menor)"
                     labelPlacement="floating"
                     value={credentials.responsavelId}
-                    onIonInput={e =>
-                      handleChange("responsavelId", e.detail.value)
-                    }
+                    onIonInput={e => handleChange("responsavelId", e.detail.value)}
                   />
                 </IonItem>
+              </div>
 
-                <IonButton expand="block" onClick={() => setStep(3)}>
-                  Próximo
-                </IonButton>
-              </>
-            )}
+              <IonButton expand="block" className="btn" onClick={() => setStep(3)}>
+                Próximo
+              </IonButton>
+            </>
+          )}
 
-            {step === 2 && credentials.type === "sensei" && (
-              <>
-                <h2>Dados do Sensei</h2>
+          {/* STEP 2 — Sensei */}
+          {step === 2 && credentials.type === "sensei" && (
+            <>
+              <h1 className="title">Dados do sensei</h1>
 
-                <IonItem>
+              <div className="inputs">
+                <IonItem className="input-line">
                   <IonInput
                     label="Dojo ID"
                     labelPlacement="floating"
                     value={credentials.dojoId}
-                    onIonInput={e =>
-                      handleChange("dojoId", e.detail.value)
-                    }
+                    onIonInput={e => handleChange("dojoId", e.detail.value)}
                   />
                 </IonItem>
+              </div>
 
-                <IonButton expand="block" onClick={() => setStep(3)}>
-                  Próximo
-                </IonButton>
-              </>
-            )}
+              <IonButton expand="block" className="btn" onClick={() => setStep(3)}>
+                Próximo
+              </IonButton>
+            </>
+          )}
 
-            {/* STEP 3 — Dados comuns */}
-            {step === 3 && (
-              <>
-                <h2>Crie sua conta</h2>
+          {/* STEP 3 */}
+          {step === 3 && (
+            <>
+              <h1 className="title">Criar conta</h1>
 
-                <IonItem>
+              <div className="inputs">
+                <IonItem className="input-line">
                   <IonInput
                     label="Username"
                     labelPlacement="floating"
                     value={credentials.username}
-                    onIonInput={e =>
-                      handleChange("username", e.detail.value)
-                    }
+                    onIonInput={e => handleChange("username", e.detail.value)}
                   />
                 </IonItem>
 
-                <IonItem>
+                <IonItem className="input-line">
                   <IonInput
                     type="email"
                     label="Email"
                     labelPlacement="floating"
                     value={credentials.email}
-                    onIonInput={e =>
-                      handleChange("email", e.detail.value)
-                    }
+                    onIonInput={e => handleChange("email", e.detail.value)}
                   />
                 </IonItem>
 
-                <IonItem>
+                <IonItem className="input-line">
                   <IonInput
                     type="password"
-                    label="Password"
+                    label="Senha"
                     labelPlacement="floating"
                     value={credentials.password}
-                    onIonInput={e =>
-                      handleChange("password", e.detail.value)
-                    }
+                    onIonInput={e => handleChange("password", e.detail.value)}
                   />
                 </IonItem>
+              </div>
 
-                <IonButton expand="block" onClick={handleSignup}>
-                  Registrar
-                </IonButton>
-              </>
-            )}
-
-          </div>
+              <IonButton expand="block" className="btn" onClick={handleSignup}>
+                Registrar
+              </IonButton>
+            </>
+          )}
         </div>
-
       </IonContent>
     </IonPage>
   );

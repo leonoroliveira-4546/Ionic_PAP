@@ -185,3 +185,24 @@
   color: #db4437;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
+
+.signup-page .login-container {
+  max-width: 420px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.signup-page h1,
+.signup-page h2 {
+  text-align: center;
+}
+
+.signup-page ion-datetime {
+  --background: transparent;
+  color: #2b0000;
+}
+
+.signup-page ion-item {
+  --background: transparent;
+}
