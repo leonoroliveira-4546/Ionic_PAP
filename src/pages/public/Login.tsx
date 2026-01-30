@@ -1,22 +1,21 @@
 import React, { useState } from "react";
 import { IonPage, IonContent, IonInput, IonButton, IonItem} from "@ionic/react";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { useHistory } from "react-router-dom";
+import { auth } from "../../firebaseConfig";
 import { useAuth } from "../../AuthContext";
 import authApi from "../../hooks/authApi";
-import { useHistory } from "react-router-dom";
 import '../StylesPages.css';
 
 const Login: React.FC = () => {
-  const { user, Login } = useAuth();
-  const { login } = authApi(user, Login);
+  const { Login } = useAuth();
+  const { login } = authApi(Login);
   const history = useHistory();
+
   const [credentials, setCredentials] = useState({
     email: "",
     password: ""
   });
-
-  const goTo = (path: string) => {
-    history.push(path);
-  };
 
   const handleChange = (field: "email" | "password", value: string | null | undefined) => {
     setCredentials(prev => ({
@@ -26,12 +25,24 @@ const Login: React.FC = () => {
   };
 
   const handleLogin = async () => {
-    const result = await login(credentials);
+    try {
+      const result = await signInWithEmailAndPassword(
+        auth,
+        credentials.email,
+        credentials.password
+      );
 
-    if (result.success && result.data.token) {
-      goTo('/')
-    } else {
-      console.error(result.error);
+      const idToken = await result.user.getIdToken();
+      const apiResult = await login(idToken);
+
+      if (apiResult.success) {
+        history.push('/home');
+      } else {
+        console.error(apiResult.error);
+      }
+
+    } catch (error: any) {
+      console.error('Erro no login: ', error.message);
     }
   };
 

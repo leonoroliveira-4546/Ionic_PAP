@@ -1,20 +1,31 @@
 import React from "react";
-import { IonPage, IonContent, IonInput, IonButton, IonItem} from "@ionic/react";
-import { useHistory } from "react-router-dom";
-import '../StylesPages.css';
+import { IonPage, IonContent, IonButton} from "@ionic/react";
 import { auth, googleProvider } from "../../firebaseConfig";
 import { signInWithPopup } from "firebase/auth";
+import { useHistory } from "react-router-dom";
+import { useAuth } from "../../AuthContext";
+import authApi from "../../hooks/authApi";
+import '../StylesPages.css';
 
 const InicialPage: React.FC = () => {
+  const { Login } = useAuth();
+  const { login } = authApi(Login);
   const history = useHistory();
 
   const loginWithGoogle = async () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
-      console.log("Usuário:", result.user);
-      history.push("/home");
-    } catch (error) {
-      console.error("Erro no login:", error);
+      
+      const idToken = await result.user.getIdToken();
+      const apiResult = await login(idToken);
+
+      if (apiResult.success) {
+        history.push('/home');
+      } else {
+        console.error(apiResult.error);
+      }
+    } catch (error: any) {
+      console.error("Erro no login: ", error.message);
     }
   };
 

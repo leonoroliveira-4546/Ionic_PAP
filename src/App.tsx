@@ -4,9 +4,11 @@ import { IonReactRouter } from '@ionic/react-router';
 import React from 'react';
 import { AuthProvider, useAuth } from './AuthContext';
 
-import Home from './pages/Home';
-import Login from './pages/publics_pages/Login';
-import InicialPage from './pages/publics_pages/InicialPage';
+import Home from './pages/private/Home';
+import Login from './pages/public/Login';
+import Signup from './pages/public/SignUp';
+import PrivateRoute from './components/PrivadeRoute';
+import InicialPage from './pages/public/InicialPage';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -37,7 +39,6 @@ import '@ionic/react/css/palettes/dark.system.css';
 
 /* Theme variables */
 import './theme/variables.css';
-import Temp from './pages/temp';
 
 setupIonicReact();
 
@@ -59,11 +60,10 @@ const InnerApp: React.FC = () => {
           {/* Rotas públicas */}
           <Route exact path='/' component={InicialPage}/>
           <Route exact path='/login' component={Login}/>
-
-          <Route exact path='/temp' component={Temp}/>
+          <Route exact path='/signup' component={Signup}/>
 
           {/* Rotas privadas */}
-          <Route exact path='/home' component={Home}/>
+          <PrivateRoute exact path='/home' component={Home}/>
         </IonRouterOutlet>
       </IonReactRouter>
     </IonApp>
