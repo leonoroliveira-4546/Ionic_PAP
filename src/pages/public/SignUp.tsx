@@ -8,7 +8,7 @@ type UserType = "athlete" | "responsavel" | "sensei";
 
 const Signup: React.FC = () => {
   const { Login } = useAuth();
-  const { signup } = authApi(Login);
+  const { signup, calculateAge } = authApi(Login);
   const history = useHistory();
 
   const [step, setStep] = useState(1);
@@ -25,6 +25,11 @@ const Signup: React.FC = () => {
     responsavelId: ""
   });
 
+  const [cre_responsavel, setCre_Responsavel] = useState({
+    username: "",
+    email: "",
+  });
+
   useEffect(() => {
     if (pendingError) {
       setTimeout(() => {
@@ -36,6 +41,13 @@ const Signup: React.FC = () => {
 
   const handleChange = (field: keyof typeof credentials, value: string | null | undefined) => {
     setCredentials(prev => ({
+      ...prev,
+      [field]: value || ""
+    }));
+  };
+
+  const handleChangeR = (field: keyof typeof cre_responsavel, value: string | null | undefined) => {
+    setCre_Responsavel(prev => ({
       ...prev,
       [field]: value || ""
     }));
@@ -55,6 +67,30 @@ const Signup: React.FC = () => {
     }
 
     return true;
+  };
+
+  const calculate_age = async () => {
+    const res = await calculateAge(credentials.birthDate);
+
+    if (res.data < 13) {
+      alert('Atletas com menos de 13 anos devem ser cadastrados por um responsável.')
+      setStep(1)
+    } else if (res.data < 18) {
+      setStep(3) 
+    } else {
+      setStep(4)
+    }
+  };
+
+  const sendEmailForR = async () => {
+    const res = await signup(credentials);
+
+    if (res) {
+      setShowAlert(true);
+      setTimeout(() => history.push("/login"), 7000);
+    } else {
+      setPendingError("Erro ao registrar");
+    }
   };
 
   const handleSignup = async () => {
@@ -99,7 +135,7 @@ const Signup: React.FC = () => {
 
               <IonButton expand="block" onClick={() => {
                 handleChange("type", "responsavel");
-                setStep(3);
+                setStep(4); //futuramente passar para etapa dois
               }} className="btn-outline">
                 Responsável
               </IonButton>
@@ -131,27 +167,9 @@ const Signup: React.FC = () => {
                     }
                   />
                 </IonItem>
-
-                <IonItem className="input-line">
-                  <IonInput
-                    label="Dojo ID (opcional)"
-                    labelPlacement="floating"
-                    value={credentials.dojoId}
-                    onIonInput={e => handleChange("dojoId", e.detail.value)}
-                  />
-                </IonItem>
-
-                <IonItem className="input-line">
-                  <IonInput
-                    label="Responsável (se menor)"
-                    labelPlacement="floating"
-                    value={credentials.responsavelId}
-                    onIonInput={e => handleChange("responsavelId", e.detail.value)}
-                  />
-                </IonItem>
               </div>
 
-              <IonButton expand="block" className="btn" onClick={() => setStep(3)}>
+              <IonButton expand="block" className="btn" onClick={() => calculate_age()}>
                 Próximo
               </IonButton>
             </>
@@ -162,16 +180,29 @@ const Signup: React.FC = () => {
             <>
               <h1 className="title">Dados do sensei</h1>
 
-              <div className="inputs">
-                <IonItem className="input-line">
-                  <IonInput
-                    label="Dojo ID"
-                    labelPlacement="floating"
-                    value={credentials.dojoId}
-                    onIonInput={e => handleChange("dojoId", e.detail.value)}
-                  />
-                </IonItem>
-              </div>
+              <IonButton expand="block" onClick={() => { setStep(3); }} className="btn-outline">
+                Criar Dojo Agora
+              </IonButton>
+
+              <IonButton expand="block" className="btn" onClick={() => setStep(4)}>
+                fazer mais tarde
+              </IonButton>
+            </>
+          )}
+
+          {/* STEP 2 — Responsavel */}
+          {step === 2 && credentials.type === "responsavel" && (
+            <>
+              <h1 className="title">Dados do responsavel</h1>
+
+              <IonItem className="input-line">
+                <label>Quantos são para inscrever?</label>
+                <IonInput
+                  type="number"
+                />
+              </IonItem>
+
+              {/* Campos para cada criança com username e seu aniversarios */}
 
               <IonButton expand="block" className="btn" onClick={() => setStep(3)}>
                 Próximo
@@ -179,8 +210,51 @@ const Signup: React.FC = () => {
             </>
           )}
 
-          {/* STEP 3 */}
+          {/* STEP 3 — Atleta */}
+          {step === 3 && credentials.type === "athlete" && (
+            <>
+              <h1 className="title">Dados do Atleta</h1>
+              <p>Adicione as informações do teu responsavel em baixo:</p>
+
+              <IonItem className="input-line">
+                <IonInput
+                  label="Username"
+                  labelPlacement="floating"
+                  value={cre_responsavel.username}
+                  onIonInput={e => handleChangeR("username", e.detail.value)}
+                />
+              </IonItem>
+              <IonItem className="input-line">
+                <IonInput
+                  type="email"
+                  label="Email"
+                  labelPlacement="floating"
+                  value={cre_responsavel.email}
+                  onIonInput={e => handleChangeR("email", e.detail.value)}
+                />
+              </IonItem>
+
+              <IonButton expand="block" className="btn" onClick={() => setStep(3)}>
+                Próximo
+              </IonButton>
+            </>
+          )}
+
           {step === 3 && (
+            <>
+              <h1 className="title">Convite para entrar no Dojo</h1>
+
+              {/* Aqui onde tera a mostra os dojos existentes 
+                que depois dara para fazer pedido */}
+
+              <IonButton expand="block" className="btn" onClick={() => setStep(4)}>
+                fazer mais tarde
+              </IonButton>
+            </>
+          )}
+
+          {/* STEP 4 - Informações Finais*/}
+          {step === 4 && (
             <>
               <h1 className="title">Criar conta</h1>
 

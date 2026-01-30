@@ -43,7 +43,12 @@ export const authApi = (Login: (userData: any) => void) => {
     await axios.post(`${url}/logout`, {}, { withCredentials: true });
   }
 
-  return { login, signup, logout};
+  const calculateAge = async (birthDate: string) => {
+    const response = await axios.post(`${url}/calculate_age`, {birthDate});
+    return {data: response.data};
+  }
+
+  return { login, signup, logout, calculateAge};
 };
 
 export default authApi;
