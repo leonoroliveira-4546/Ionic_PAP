@@ -1,4 +1,5 @@
 import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/react';
+import Navbar from '../../components/MainLayout';
 
 const Home: React.FC = () => {
   return (
@@ -15,6 +16,7 @@ const Home: React.FC = () => {
           </IonToolbar>
         </IonHeader>
       </IonContent>
+      <Navbar/>
     </IonPage>
   );
 };

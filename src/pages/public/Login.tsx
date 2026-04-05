@@ -83,7 +83,7 @@ const Login: React.FC = () => {
             Esqueçeu a palavra-passe?
           </div>
           <div className="signup">
-            Não tens conta? <span>Criar agora</span>
+            Não tens conta? <span onClick={() => history.push("/signup")} style={{ cursor: "pointer" }}> Criar agora </span>
           </div>
         </div>
       </IonContent>

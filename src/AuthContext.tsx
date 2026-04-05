@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { getAuth } from "firebase/auth";
 
 interface User {
     _id: string;
@@ -11,10 +12,11 @@ interface User {
 }
 
 interface AuthContextType {
-    user: User;
+    user: User | null;
     isAuthenticated: () => boolean;
-    Login: (userData: any) => void;
+    Login: (userData: User) => void;
     logout: () => void;
+    getToken: () => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -24,10 +26,12 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-    const [user, setUser] = useState(() => {
+    const [user, setUser] = useState<User | null>(() => {
         const savedUser = localStorage.getItem("user");
         return savedUser ? JSON.parse(savedUser) : null;
     });
+
+    const auth = getAuth();
 
     useEffect(() => {
         if (user) {
@@ -42,14 +46,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         localStorage.setItem("user",JSON.stringify(userData));
     };
 
-    const logout = () => {
+    const logout = async () => {
         setUser(null);
+        localStorage.removeItem('user');
+        await auth.signOut();
     };
 
     const isAuthenticated = () => !!user;
 
+    const getToken = async (): Promise<string | null> => {
+        const firebaseUser = auth.currentUser;
+        if (!firebaseUser) return null;
+        try {
+            return await firebaseUser.getIdToken(true);
+        } catch (error) {
+            console.error('Erro ao pegar token: ', error);
+            return null;
+        }
+    }
+
     return (
-        <AuthContext.Provider value={{ user, Login, logout, isAuthenticated}}>
+        <AuthContext.Provider value={{ user, Login, logout, isAuthenticated, getToken}}>
             {children}
         </AuthContext.Provider>
     );

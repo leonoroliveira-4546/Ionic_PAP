@@ -4,11 +4,14 @@ import { IonReactRouter } from '@ionic/react-router';
 import React from 'react';
 import { AuthProvider, useAuth } from './AuthContext';
 
-import Home from './pages/private/Home';
+import Home from './pages/private/temporario/Home';
 import Login from './pages/public/Login';
 import Signup from './pages/public/SignUp';
 import PrivateRoute from './components/PrivadeRoute';
 import InicialPage from './pages/public/InicialPage';
+import Comunidade from './pages/private/Comunidade/temporario/Comuninade';
+import DetalhesPost from './pages/private/Comunidade/temporario/DetailsPost';
+import ConfirmResponsavel from './pages/public/ConfirmResponsavel';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -58,12 +61,15 @@ const InnerApp: React.FC = () => {
       <IonReactRouter>
         <IonRouterOutlet>
           {/* Rotas públicas */}
-          <Route exact path='/' component={InicialPage}/>
           <Route exact path='/login' component={Login}/>
+          <Route exact path='/' component={InicialPage}/>
           <Route exact path='/signup' component={Signup}/>
+          <Route exact path='/signup/confirm-responsavel' component={ConfirmResponsavel}/>
 
           {/* Rotas privadas */}
           <PrivateRoute exact path='/home' component={Home}/>
+          <PrivateRoute exact path='/comunidade' component={Comunidade}/>
+          <PrivateRoute exact path='/comunidade/post/:id' component={DetalhesPost}/>
         </IonRouterOutlet>
       </IonReactRouter>
     </IonApp>

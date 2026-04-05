@@ -1,4 +1,4 @@
-import axios from "axios";
+import api from "../components/AxiosInstance"
 import Cookies from 'js-cookie';
 
 export interface User{
@@ -9,46 +9,48 @@ export interface User{
   birthDate: string;
   dojoId: string;
   responsavelId: string;
+  childrens?: {
+    username: string;
+    birthDate: string;
+  }[];
 }
 
-const url = "http://localhost:8000";
-
 export const authApi = (Login: (userData: any) => void) => {
-
   const login = async (idToken: string): Promise<any> => {
-    try {
-      const response = await axios.post(`${url}/login`, { idToken }, { withCredentials: true });
-      
-      Login(response.data.user);
-      return {success: true, data: response.data};
-    } catch (error: any) {
-      const msg = error.response?.data || error.message || "Erro desconhecido";
-      return { success: false, error: msg };
-    }
+    const { data } = await api.post("/login", { idToken });
+    Login(data.user);
+
+    return data;
   };
 
   const signup = async (user: User): Promise<any> => {
-    try {
-      const response = await axios.post(`${url}/register`, user);
-      return {success: true, data: response.data};
-    } catch (error: any) {
-      const msg = error.response?.data || error.message || 'Erro desconhecido';
-      return { success: false, error: msg};
-    }
+    const { data } = await api.post("/register", user);
+    return data;
   };
 
   const logout = async () => {
     Login(null);
     Cookies.remove('auth')
-    await axios.post(`${url}/logout`, {}, { withCredentials: true });
-  }
+    await api.post("/logout");
+  };
 
   const calculateAge = async (birthDate: string) => {
-    const response = await axios.post(`${url}/calculate_age`, {birthDate});
-    return {data: response.data};
-  }
+    const { data } = await api.post("/calculate_age", { birthDate });
+    return { data };
+  };
 
-  return { login, signup, logout, calculateAge};
+  const inviteResponsavel = async (email: string, athleteName: string) => {
+    return api.post("/invite-responsavel", {
+      email,
+      athleteName,
+    });
+  };
+
+  const confirmResponsavelInvite = async (token: string) => {
+    return api.post("/confirm-responsavel", { token });
+  };
+
+  return { login, signup, logout, calculateAge, inviteResponsavel, confirmResponsavelInvite};
 };
 
 export default authApi;
