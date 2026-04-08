@@ -2,16 +2,19 @@ import { Route } from 'react-router-dom';
 import { IonApp, IonRouterOutlet, setupIonicReact } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 import React from 'react';
-import { AuthProvider, useAuth } from './AuthContext';
+import { AuthProvider } from './AuthContext';
 
-import Home from './pages/private/temporario/Home';
+import Home from './pages/private/Home/Home';
 import Login from './pages/public/Login';
 import Signup from './pages/public/SignUp';
 import PrivateRoute from './components/PrivadeRoute';
 import InicialPage from './pages/public/InicialPage';
-import Comunidade from './pages/private/Comunidade/temporario/Comuninade';
+import Comunidade from './pages/private/Comunidade/Comunidade';
 import DetalhesPost from './pages/private/Comunidade/temporario/DetailsPost';
+import Chat from './pages/private/Chat/Chat';
 import ConfirmResponsavel from './pages/public/ConfirmResponsavel';
+import ProfileSettings from './pages/private/ProfileSettings';
+import Shop from './pages/private/loja';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -54,8 +57,6 @@ const App: React.FC = () => {
 };
 
 const InnerApp: React.FC = () => {
-  const user = useAuth();
-
   return(
     <IonApp>
       <IonReactRouter>
@@ -70,6 +71,9 @@ const InnerApp: React.FC = () => {
           <PrivateRoute exact path='/home' component={Home}/>
           <PrivateRoute exact path='/comunidade' component={Comunidade}/>
           <PrivateRoute exact path='/comunidade/post/:id' component={DetalhesPost}/>
+          <PrivateRoute exact path='/chat' component={Chat}/>
+          <PrivateRoute exact path='/perfil' component={ProfileSettings}/>
+          <PrivateRoute exact path='/shop' component={Shop}/>
         </IonRouterOutlet>
       </IonReactRouter>
     </IonApp>

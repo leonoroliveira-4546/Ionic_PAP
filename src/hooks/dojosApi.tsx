@@ -25,7 +25,32 @@ export const dojosApi = () => {
     return data;
   };
 
-  return { getDojos, createDojo, joinDojo};
+  const getDojoMembers = async (dojoId: string) => {
+    const { data } = await api.get(`/dojo/members/${dojoId}`);
+    return data;
+  };
+
+  const removeMember = async (dojoId: string, userId: string) => {
+    const { data } = await api.post("/dojo/remove-member", { dojoId, userId });
+    return data;
+  };
+
+  const addTrainingSchedule = async ( dojoId: string, FormData: { day: string; time: string; location: string } ) => {
+    const { data } = await api.post(`/dojos/${dojoId}/schedule`, FormData);
+    return data;
+  };
+
+  const createTournament = async ( dojoId: string, FormData: { name: string; date: string; location: string; userId: string } ) => {
+    const { data } = await api.post(`/dojos/${dojoId}/tournaments`, FormData);
+    return data;
+  };
+
+  const getDojoTournaments = async (dojoId: string) => {
+    const { data } = await api.get(`/dojos/${dojoId}/tournaments`);
+    return data;
+  };
+
+  return { getDojos, createDojo, joinDojo, getDojoMembers, removeMember, addTrainingSchedule, createTournament, getDojoTournaments };
 };
 
 export default dojosApi;

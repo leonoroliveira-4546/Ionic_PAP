@@ -3,12 +3,23 @@ import { getAuth } from "firebase/auth";
 
 interface User {
     _id: string;
+    authUid?: string;
     username: string;
-    profilePic: string;
-    password: string;
+    profilePic?: string | null;
     email: string;
+    emailVerified?: boolean;
     type: string;
-    dojo: string;
+    birthDate?: string;
+    responsavelId?: string;
+    dojoId?: string | null;
+    status?: string;
+    absences?: number;
+    childrens?: {
+        _id?: string;
+        username: string;
+        birthDate: string;
+        absences?: number;
+    }[];
 }
 
 interface AuthContextType {

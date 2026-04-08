@@ -34,8 +34,10 @@ const InicialPage: React.FC = () => {
       <IonContent fullscreen className="content" scrollY={false}>
         <div className="page">
 
-          {/* LOGO */}
-          <div className="logo">Logo</div>
+          <div className="logo">
+            <img src="/public/logo.png" alt="" />
+            <h2>Warera Dojo</h2>
+          </div>
 
           <h1 className="title">Bem-vindo ao seu dojo</h1>
           <p className="subtitle">

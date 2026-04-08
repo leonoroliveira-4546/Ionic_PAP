@@ -48,10 +48,13 @@ const Login: React.FC = () => {
 
   return (
     <IonPage>
-      <IonContent fullscreen className="content" scrollY={false}>
+      <IonContent fullscreen className="content" scrollY={true}>
         <div className="page">
 
-          <div className="logo">Logo</div>
+          <div className="logo">
+            <img src="/public/logo.png" alt="" />
+            <h2>Warera Dojo</h2>
+          </div>
           <h1 className="title">Bem Vindo de Volta!</h1>
 
           <div className="inputs">
@@ -79,6 +82,7 @@ const Login: React.FC = () => {
           <IonButton className="btn" onClick={handleLogin}>
             Entrar
           </IonButton>
+
           <div className="forgot">
             Esqueçeu a palavra-passe?
           </div>

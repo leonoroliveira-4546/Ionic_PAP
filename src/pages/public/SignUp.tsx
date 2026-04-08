@@ -76,7 +76,7 @@ const Signup: React.FC = () => {
     const fetchDojos = async () => {
       const res = await getDojos();
       if (res.success) {
-        setDojos(res.data);
+        setDojos(res.dojos);
       }
     };
 
@@ -352,7 +352,7 @@ const Signup: React.FC = () => {
           {/* STEP 2 — Responsavel */}
           {step === 2 && credentials.type === "responsavel" && (
             <>
-              <h2>Filhos</h2>
+              <h2>Educantes</h2>
 
               {childrens.map((child, index) => (
                 <div key={index}>
@@ -386,7 +386,7 @@ const Signup: React.FC = () => {
               ))}
 
               <IonButton onClick={addChild}>
-                + Adicionar filho
+                + Adicionar educante
               </IonButton>
               <IonButton onClick={() => { if (!validateChildren()) return; setStep(4) }}>
                 Próximo

@@ -50,7 +50,27 @@ export const authApi = (Login: (userData: any) => void) => {
     return api.post("/confirm-responsavel", { token });
   };
 
-  return { login, signup, logout, calculateAge, inviteResponsavel, confirmResponsavelInvite};
+  const addPerformance = async (FormData: { athleteId?: string; childId?: string; rating: number; improvements: string[]; needsImprovement: string[]; }) => {
+    const { data } = await api.post("/addPerformance", FormData);
+    return data;
+  };
+
+  const getPerformance = async (params: { athleteId?: string; childId?: string; }) => {
+    const { data } = await api.get("/getAthletePerformance", { params });
+    return data;
+  };
+
+  const addAbsence = async (FormData: { userId: string; date: string; }) => {
+    const { data } = await api.post("/addAbsence", FormData);
+    return data;
+  };
+
+  const getAbsencesByMonth = async (userId: string, month: string ) => {
+    const { data } = await api.get(`/getAthleteAbsences/${userId}`, { params: { month } });
+    return data;
+  };
+
+  return { login, signup, logout, calculateAge, inviteResponsavel, confirmResponsavelInvite, addPerformance, getPerformance, addAbsence, getAbsencesByMonth };
 };
 
 export default authApi;
