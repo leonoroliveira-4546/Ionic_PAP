@@ -18,7 +18,10 @@ interface User {
         _id?: string;
         username: string;
         birthDate: string;
-        absences?: number;
+        absences?: {
+            month: string;
+            count: number;
+        }[];
     }[];
 }
 

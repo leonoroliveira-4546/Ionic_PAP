@@ -12,6 +12,10 @@ export interface User{
   childrens?: {
     username: string;
     birthDate: string;
+    absences?: {
+      month: string;
+      count: number;
+    }[];
   }[];
 }
 

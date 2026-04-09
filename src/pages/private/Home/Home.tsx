@@ -34,24 +34,49 @@ const Home: React.FC = () => {
 
   if (!user) return null;
 
-  const fetchAthleteData = async (athleteId: string) => {
+  const fetchAthleteData = async (athleteId: string, isChild: boolean = false) => {
     try {
-      const perfData = await getPerformance({ athleteId });
-      setPerformance(perfData.performance || null);
+      const perfParams = isChild ? { athleteId: user._id, childId: athleteId } : { athleteId };
+      const perfData = await getPerformance(perfParams);
+      if (!perfData.success) {
+        alert(perfData.error);
+        setPerformance(null);
+      } else {
+        setPerformance(perfData.performance || null);
+      }
 
       const month = new Date().toISOString().slice(0, 7);
-      const absData = await getAbsencesByMonth(athleteId, month);
-      setAbsences(absData.count || 0);
+      if (isChild) {
+        const child = user.childrens?.find((c: any) => c._id === athleteId);
+        const abs = child?.absences?.find((a: any) => a.month === month)?.count || 0;
+        setAbsences(abs);
+      } else {
+        const absData = await getAbsencesByMonth(athleteId, month);
+        if (!absData.success) {
+          alert(absData.error);
+          setAbsences(0);
+        } else {
+          setAbsences(absData.count || 0);
+        }
+      }
 
       if (user.dojoId) {
-        const dojoMembers = await getDojoMembers(user.dojoId);
-        setTrainingSchedule(dojoMembers.members?.find((m: any) => m._id === athleteId)?.trainingSchedule || []);
+        const dojoData = await getDojoMembers(user.dojoId);
+        if (!dojoData.success) {
+          alert(dojoData.error);
+        } else {
+          setTrainingSchedule(dojoData.dojo.trainingSchedule);
+        }
 
         const tournaments = await getDojoTournaments(user.dojoId);
-        setUpcomingTournaments(tournaments.tournaments || []);
+        if (!tournaments.success) {
+          alert(tournaments.error);
+        } else {
+          setUpcomingTournaments(tournaments.tournaments || []);
+        }
       }
     } catch (err) {
-      console.error('Erro ao buscar dados do atleta:', err);
+      alert('Erro ao buscar dados do atleta: ' + err);
     }
   };
 
@@ -60,56 +85,96 @@ const Home: React.FC = () => {
 
     try {
       const membersData = await getDojoMembers(user.dojoId);
-      setDojoMembers(membersData.members || []);
+      if (!membersData.success) {
+        alert(membersData.error);
+      } else {
+        setDojoMembers(membersData.dojo.members);
+        setTrainingSchedule(membersData.dojo.trainingSchedule);
+      }
 
       const tournamentsData = await getDojoTournaments(user.dojoId);
-      setTournaments(tournamentsData.tournaments || []);
+      if (!tournamentsData.success) {
+        alert(tournamentsData.error);
+      } else {
+        setTournaments(tournamentsData.tournaments || []);
+      }
     } catch (err) {
-      console.error("Erro ao buscar dados do dojo:", err);
+      alert("Erro ao buscar dados do dojo: " + err);
     }
   };
 
   const handleRemoveMember = async (userId: string) => {
     if (!user.dojoId) return;
-    await removeMember(user.dojoId, userId);
-    fetchDojoData();
+    try {
+      const data = await removeMember(user.dojoId, userId);
+      if (!data.success) {
+        alert(data.error);
+      } else {
+        fetchDojoData();
+      }
+    } catch (err) {
+      alert('Erro ao remover membro: ' + err);
+    }
   };
 
   const handleCreateTournament = async () => {
     if (!user.dojoId) return;
 
-    const newTournament = {
-      name: "Torneio Exemplo",
-      date: new Date().toISOString().slice(0,10),
-      location: "Dojo Central",
-      userId: user._id
-    };
+    try {
+      const newTournament = {
+        name: "Torneio Exemplo",
+        date: new Date().toISOString().slice(0,10),
+        location: "Dojo Central",
+        userId: user._id
+      };
 
-    await createTournament(user.dojoId, newTournament);
-    fetchDojoData();
+      const data = await createTournament(user.dojoId, newTournament);
+      if (!data.success) {
+        alert(data.error);
+      } else {
+        fetchDojoData();
+      }
+    } catch (err) {
+      alert('Erro ao criar torneio: ' + err);
+    }
   };
 
   const handleAddPerformance = async () => {
     if (!selectedMember) return;
 
-    await addPerformance({
-      athleteId: selectedMember,
-      rating: newPerformance.rating,
-      improvements: newPerformance.improvements.split(',').map(i => i.trim()),
-      needsImprovement: newPerformance.needsImprovement.split(',').map(i => i.trim())
-    });
-
-    alert('Performance adicionada com sucesso!');
-    setNewPerformance({ rating: 0, improvements: '', needsImprovement: '' });
+    try {
+      const data = await addPerformance({
+        athleteId: selectedMember,
+        rating: newPerformance.rating,
+        improvements: newPerformance.improvements.split(',').map(i => i.trim()),
+        needsImprovement: newPerformance.needsImprovement.split(',').map(i => i.trim())
+      });
+      if (!data.success) {
+        alert(data.error);
+      } else {
+        alert('Performance adicionada com sucesso!');
+        setNewPerformance({ rating: 0, improvements: '', needsImprovement: '' });
+      }
+    } catch (err) {
+      alert('Erro ao adicionar performance: ' + err);
+    }
   };
 
   const handleAddTrainingSchedule = async () => {
     if (!user.dojoId) return;
 
-    await addTrainingSchedule(user.dojoId, newSchedule);
-    alert('Horário adicionado com sucesso!');
-    setNewSchedule({ day: '', time: '', location: '' });
-    fetchDojoData();
+    try {
+      const data = await addTrainingSchedule(user.dojoId, newSchedule);
+      if (!data.success) {
+        alert(data.error);
+      } else {
+        alert('Horário adicionado com sucesso!');
+        setNewSchedule({ day: '', time: '', location: '' });
+        fetchDojoData();
+      }
+    } catch (err) {
+      alert('Erro ao adicionar horário: ' + err);
+    }
   };
 
   useEffect(() => {
@@ -194,10 +259,10 @@ const Home: React.FC = () => {
         </IonCardHeader>
         <IonCardContent>
           <IonList>
-            {dojoMembers.map(member => (
-              <IonItem key={member._id}>
-                <IonLabel>{member.username}</IonLabel>
-                <IonButton color="danger" onClick={() => handleRemoveMember(member._id)}>Remover</IonButton>
+            {dojoMembers.filter(member => member.id).map(member => (
+              <IonItem key={member.id._id}>
+                <IonLabel>{member.id.username}</IonLabel>
+                <IonButton color="danger" onClick={() => handleRemoveMember(member.id._id)}>Remover</IonButton>
               </IonItem>
             ))}
           </IonList>
@@ -241,8 +306,8 @@ const Home: React.FC = () => {
         </IonCardHeader>
         <IonCardContent>
           <IonSelect placeholder="Escolha um membro" value={selectedMember} onIonChange={e => setSelectedMember(e.detail.value!)}>
-            {dojoMembers.map(member => (
-              <IonSelectOption key={member._id} value={member._id}>{member.username}</IonSelectOption>
+            {dojoMembers.filter(member => member.id).map(member => (
+              <IonSelectOption key={member.id._id} value={member.id._id}>{member.id.username}</IonSelectOption>
             ))}
           </IonSelect>
 
@@ -301,7 +366,7 @@ const Home: React.FC = () => {
     } else if (user.type === 'responsavel' && (selectedChild || (user.childrens && user.childrens.length === 1))) {
       const childId = selectedChild || user.childrens?.[0]?._id;
       if (childId) {
-        fetchAthleteData(childId);
+        fetchAthleteData(childId, true);
       }
     }
   }, [user, selectedChild]);
