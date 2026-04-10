@@ -199,7 +199,7 @@ const DetalhesPost: React.FC<DetailsProps> = ({ match }) => {
                         <IonButton expand="block" onClick={handleUpdatePost}>
                             <IonIcon icon={saveOutline} /> Guardar
                         </IonButton>
-                        <IonButton expand="block" color="medium" onClick={() => insertModal.current?.dismiss()}>
+                        <IonButton expand="block" color="medium" onClick={() => setShowEditModal(false)}>
                             Fechar
                         </IonButton>
                     </IonContent>

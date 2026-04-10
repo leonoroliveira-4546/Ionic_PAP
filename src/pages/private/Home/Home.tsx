@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonList, IonItem, IonLabel, IonButton, IonSelect, IonSelectOption } from '@ionic/react';
+import React, { useEffect, useState, useRef } from 'react';
+import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonList, IonItem, IonLabel, IonButton, IonSelect, IonSelectOption, IonModal, IonInput, IonDatetime, IonIcon, IonGrid, IonRow, IonCol } from '@ionic/react';
+import { close, add, chevronBack, create, trash, eye } from 'ionicons/icons';
 import { useAuth } from '../../../AuthContext';
 import Navbar from '../../../components/MainLayout';
 import '../../../pages/StylesPages.css';
@@ -29,8 +30,21 @@ const Home: React.FC = () => {
     location: ''
   });
 
+  // Modais
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [showMemberDetailsModal, setShowMemberDetailsModal] = useState(false);
+  const [showTournamentModal, setShowTournamentModal] = useState(false);
+  const [selectedMemberDetails, setSelectedMemberDetails] = useState<any>(null);
+  const [editingSchedules, setEditingSchedules] = useState<any[]>([]);
+  const [editingTournaments, setEditingTournaments] = useState<any[]>([]);
+  const [newTournamentData, setNewTournamentData] = useState({
+    name: '',
+    date: '',
+    location: ''
+  });
+
   const { addPerformance, getPerformance, getAbsencesByMonth } = authApi(() => {});
-  const { getDojoMembers, removeMember, addTrainingSchedule, createTournament, getDojoTournaments } = dojosApi();
+  const { getDojoMembers, removeMember, addTrainingSchedule, updateTrainingSchedules, createTournament, getDojoTournaments, updateTournament, deleteTournament } = dojosApi();
 
   if (!user) return null;
 
@@ -110,53 +124,11 @@ const Home: React.FC = () => {
       if (!data.success) {
         alert(data.error);
       } else {
+        alert('Membro removido com sucesso!');
         fetchDojoData();
       }
     } catch (err) {
       alert('Erro ao remover membro: ' + err);
-    }
-  };
-
-  const handleCreateTournament = async () => {
-    if (!user.dojoId) return;
-
-    try {
-      const newTournament = {
-        name: "Torneio Exemplo",
-        date: new Date().toISOString().slice(0,10),
-        location: "Dojo Central",
-        userId: user._id
-      };
-
-      const data = await createTournament(user.dojoId, newTournament);
-      if (!data.success) {
-        alert(data.error);
-      } else {
-        fetchDojoData();
-      }
-    } catch (err) {
-      alert('Erro ao criar torneio: ' + err);
-    }
-  };
-
-  const handleAddPerformance = async () => {
-    if (!selectedMember) return;
-
-    try {
-      const data = await addPerformance({
-        athleteId: selectedMember,
-        rating: newPerformance.rating,
-        improvements: newPerformance.improvements.split(',').map(i => i.trim()),
-        needsImprovement: newPerformance.needsImprovement.split(',').map(i => i.trim())
-      });
-      if (!data.success) {
-        alert(data.error);
-      } else {
-        alert('Performance adicionada com sucesso!');
-        setNewPerformance({ rating: 0, improvements: '', needsImprovement: '' });
-      }
-    } catch (err) {
-      alert('Erro ao adicionar performance: ' + err);
     }
   };
 
@@ -175,6 +147,119 @@ const Home: React.FC = () => {
     } catch (err) {
       alert('Erro ao adicionar horário: ' + err);
     }
+  };
+
+  const handleSaveScheduleChanges = async () => {
+    if (!user.dojoId) return;
+    try {
+      const data = await updateTrainingSchedules(user.dojoId, editingSchedules);
+      if (!data.success) {
+        alert(data.error);
+      } else {
+        alert('Alterações aos horários salvas com sucesso!');
+        setShowScheduleModal(false);
+        setTrainingSchedule(editingSchedules);
+      }
+    } catch (err) {
+      alert('Erro ao salvar horários: ' + err);
+    }
+  };
+
+  const handleAddScheduleInModal = () => {
+    if (newSchedule.day && newSchedule.time && newSchedule.location) {
+      setEditingSchedules([...editingSchedules, { ...newSchedule }]);
+      setNewSchedule({ day: '', time: '', location: '' });
+    }
+  };
+
+  const handleRemoveSchedule = (index: number) => {
+    setEditingSchedules(editingSchedules.filter((_, i) => i !== index));
+  };
+
+  const handleViewMemberDetails = async (member: any) => {
+    setSelectedMemberDetails(member);
+    try {
+      const perfData = await getPerformance({ athleteId: member._id });
+      if (!perfData.success) {
+        alert(perfData.error);
+        setPerformance(null);
+      } else {
+        setPerformance(perfData.performance || null);
+      }
+    } catch (err) {
+      alert('Erro ao buscar performance: ' + err);
+    }
+    setShowMemberDetailsModal(true);
+  };
+
+  const handleAddPerformanceToMember = async () => {
+    if (!selectedMember || !selectedMemberDetails) return;
+
+    try {
+      const data = await addPerformance({
+        athleteId: selectedMember,
+        rating: newPerformance.rating,
+        improvements: newPerformance.improvements.split(',').map(i => i.trim()),
+        needsImprovement: newPerformance.needsImprovement.split(',').map(i => i.trim())
+      });
+      if (!data.success) {
+        alert(data.error);
+      } else {
+        alert('Performance adicionada com sucesso!');
+        setNewPerformance({ rating: 0, improvements: '', needsImprovement: '' });
+        setShowMemberDetailsModal(false);
+      }
+    } catch (err) {
+      alert('Erro ao adicionar performance: ' + err);
+    }
+  };
+
+  const handleSaveTournamentChanges = async () => {
+    if (!user.dojoId) {
+      alert('Dojo ID não encontrado');
+      return;
+    }
+    try {
+      // Remove deleted tournaments
+      for (let i = 0; i < tournaments.length; i++) {
+        const existingTournament = editingTournaments.find((t: any) => t._id === tournaments[i]._id);
+        if (!existingTournament) {
+          await deleteTournament(tournaments[i]._id);
+        }
+      }
+
+      // Update or create tournaments
+      for (const tournament of editingTournaments) {
+        if (tournament._id) {
+          await updateTournament(tournament._id, { name: tournament.name, date: tournament.date, location: tournament.location });
+        } else {
+          const newTournamentData = {
+            name: tournament.name,
+            date: tournament.date,
+            location: tournament.location,
+            userId: user._id
+          };
+          await createTournament(user.dojoId, newTournamentData);
+        }
+      }
+
+      alert('Alterações aos torneios salvas com sucesso!');
+      setShowTournamentModal(false);
+      fetchDojoData();
+    } catch (err) {
+      alert('Erro ao salvar torneios: ' + err);
+    }
+  };
+
+  const handleAddTournamentInModal = () => {
+    if (newTournamentData.name && newTournamentData.date && newTournamentData.location) {
+      setEditingTournaments([...editingTournaments, { ...newTournamentData }]);
+      setNewTournamentData({ name: '', date: '', location: '' });
+    }
+  };
+
+  const handleRemoveTournament = (index: number) => {
+    setEditingTournaments(editingTournaments.filter((_, i) => i !== index));
   };
 
   useEffect(() => {
@@ -253,6 +338,36 @@ const Home: React.FC = () => {
     <div className="page background">
       <h2>Dashboard do Sensei</h2>
 
+      {/* Horários */}
+      <IonCard>
+        <IonCardHeader>
+          <IonCardTitle>Horários de Treino</IonCardTitle>
+        </IonCardHeader>
+        <IonCardContent>
+          <IonList>
+            {trainingSchedule.length > 0 ? (
+              trainingSchedule.map((schedule, index) => (
+                <IonItem key={index}>
+                  <IonLabel>
+                    <h3>{schedule.day}</h3>
+                    <p>{schedule.time} - {schedule.location}</p>
+                  </IonLabel>
+                </IonItem>
+              ))
+            ) : (
+              <p>Nenhum horário adicionado ainda.</p>
+            )}
+          </IonList>
+          <IonButton expand="block" color="primary" onClick={() => {
+            setEditingSchedules(trainingSchedule);
+            setShowScheduleModal(true);
+          }}>
+            Editar Horários
+          </IonButton>
+        </IonCardContent>
+      </IonCard>
+
+      {/* Membros */}
       <IonCard>
         <IonCardHeader>
           <IonCardTitle>Membros do Dojo</IonCardTitle>
@@ -262,67 +377,253 @@ const Home: React.FC = () => {
             {dojoMembers.filter(member => member.id).map(member => (
               <IonItem key={member.id._id}>
                 <IonLabel>{member.id.username}</IonLabel>
-                <IonButton color="danger" onClick={() => handleRemoveMember(member.id._id)}>Remover</IonButton>
+                <IonButton fill="clear" onClick={() => handleViewMemberDetails(member.id)}>
+                  <IonIcon slot="icon-only" icon={eye}></IonIcon>
+                </IonButton>
+                <IonButton fill="clear" color="danger" onClick={() => handleRemoveMember(member.id._id)}>
+                  <IonIcon slot="icon-only" icon={trash}></IonIcon>
+                </IonButton>
               </IonItem>
             ))}
           </IonList>
         </IonCardContent>
       </IonCard>
-      <IonCard>
-        <IonCardHeader>
-          <IonCardTitle>Adicionar Horário de Treino</IonCardTitle>
-        </IonCardHeader>
-        <IonCardContent>
-          <IonLabel>Dia</IonLabel>
-          <input type="text" value={newSchedule.day} onChange={e => setNewSchedule({...newSchedule, day: e.target.value})} />
 
-          <IonLabel>Hora</IonLabel>
-          <input type="text" value={newSchedule.time} onChange={e => setNewSchedule({...newSchedule, time: e.target.value})} />
-
-          <IonLabel>Local</IonLabel>
-          <input type="text" value={newSchedule.location} onChange={e => setNewSchedule({...newSchedule, location: e.target.value})} />
-
-          <IonButton expand="block" onClick={handleAddTrainingSchedule}>Salvar Horário</IonButton>
-        </IonCardContent>
-      </IonCard>
+      {/* Torneios */}
       <IonCard>
         <IonCardHeader>
           <IonCardTitle>Torneios</IonCardTitle>
         </IonCardHeader>
         <IonCardContent>
-          <IonList>
-            {tournaments.map(t => (
-              <IonItem key={t._id}>
-                <IonLabel>{t.name} - {t.date}</IonLabel>
-              </IonItem>
-            ))}
-          </IonList>
-          <IonButton expand="block" onClick={() => handleCreateTournament()}>Criar Torneio</IonButton>
+          {tournaments.length > 0 ? (
+            <IonList>
+              {tournaments.map(t => (
+                <IonItem key={t._id}>
+                  <IonLabel>
+                    <h3>{t.name}</h3>
+                    <p>{t.date} - {t.location}</p>
+                  </IonLabel>
+                </IonItem>
+              ))}
+            </IonList>
+          ) : (
+            <p>Nenhum torneio criado ainda.</p>
+          )}
+          <IonButton expand="block" color="primary" onClick={() => {
+            setEditingTournaments(tournaments);
+            setShowTournamentModal(true);
+          }}>
+            Gerir Torneios
+          </IonButton>
         </IonCardContent>
       </IonCard>
-      <IonCard>
-        <IonCardHeader>
-          <IonCardTitle>Adicionar Performance</IonCardTitle>
-        </IonCardHeader>
-        <IonCardContent>
-          <IonSelect placeholder="Escolha um membro" value={selectedMember} onIonChange={e => setSelectedMember(e.detail.value!)}>
-            {dojoMembers.filter(member => member.id).map(member => (
-              <IonSelectOption key={member.id._id} value={member.id._id}>{member.id.username}</IonSelectOption>
-            ))}
-          </IonSelect>
 
-          <IonLabel>Avaliação (1-5)</IonLabel>
-          <input type="number" min={1} max={5} value={newPerformance.rating} onChange={e => setNewPerformance({...newPerformance, rating: Number(e.target.value)})} />
+      {/* Modal Horários */}
+      <IonModal isOpen={showScheduleModal} onDidDismiss={() => setShowScheduleModal(false)}>
+        <IonHeader>
+          <IonToolbar>
+            <IonTitle>Editar Horários de Treino</IonTitle>
+            <IonButton slot="end" fill="clear" onClick={() => setShowScheduleModal(false)}>
+              <IonIcon slot="icon-only" icon={close}></IonIcon>
+            </IonButton>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent>
+          <IonCard>
+            <IonCardHeader>
+              <IonCardTitle>Adicionar Novo Horário</IonCardTitle>
+            </IonCardHeader>
+            <IonCardContent>
+              <IonSelect placeholder="Dia da Semana" value={newSchedule.day} onIonChange={e => setNewSchedule({...newSchedule, day: e.detail.value})}>
+                <IonSelectOption value="Segunda">Segunda-feira</IonSelectOption>
+                <IonSelectOption value="Terça">Terça-feira</IonSelectOption>
+                <IonSelectOption value="Quarta">Quarta-feira</IonSelectOption>
+                <IonSelectOption value="Quinta">Quinta-feira</IonSelectOption>
+                <IonSelectOption value="Sexta">Sexta-feira</IonSelectOption>
+                <IonSelectOption value="Sábado">Sábado</IonSelectOption>
+                <IonSelectOption value="Domingo">Domingo</IonSelectOption>
+              </IonSelect>
 
-          <IonLabel>Melhorias (separadas por vírgula)</IonLabel>
-          <input type="text" value={newPerformance.improvements} onChange={e => setNewPerformance({...newPerformance, improvements: e.target.value})} />
+              <IonInput placeholder="Hora (ex: 18:00)" value={newSchedule.time} onIonChange={e => setNewSchedule({...newSchedule, time: e.detail.value || ''})}></IonInput>
 
-          <IonLabel>O que precisa melhorar (separadas por vírgula)</IonLabel>
-          <input type="text" value={newPerformance.needsImprovement} onChange={e => setNewPerformance({...newPerformance, needsImprovement: e.target.value})} />
+              <IonInput placeholder="Local" value={newSchedule.location} onIonChange={e => setNewSchedule({...newSchedule, location: e.detail.value || ''})}></IonInput>
 
-          <IonButton expand="block" onClick={handleAddPerformance}>Salvar Performance</IonButton>
-        </IonCardContent>
-      </IonCard>
+              <IonButton expand="block" onClick={handleAddScheduleInModal}>
+                <IonIcon slot="start" icon={add}></IonIcon>
+                Adicionar
+              </IonButton>
+            </IonCardContent>
+          </IonCard>
+
+          <IonCard>
+            <IonCardHeader>
+              <IonCardTitle>Horários Atuais</IonCardTitle>
+            </IonCardHeader>
+            <IonCardContent>
+              <IonList>
+                {editingSchedules.map((schedule, index) => (
+                  <IonItem key={index}>
+                    <IonLabel>
+                      <h3>{schedule.day}</h3>
+                      <p>{schedule.time} - {schedule.location}</p>
+                    </IonLabel>
+                    <IonButton fill="clear" color="danger" onClick={() => handleRemoveSchedule(index)}>
+                      <IonIcon slot="icon-only" icon={trash}></IonIcon>
+                    </IonButton>
+                  </IonItem>
+                ))}
+              </IonList>
+            </IonCardContent>
+          </IonCard>
+
+          <IonButton expand="block" color="success" onClick={handleSaveScheduleChanges}>
+            Salvar Alterações
+          </IonButton>
+          <IonButton expand="block" color="medium" onClick={() => setShowScheduleModal(false)}>
+            Cancelar
+          </IonButton>
+        </IonContent>
+      </IonModal>
+
+      {/* Modal Detalhes do Membro */}
+      <IonModal isOpen={showMemberDetailsModal} onDidDismiss={() => setShowMemberDetailsModal(false)}>
+        <IonHeader>
+          <IonToolbar>
+            <IonTitle>Detalhes do Atleta</IonTitle>
+            <IonButton slot="end" fill="clear" onClick={() => setShowMemberDetailsModal(false)}>
+              <IonIcon slot="icon-only" icon={close}></IonIcon>
+            </IonButton>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent>
+          {selectedMemberDetails && (
+            <>
+              <IonCard>
+                <IonCardHeader>
+                  <IonCardTitle>{selectedMemberDetails.username}</IonCardTitle>
+                </IonCardHeader>
+                <IonCardContent>
+                  <p><strong>Email:</strong> {selectedMemberDetails.email}</p>
+                  {selectedMemberDetails.birthDate && <p><strong>Data de Nascimento:</strong> {new Date(selectedMemberDetails.birthDate).toLocaleDateString()}</p>}
+                </IonCardContent>
+              </IonCard>
+
+              <IonCard>
+                <IonCardHeader>
+                  <IonCardTitle>Informações de Desempenho</IonCardTitle>
+                </IonCardHeader>
+                <IonCardContent>
+                  <p><strong>Faltas no Mês Atual:</strong> {performance?.absences || 0}</p>
+                  {performance && (
+                    <>
+                      <p><strong>Avaliação:</strong> {performance.rating}/5</p>
+                      <h4>Melhorias:</h4>
+                      <ul>
+                        {performance.feedback?.improvements?.map((item: string, idx: number) => <li key={idx}>{item}</li>)}
+                      </ul>
+                      <h4>Precisa Melhorar:</h4>
+                      <ul>
+                        {performance.feedback?.needsImprovement?.map((item: string, idx: number) => <li key={idx}>{item}</li>)}
+                      </ul>
+                    </>
+                  )}
+                </IonCardContent>
+              </IonCard>
+
+              <IonCard>
+                <IonCardHeader>
+                  <IonCardTitle>Adicionar Performance</IonCardTitle>
+                </IonCardHeader>
+                <IonCardContent>
+                  <IonInput placeholder="Avaliação (1-5)" type="number" min={1} max={5} value={newPerformance.rating} onIonChange={e => setNewPerformance({...newPerformance, rating: Number(e.detail.value)})}></IonInput>
+
+                  <IonInput placeholder="Melhorias (separadas por vírgula)" value={newPerformance.improvements} onIonChange={e => setNewPerformance({...newPerformance, improvements: e.detail.value || ''})}></IonInput>
+
+                  <IonInput placeholder="O que precisa melhorar (separadas por vírgula)" value={newPerformance.needsImprovement} onIonChange={e => setNewPerformance({...newPerformance, needsImprovement: e.detail.value || ''})}></IonInput>
+
+                  <IonButton expand="block" color="success" onClick={() => {
+                    setSelectedMember(selectedMemberDetails._id);
+                    handleAddPerformanceToMember();
+                  }}>
+                    Adicionar Performance
+                  </IonButton>
+                </IonCardContent>
+              </IonCard>
+
+              <IonButton expand="block" color="danger" onClick={() => {
+                handleRemoveMember(selectedMemberDetails._id);
+                setShowMemberDetailsModal(false);
+              }}>
+                Remover Atleta
+              </IonButton>
+
+              <IonButton expand="block" onClick={() => setShowMemberDetailsModal(false)}>
+                Okay
+              </IonButton>
+            </>
+          )}
+        </IonContent>
+      </IonModal>
+
+      {/* Modal Torneios */}
+      <IonModal isOpen={showTournamentModal} onDidDismiss={() => setShowTournamentModal(false)}>
+        <IonHeader>
+          <IonToolbar>
+            <IonTitle>Gerir Torneios</IonTitle>
+            <IonButton slot="end" fill="clear" onClick={() => setShowTournamentModal(false)}>
+              <IonIcon slot="icon-only" icon={close}></IonIcon>
+            </IonButton>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent>
+          <IonCard>
+            <IonCardHeader>
+              <IonCardTitle>Adicionar Novo Torneio</IonCardTitle>
+            </IonCardHeader>
+            <IonCardContent>
+              <IonInput placeholder="Nome do Torneio" value={newTournamentData.name} onIonChange={e => setNewTournamentData({...newTournamentData, name: e.detail.value || ''})}></IonInput>
+
+              <IonLabel>Data do Torneio</IonLabel>
+              <IonDatetime value={newTournamentData.date} onIonChange={e => setNewTournamentData({...newTournamentData, date: e.detail.value as string})}></IonDatetime>
+
+              <IonInput placeholder="Local" value={newTournamentData.location} onIonChange={e => setNewTournamentData({...newTournamentData, location: e.detail.value || ''})}></IonInput>
+
+              <IonButton expand="block" onClick={handleAddTournamentInModal}>
+                <IonIcon slot="start" icon={add}></IonIcon>
+                Adicionar
+              </IonButton>
+            </IonCardContent>
+          </IonCard>
+
+          <IonCard>
+            <IonCardHeader>
+              <IonCardTitle>Torneios Atuais</IonCardTitle>
+            </IonCardHeader>
+            <IonCardContent>
+              <IonList>
+                {editingTournaments.map((tournament, index) => (
+                  <IonItem key={index}>
+                    <IonLabel>
+                      <h3>{tournament.name}</h3>
+                      <p>{tournament.date} - {tournament.location}</p>
+                    </IonLabel>
+                    <IonButton fill="clear" color="danger" onClick={() => handleRemoveTournament(index)}>
+                      <IonIcon slot="icon-only" icon={trash}></IonIcon>
+                    </IonButton>
+                  </IonItem>
+                ))}
+              </IonList>
+            </IonCardContent>
+          </IonCard>
+
+          <IonButton expand="block" color="success" onClick={handleSaveTournamentChanges}>
+            Salvar Alterações
+          </IonButton>
+          <IonButton expand="block" color="medium" onClick={() => setShowTournamentModal(false)}>
+            Cancelar
+          </IonButton>
+        </IonContent>
+      </IonModal>
     </div>
   );
 
@@ -357,7 +658,22 @@ const Home: React.FC = () => {
     }
 
     const athleteId = selectedChild || children[0]._id || children[0].username;
-    return renderAthleteDashboard(athleteId);
+    const currentChild = children.find((c: any) => c._id === athleteId);
+    
+    return (
+      <>
+        {children.length > 1 && (
+          <IonButton fill="clear" onClick={() => setSelectedChild('')}>
+            <IonIcon slot="start" icon={chevronBack}></IonIcon>
+            Voltar
+          </IonButton>
+        )}
+        <div>
+          {currentChild && <p style={{fontSize: '0.9em', color: '#999'}}>{currentChild.username}</p>}
+          {renderAthleteDashboard(athleteId)}
+        </div>
+      </>
+    );
   };
 
   useEffect(() => {
