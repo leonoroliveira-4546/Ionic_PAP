@@ -65,7 +65,12 @@ export const dojosApi = () => {
     return data;
   };
 
-  return { getDojos, createDojo, joinDojo, getDojoMembers, removeMember, addTrainingSchedule, updateTrainingSchedules, createTournament, getDojoTournaments, updateTournament, deleteTournament };
+  const removeChildFromResponsible = async (responsibleId: string, childId: string) => {
+    const { data } = await api.post("/dojo/remove-child", { responsibleId, childId });
+    return data;
+  };
+
+  return { getDojos, createDojo, joinDojo, getDojoMembers, removeMember, removeChildFromResponsible, addTrainingSchedule, updateTrainingSchedules, createTournament, getDojoTournaments, updateTournament, deleteTournament };
 };
 
 export default dojosApi;

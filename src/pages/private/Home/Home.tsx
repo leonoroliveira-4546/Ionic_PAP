@@ -17,8 +17,8 @@ const Home: React.FC = () => {
 
   const [dojoMembers, setDojoMembers] = useState<any[]>([]);
   const [tournaments, setTournaments] = useState<any[]>([]);
-
-  const [selectedMember, setSelectedMember] = useState<string>(''); // Membro selecionado
+  const [attendanceToday, setAttendanceToday] = useState<string[]>([]);
+  const [absencesMarkedToday, setAbsencesMarkedToday] = useState<string[]>([]);
   const [newPerformance, setNewPerformance] = useState({
     rating: 0,
     improvements: '',
@@ -43,8 +43,8 @@ const Home: React.FC = () => {
     location: ''
   });
 
-  const { addPerformance, getPerformance, getAbsencesByMonth } = authApi(() => {});
-  const { getDojoMembers, removeMember, addTrainingSchedule, updateTrainingSchedules, createTournament, getDojoTournaments, updateTournament, deleteTournament } = dojosApi();
+  const { addPerformance, getPerformance, getAbsencesByMonth, addAbsence } = authApi(() => {});
+  const { getDojoMembers, removeMember, removeChildFromResponsible, addTrainingSchedule, updateTrainingSchedules, createTournament, getDojoTournaments, updateTournament, deleteTournament } = dojosApi();
 
   if (!user) return null;
 
@@ -102,7 +102,7 @@ const Home: React.FC = () => {
       if (!membersData.success) {
         alert(membersData.error);
       } else {
-        setDojoMembers(membersData.dojo.members);
+        setDojoMembers(membersData.members);
         setTrainingSchedule(membersData.dojo.trainingSchedule);
       }
 
@@ -117,18 +117,64 @@ const Home: React.FC = () => {
     }
   };
 
-  const handleRemoveMember = async (userId: string) => {
+  const handleRemoveMember = async (member: any) => {
     if (!user.dojoId) return;
     try {
-      const data = await removeMember(user.dojoId, userId);
-      if (!data.success) {
-        alert(data.error);
+      if (member.parentId) {
+        // Se for um filho, remover da lista de filhos do responsável
+        const result = await removeChildFromResponsible(member.parentId, member._id);
+        if (!result.success) {
+          alert(result.error);
+          return;
+        }
+        alert('Filho removido com sucesso!');
       } else {
-        alert('Membro removido com sucesso!');
-        fetchDojoData();
+        // Se for um usuário direto, remover do dojo
+        const data = await removeMember(user.dojoId, member._id);
+        if (!data.success) {
+          alert(data.error);
+        } else {
+          alert('Membro removido com sucesso!');
+        }
       }
+      fetchDojoData();
     } catch (err) {
       alert('Erro ao remover membro: ' + err);
+    }
+  };
+
+  const handleMarkAttendance = (memberId: string) => {
+    if (!attendanceToday.includes(memberId)) {
+      setAttendanceToday([...attendanceToday, memberId]);
+    }
+  };
+
+  const handleMarkAbsence = async (member: any) => {
+    if (!user) return;
+
+    try {
+      const date = new Date().toISOString();
+      const payload: any = { userId: user._id, date };
+
+      if (member.parentId) {
+        payload.userId = member.parentId;
+        payload.childId = member._id;
+      } else {
+        payload.userId = member._id;
+      }
+
+      const result = await addAbsence(payload);
+      if (!result.success) {
+        alert(result.error);
+        return;
+      }
+
+      if (!absencesMarkedToday.includes(member._id)) {
+        setAbsencesMarkedToday([...absencesMarkedToday, member._id]);
+      }
+      alert('Falta registrada com sucesso!');
+    } catch (err) {
+      alert('Erro ao registrar falta: ' + err);
     }
   };
 
@@ -179,12 +225,24 @@ const Home: React.FC = () => {
   const handleViewMemberDetails = async (member: any) => {
     setSelectedMemberDetails(member);
     try {
-      const perfData = await getPerformance({ athleteId: member._id });
-      if (!perfData.success) {
-        alert(perfData.error);
-        setPerformance(null);
+      if (member.parentId) {
+        // Se for um filho, buscar performance com childId
+        const perfData = await getPerformance({ athleteId: member.parentId, childId: member._id });
+        if (!perfData.success) {
+          alert(perfData.error);
+          setPerformance(null);
+        } else {
+          setPerformance(perfData.performance || null);
+        }
       } else {
-        setPerformance(perfData.performance || null);
+        // Se for um usuário direto, buscar performance normal
+        const perfData = await getPerformance({ athleteId: member._id });
+        if (!perfData.success) {
+          alert(perfData.error);
+          setPerformance(null);
+        } else {
+          setPerformance(perfData.performance || null);
+        }
       }
     } catch (err) {
       alert('Erro ao buscar performance: ' + err);
@@ -193,15 +251,42 @@ const Home: React.FC = () => {
   };
 
   const handleAddPerformanceToMember = async () => {
-    if (!selectedMember || !selectedMemberDetails) return;
+    if (!selectedMemberDetails) return;
 
     try {
-      const data = await addPerformance({
-        athleteId: selectedMember,
+      // Filtrar e validar os arrays de feedback
+      const improvements = newPerformance.improvements
+        .split(',')
+        .map(i => i.trim())
+        .filter(i => i.length > 0);
+
+      const needsImprovement = newPerformance.needsImprovement
+        .split(',')
+        .map(i => i.trim())
+        .filter(i => i.length > 0);
+
+      // Validar se pelo menos um campo de feedback foi preenchido
+      if (improvements.length === 0 && needsImprovement.length === 0) {
+        alert('Por favor, preencha pelo menos um campo de feedback (melhorias ou pontos a melhorar).');
+        return;
+      }
+
+      let performanceData: any = {
         rating: newPerformance.rating,
-        improvements: newPerformance.improvements.split(',').map(i => i.trim()),
-        needsImprovement: newPerformance.needsImprovement.split(',').map(i => i.trim())
-      });
+        improvements: improvements,
+        needsImprovement: needsImprovement
+      };
+
+      if (selectedMemberDetails.parentId) {
+        // Se for um filho, adicionar performance com childId
+        performanceData.athleteId = selectedMemberDetails.parentId;
+        performanceData.childId = selectedMemberDetails._id;
+      } else {
+        // Se for um usuário direto
+        performanceData.athleteId = selectedMemberDetails._id;
+      }
+
+      const data = await addPerformance(performanceData);
       if (!data.success) {
         alert(data.error);
       } else {
@@ -374,18 +459,69 @@ const Home: React.FC = () => {
         </IonCardHeader>
         <IonCardContent>
           <IonList>
-            {dojoMembers.filter(member => member.id).map(member => (
-              <IonItem key={member.id._id}>
-                <IonLabel>{member.id.username}</IonLabel>
-                <IonButton fill="clear" onClick={() => handleViewMemberDetails(member.id)}>
-                  <IonIcon slot="icon-only" icon={eye}></IonIcon>
-                </IonButton>
-                <IonButton fill="clear" color="danger" onClick={() => handleRemoveMember(member.id._id)}>
-                  <IonIcon slot="icon-only" icon={trash}></IonIcon>
-                </IonButton>
-              </IonItem>
-            ))}
+            {dojoMembers.map(member => {
+              const isPresent = attendanceToday.includes(member._id);
+              return (
+                <IonItem key={member._id}>
+                  <IonLabel>{member.username}</IonLabel>
+                  <IonButton fill="clear" onClick={() => handleViewMemberDetails(member)}>
+                    <IonIcon slot="icon-only" icon={eye}></IonIcon>
+                  </IonButton>
+                  <IonButton fill="clear" color="danger" onClick={() => handleRemoveMember(member)}>
+                    <IonIcon slot="icon-only" icon={trash}></IonIcon>
+                  </IonButton>
+                  <IonButton
+                    fill="outline"
+                    color={isPresent ? 'success' : 'primary'}
+                    onClick={() => handleMarkAttendance(member._id)}
+                    disabled={isPresent}
+                  >
+                    {isPresent ? 'Presente' : 'Marcar presença'}
+                  </IonButton>
+                  <IonButton
+                    fill="outline"
+                    color={absencesMarkedToday.includes(member._id) ? 'danger' : 'medium'}
+                    onClick={() => handleMarkAbsence(member)}
+                    disabled={absencesMarkedToday.includes(member._id)}
+                  >
+                    {absencesMarkedToday.includes(member._id) ? 'Faltou' : 'Faltar'}
+                  </IonButton>
+                </IonItem>
+              );
+            })}
           </IonList>
+
+          <IonCard style={{ marginTop: '1rem' }}>
+            <IonCardHeader>
+              <IonCardTitle>Presenças de hoje</IonCardTitle>
+            </IonCardHeader>
+            <IonCardContent>
+              <p>{attendanceToday.length} de {dojoMembers.length} membros presentes</p>
+              {attendanceToday.length > 0 && (
+                <p>Membros marcados: {dojoMembers
+                  .filter(member => attendanceToday.includes(member._id))
+                  .map(member => member.username)
+                  .join(', ')}
+                </p>
+              )}
+            </IonCardContent>
+          </IonCard>
+
+          <IonCard style={{ marginTop: '1rem' }}>
+            <IonCardHeader>
+              <IonCardTitle>Faltas de hoje</IonCardTitle>
+            </IonCardHeader>
+            <IonCardContent>
+              <p>{absencesMarkedToday.length} de {dojoMembers.length} membros faltaram</p>
+              {absencesMarkedToday.length > 0 && (
+                <p>Membros faltaram: {dojoMembers
+                  .filter(member => absencesMarkedToday.includes(member._id))
+                  .map(member => member.username)
+                  .join(', ')}
+                </p>
+              )}
+            </IonCardContent>
+          </IonCard>
         </IonCardContent>
       </IonCard>
 
@@ -542,7 +678,6 @@ const Home: React.FC = () => {
                   <IonInput placeholder="O que precisa melhorar (separadas por vírgula)" value={newPerformance.needsImprovement} onIonChange={e => setNewPerformance({...newPerformance, needsImprovement: e.detail.value || ''})}></IonInput>
 
                   <IonButton expand="block" color="success" onClick={() => {
-                    setSelectedMember(selectedMemberDetails._id);
                     handleAddPerformanceToMember();
                   }}>
                     Adicionar Performance
@@ -551,7 +686,7 @@ const Home: React.FC = () => {
               </IonCard>
 
               <IonButton expand="block" color="danger" onClick={() => {
-                handleRemoveMember(selectedMemberDetails._id);
+                handleRemoveMember(selectedMemberDetails);
                 setShowMemberDetailsModal(false);
               }}>
                 Remover Atleta
