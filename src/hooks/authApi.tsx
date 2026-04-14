@@ -64,7 +64,7 @@ export const authApi = (Login: (userData: any) => void) => {
     return data;
   };
 
-  const addAbsence = async (FormData: { userId: string; childId?: string; date: string; }) => {
+  const addAbsence = async (FormData: { userId: string; childId?: string; date: string; reason?: string; }) => {
     const { data } = await api.post("/addAbsence", FormData);
     return data;
   };

@@ -59,7 +59,7 @@ export const mockUsers: User[] = [
     email: 'ana@example.com',
     type: 'atleta',
     dojo: 'Dojo Central',
-    belt: 'Roxa',
+    belt: 'Vermelha',
     points: 800,
     ranking: 4
   },

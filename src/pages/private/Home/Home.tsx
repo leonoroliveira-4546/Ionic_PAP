@@ -29,11 +29,17 @@ const Home: React.FC = () => {
     time: '',
     location: ''
   });
+  const [attendanceStatus, setAttendanceStatus] = useState<'present' | 'absent' | null>(null);
+  const [absenceReason, setAbsenceReason] = useState<'disease' | 'other' | null>(null);
+  const [absenceReasons, setAbsenceReasons] = useState<Record<string, 'disease' | 'other'>>({});
+  const [memberAbsences, setMemberAbsences] = useState<number>(0);
+  const [performanceAction, setPerformanceAction] = useState<'add' | 'edit' | null>(null);
 
   // Modais
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showMemberDetailsModal, setShowMemberDetailsModal] = useState(false);
   const [showTournamentModal, setShowTournamentModal] = useState(false);
+  const [showPerformanceModal, setShowPerformanceModal] = useState(false);
   const [selectedMemberDetails, setSelectedMemberDetails] = useState<any>(null);
   const [editingSchedules, setEditingSchedules] = useState<any[]>([]);
   const [editingTournaments, setEditingTournaments] = useState<any[]>([]);
@@ -224,6 +230,10 @@ const Home: React.FC = () => {
 
   const handleViewMemberDetails = async (member: any) => {
     setSelectedMemberDetails(member);
+    // Reset attendance status - será definido baseado nos dados atuais
+    setAttendanceStatus(null);
+    setAbsenceReason(null);
+
     try {
       if (member.parentId) {
         // Se for um filho, buscar performance com childId
@@ -234,6 +244,12 @@ const Home: React.FC = () => {
         } else {
           setPerformance(perfData.performance || null);
         }
+
+        // Buscar faltas do filho
+        const month = new Date().toISOString().slice(0, 7);
+        const child = user.childrens?.find((c: any) => c._id === member._id);
+        const abs = child?.absences?.find((a: any) => a.month === month)?.count || 0;
+        setMemberAbsences(abs);
       } else {
         // Se for um usuário direto, buscar performance normal
         const perfData = await getPerformance({ athleteId: member._id });
@@ -243,9 +259,29 @@ const Home: React.FC = () => {
         } else {
           setPerformance(perfData.performance || null);
         }
+
+        // Buscar faltas do usuário
+        const month = new Date().toISOString().slice(0, 7);
+        const absData = await getAbsencesByMonth(member._id, month);
+        if (!absData.success) {
+          alert(absData.error);
+          setMemberAbsences(0);
+        } else {
+          setMemberAbsences(absData.count || 0);
+        }
       }
+
+      // Verificar se já houve marcação de presença hoje
+      const today = new Date().toDateString();
+      if (attendanceToday.includes(member._id)) {
+        setAttendanceStatus('present');
+      } else if (absencesMarkedToday.includes(member._id)) {
+        setAttendanceStatus('absent');
+        setAbsenceReason(absenceReasons[member._id] || null);
+      }
+
     } catch (err) {
-      alert('Erro ao buscar performance: ' + err);
+      alert('Erro ao buscar dados: ' + err);
     }
     setShowMemberDetailsModal(true);
   };
@@ -277,6 +313,8 @@ const Home: React.FC = () => {
         needsImprovement: needsImprovement
       };
 
+      console.log('Enviando performance data:', performanceData); // Debug log
+
       if (selectedMemberDetails.parentId) {
         // Se for um filho, adicionar performance com childId
         performanceData.athleteId = selectedMemberDetails.parentId;
@@ -286,16 +324,133 @@ const Home: React.FC = () => {
         performanceData.athleteId = selectedMemberDetails._id;
       }
 
+      // Se já existe performance, o backend vai atualizar a do mês atual
+      // Se não existe, vai criar uma nova
       const data = await addPerformance(performanceData);
+      console.log('Resposta da API:', data); // Debug log
+
       if (!data.success) {
         alert(data.error);
       } else {
-        alert('Performance adicionada com sucesso!');
+        alert(performance ? 'Performance atualizada com sucesso!' : 'Performance adicionada com sucesso!');
         setNewPerformance({ rating: 0, improvements: '', needsImprovement: '' });
-        setShowMemberDetailsModal(false);
+        // Recarregar dados do membro para atualizar a performance exibida
+        if (selectedMemberDetails.parentId) {
+          const perfData = await getPerformance({ athleteId: selectedMemberDetails.parentId, childId: selectedMemberDetails._id });
+          if (perfData.success) {
+            setPerformance(perfData.performance || null);
+          }
+        } else {
+          const perfData = await getPerformance({ athleteId: selectedMemberDetails._id });
+          if (perfData.success) {
+            setPerformance(perfData.performance || null);
+          }
+        }
       }
     } catch (err) {
-      alert('Erro ao adicionar performance: ' + err);
+      console.error('Erro ao adicionar performance:', err); // Debug log
+      alert('Erro ao adicionar/atualizar performance: ' + err);
+    }
+  };
+
+  const handleMarkAttendanceInDetails = async (member: any) => {
+    if (!user || !attendanceStatus) return;
+
+    try {
+      if (attendanceStatus === 'absent') {
+        // Marcar como falta
+        const date = new Date().toISOString();
+        const payload: any = { userId: user._id, date };
+
+        if (member.parentId) {
+          payload.userId = member.parentId;
+          payload.childId = member._id;
+        } else {
+          payload.userId = member._id;
+        }
+
+        // Incluir o motivo da falta se foi selecionado
+        if (absenceReason) {
+          payload.reason = absenceReason;
+        }
+
+        const result = await addAbsence(payload);
+        if (!result.success) {
+          alert(result.error);
+          return;
+        }
+
+        // Adicionar à lista de faltas do dia
+        if (!absencesMarkedToday.includes(member._id)) {
+          setAbsencesMarkedToday([...absencesMarkedToday, member._id]);
+        }
+        // Armazenar motivo para mostrar ao reabrir
+        if (absenceReason) {
+          setAbsenceReasons({ ...absenceReasons, [member._id]: absenceReason });
+        }
+        // Remover da lista de presenças se estava lá
+        if (attendanceToday.includes(member._id)) {
+          setAttendanceToday(attendanceToday.filter(id => id !== member._id));
+        }
+
+      } else if (attendanceStatus === 'present') {
+        // Marcar como presente
+        if (!attendanceToday.includes(member._id)) {
+          setAttendanceToday([...attendanceToday, member._id]);
+        }
+        // Remover da lista de faltas se estava lá
+        if (absencesMarkedToday.includes(member._id)) {
+          setAbsencesMarkedToday(absencesMarkedToday.filter(id => id !== member._id));
+        }
+        if (absenceReasons[member._id]) {
+          const updated = { ...absenceReasons };
+          delete updated[member._id];
+          setAbsenceReasons(updated);
+        }
+      }
+    } catch (err) {
+      alert('Erro ao registrar presença: ' + err);
+    }
+  };
+
+  const handleSaveMemberDetailsChanges = async () => {
+    if (!selectedMemberDetails) return;
+
+    try {
+      // Salvar presença se foi selecionada
+      if (attendanceStatus) {
+        await handleMarkAttendanceInDetails(selectedMemberDetails);
+      }
+
+      alert('Alterações salvas com sucesso!');
+      setShowMemberDetailsModal(false);
+      setAttendanceStatus(null);
+      setAbsenceReason(null);
+
+      // Recarregar dados do dojo para atualizar faltas e presenças
+      fetchDojoData();
+
+      // Se foi marcada uma falta, recarregar também os dados de performance/absences do membro
+      if (attendanceStatus === 'absent' && selectedMemberDetails) {
+        const month = new Date().toISOString().slice(0, 7);
+        if (selectedMemberDetails.parentId) {
+          // Para filhos, buscar do parent
+          const child = user.childrens?.find((c: any) => c._id === selectedMemberDetails._id);
+          if (child) {
+            const abs = child.absences?.find((a: any) => a.month === month)?.count || 0;
+            setAbsences(abs);
+          }
+        } else {
+          // Para usuários diretos
+          const absData = await getAbsencesByMonth(selectedMemberDetails._id, month);
+          if (absData.success) {
+            setAbsences(absData.count || 0);
+          }
+        }
+      }
+
+    } catch (err) {
+      alert('Erro ao salvar alterações: ' + err);
     }
   };
 
@@ -352,6 +507,19 @@ const Home: React.FC = () => {
       fetchDojoData();
     }
   }, [user]);
+
+  // Limpar estados de presença/falta quando muda de dia
+  useEffect(() => {
+    const today = new Date().toDateString();
+    const lastCheckedDate = localStorage.getItem('lastAttendanceDate');
+
+    if (lastCheckedDate !== today) {
+      // É um novo dia, limpar os estados de presença/falta
+      setAttendanceToday([]);
+      setAbsencesMarkedToday([]);
+      localStorage.setItem('lastAttendanceDate', today);
+    }
+  }, []);
 
   const renderAthleteDashboard = (athleteId: string) => {
     const athleteTraining = trainingSchedule.length ? trainingSchedule : [];
@@ -459,69 +627,18 @@ const Home: React.FC = () => {
         </IonCardHeader>
         <IonCardContent>
           <IonList>
-            {dojoMembers.map(member => {
-              const isPresent = attendanceToday.includes(member._id);
-              return (
-                <IonItem key={member._id}>
-                  <IonLabel>{member.username}</IonLabel>
-                  <IonButton fill="clear" onClick={() => handleViewMemberDetails(member)}>
-                    <IonIcon slot="icon-only" icon={eye}></IonIcon>
-                  </IonButton>
-                  <IonButton fill="clear" color="danger" onClick={() => handleRemoveMember(member)}>
-                    <IonIcon slot="icon-only" icon={trash}></IonIcon>
-                  </IonButton>
-                  <IonButton
-                    fill="outline"
-                    color={isPresent ? 'success' : 'primary'}
-                    onClick={() => handleMarkAttendance(member._id)}
-                    disabled={isPresent}
-                  >
-                    {isPresent ? 'Presente' : 'Marcar presença'}
-                  </IonButton>
-                  <IonButton
-                    fill="outline"
-                    color={absencesMarkedToday.includes(member._id) ? 'danger' : 'medium'}
-                    onClick={() => handleMarkAbsence(member)}
-                    disabled={absencesMarkedToday.includes(member._id)}
-                  >
-                    {absencesMarkedToday.includes(member._id) ? 'Faltou' : 'Faltar'}
-                  </IonButton>
-                </IonItem>
-              );
-            })}
+            {dojoMembers.map(member => (
+              <IonItem key={member._id}>
+                <IonLabel>{member.username}</IonLabel>
+                <IonButton fill="clear" onClick={() => handleViewMemberDetails(member)}>
+                  <IonIcon slot="icon-only" icon={eye}></IonIcon>
+                </IonButton>
+                <IonButton fill="clear" color="danger" onClick={() => handleRemoveMember(member)}>
+                  <IonIcon slot="icon-only" icon={trash}></IonIcon>
+                </IonButton>
+              </IonItem>
+            ))}
           </IonList>
-
-          <IonCard style={{ marginTop: '1rem' }}>
-            <IonCardHeader>
-              <IonCardTitle>Presenças de hoje</IonCardTitle>
-            </IonCardHeader>
-            <IonCardContent>
-              <p>{attendanceToday.length} de {dojoMembers.length} membros presentes</p>
-              {attendanceToday.length > 0 && (
-                <p>Membros marcados: {dojoMembers
-                  .filter(member => attendanceToday.includes(member._id))
-                  .map(member => member.username)
-                  .join(', ')}
-                </p>
-              )}
-            </IonCardContent>
-          </IonCard>
-
-          <IonCard style={{ marginTop: '1rem' }}>
-            <IonCardHeader>
-              <IonCardTitle>Faltas de hoje</IonCardTitle>
-            </IonCardHeader>
-            <IonCardContent>
-              <p>{absencesMarkedToday.length} de {dojoMembers.length} membros faltaram</p>
-              {absencesMarkedToday.length > 0 && (
-                <p>Membros faltaram: {dojoMembers
-                  .filter(member => absencesMarkedToday.includes(member._id))
-                  .map(member => member.username)
-                  .join(', ')}
-                </p>
-              )}
-            </IonCardContent>
-          </IonCard>
         </IonCardContent>
       </IonCard>
 
@@ -646,41 +763,80 @@ const Home: React.FC = () => {
 
               <IonCard>
                 <IonCardHeader>
-                  <IonCardTitle>Informações de Desempenho</IonCardTitle>
+                  <IonCardTitle>Marcação de Presença Hoje</IonCardTitle>
                 </IonCardHeader>
                 <IonCardContent>
-                  <p><strong>Faltas no Mês Atual:</strong> {performance?.absences || 0}</p>
-                  {performance && (
-                    <>
-                      <p><strong>Avaliação:</strong> {performance.rating}/5</p>
-                      <h4>Melhorias:</h4>
-                      <ul>
-                        {performance.feedback?.improvements?.map((item: string, idx: number) => <li key={idx}>{item}</li>)}
-                      </ul>
-                      <h4>Precisa Melhorar:</h4>
-                      <ul>
-                        {performance.feedback?.needsImprovement?.map((item: string, idx: number) => <li key={idx}>{item}</li>)}
-                      </ul>
-                    </>
+                  <IonSelect placeholder="Selecione o status" value={attendanceStatus} onIonChange={e => {
+                    setAttendanceStatus(e.detail.value);
+                    if (e.detail.value === 'present') {
+                      setAbsenceReason(null);
+                    }
+                  }}>
+                    <IonSelectOption value="present">Presente</IonSelectOption>
+                    <IonSelectOption value="absent">Faltou</IonSelectOption>
+                  </IonSelect>
+
+                  {attendanceStatus === 'absent' && (
+                    <div style={{ marginTop: '1rem' }}>
+                      <IonSelect placeholder="Selecione o motivo" value={absenceReason} onIonChange={e => setAbsenceReason(e.detail.value)}>
+                        <IonSelectOption value="disease">Doença</IonSelectOption>
+                        <IonSelectOption value="other">Sem Motivo</IonSelectOption>
+                      </IonSelect>
+                    </div>
+                  )}
+
+                  {attendanceStatus && (
+                    <div style={{ marginTop: '1rem' }}>
+                      <p><strong>Status atual:</strong> {attendanceStatus === 'present' ? 'Presente' : 'Faltou'}</p>
+                      {attendanceStatus === 'absent' && absenceReason && (
+                        <p><strong>Motivo:</strong> {absenceReason === 'disease' ? 'Doença' : 'Sem Motivo'}</p>
+                      )}
+                    </div>
                   )}
                 </IonCardContent>
               </IonCard>
 
               <IonCard>
                 <IonCardHeader>
-                  <IonCardTitle>Adicionar Performance</IonCardTitle>
+                  <IonCardTitle>Informações de Desempenho</IonCardTitle>
                 </IonCardHeader>
                 <IonCardContent>
-                  <IonInput placeholder="Avaliação (1-5)" type="number" min={1} max={5} value={newPerformance.rating} onIonChange={e => setNewPerformance({...newPerformance, rating: Number(e.detail.value)})}></IonInput>
-
-                  <IonInput placeholder="Melhorias (separadas por vírgula)" value={newPerformance.improvements} onIonChange={e => setNewPerformance({...newPerformance, improvements: e.detail.value || ''})}></IonInput>
-
-                  <IonInput placeholder="O que precisa melhorar (separadas por vírgula)" value={newPerformance.needsImprovement} onIonChange={e => setNewPerformance({...newPerformance, needsImprovement: e.detail.value || ''})}></IonInput>
-
-                  <IonButton expand="block" color="success" onClick={() => {
-                    handleAddPerformanceToMember();
+                  <p><strong>Faltas no Mês Atual:</strong> {memberAbsences}</p>
+                  {performance && (
+                    <>
+                      <p><strong>Avaliação:</strong> {performance.rating}/5</p>
+                      <h4>Melhorias:</h4>
+                      <ul>
+                        {(performance.feedback?.improvements || []).length > 0 ? (
+                          performance.feedback.improvements.map((item: string, idx: number) => <li key={idx}>{item}</li>)
+                        ) : (
+                          <li>Nenhuma melhoria cadastrada</li>
+                        )}
+                      </ul>
+                      <h4>Precisa Melhorar:</h4>
+                      <ul>
+                        {(performance.feedback?.needsImprovement || []).length > 0 ? (
+                          performance.feedback.needsImprovement.map((item: string, idx: number) => <li key={idx}>{item}</li>)
+                        ) : (
+                          <li>Nenhum ponto a melhorar cadastrado</li>
+                        )}
+                      </ul>
+                    </>
+                  )}
+                  <IonButton expand="block" color="primary" onClick={() => {
+                    // Preencher o formulário com dados existentes se houver
+                    if (performance) {
+                      setNewPerformance({
+                        rating: performance.rating || 0,
+                        improvements: performance.feedback?.improvements?.join(', ') || '',
+                        needsImprovement: performance.feedback?.needsImprovement?.join(', ') || ''
+                      });
+                    } else {
+                      setNewPerformance({ rating: 0, improvements: '', needsImprovement: '' });
+                    }
+                    setShowPerformanceModal(true);
                   }}>
-                    Adicionar Performance
+                    {performance ? 'Editar Performance' : 'Adicionar Performance'}
                   </IonButton>
                 </IonCardContent>
               </IonCard>
@@ -692,11 +848,52 @@ const Home: React.FC = () => {
                 Remover Atleta
               </IonButton>
 
+              <IonButton expand="block" color="success" onClick={() => {
+                // Guardar presença e performance
+                handleSaveMemberDetailsChanges();
+              }}>
+                Guardar Alterações
+              </IonButton>
+
               <IonButton expand="block" onClick={() => setShowMemberDetailsModal(false)}>
-                Okay
+                Cancelar
               </IonButton>
             </>
           )}
+        </IonContent>
+      </IonModal>
+
+      {/* Modal Performance */}
+      <IonModal isOpen={showPerformanceModal} onDidDismiss={() => setShowPerformanceModal(false)}>
+        <IonHeader>
+          <IonToolbar>
+            <IonTitle>{performance ? 'Editar Performance' : 'Adicionar Performance'}</IonTitle>
+            <IonButton slot="end" fill="clear" onClick={() => setShowPerformanceModal(false)}>
+              <IonIcon slot="icon-only" icon={close}></IonIcon>
+            </IonButton>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent>
+          <IonCard>
+            <IonCardContent>
+              <IonInput placeholder="Avaliação (1-5)" type="number" min={1} max={5} value={newPerformance.rating} onIonChange={e => setNewPerformance({...newPerformance, rating: Number(e.detail.value)})}></IonInput>
+
+              <IonInput placeholder="Melhorias (separadas por vírgula)" value={newPerformance.improvements} onIonChange={e => setNewPerformance({...newPerformance, improvements: e.detail.value || ''})}></IonInput>
+
+              <IonInput placeholder="O que precisa melhorar (separadas por vírgula)" value={newPerformance.needsImprovement} onIonChange={e => setNewPerformance({...newPerformance, needsImprovement: e.detail.value || ''})}></IonInput>
+
+              <IonButton expand="block" color="success" onClick={() => {
+                handleAddPerformanceToMember();
+                setShowPerformanceModal(false);
+              }}>
+                Guardar Alterações
+              </IonButton>
+
+              <IonButton expand="block" color="medium" onClick={() => setShowPerformanceModal(false)}>
+                Cancelar
+              </IonButton>
+            </IonCardContent>
+          </IonCard>
         </IonContent>
       </IonModal>
 
