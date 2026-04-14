@@ -15,6 +15,10 @@ import Chat from './pages/private/Chat/Chat';
 import ConfirmResponsavel from './pages/public/ConfirmResponsavel';
 import ProfileSettings from './pages/private/ProfileSettings';
 import Shop from './pages/private/loja';
+import Ranking from './pages/private/Ranking';
+import Educacional from './pages/private/Educacional';
+import Predicoes from './pages/private/Predicoes';
+import Planos from './pages/private/Planos';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -74,6 +78,10 @@ const InnerApp: React.FC = () => {
           <PrivateRoute exact path='/chat' component={Chat}/>
           <PrivateRoute exact path='/perfil' component={ProfileSettings}/>
           <PrivateRoute exact path='/shop' component={Shop}/>
+          <PrivateRoute exact path='/ranking' component={Ranking}/>
+          <PrivateRoute exact path='/educacional' component={Educacional}/>
+          <PrivateRoute exact path='/predicoes' component={Predicoes}/>
+          <PrivateRoute exact path='/planos' component={Planos}/>
         </IonRouterOutlet>
       </IonReactRouter>
     </IonApp>

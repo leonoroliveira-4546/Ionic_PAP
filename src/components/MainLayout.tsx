@@ -49,6 +49,38 @@ const Navbar: React.FC = () => {
           <IonIcon icon={personCircleOutline} />
         </IonButton>
 
+        <IonButton 
+          routerLink="/ranking"
+          fill={location.pathname === '/ranking' ? 'solid' : 'clear'}
+          className='nav-button'
+        >
+          <IonIcon icon={personCircleOutline} />
+        </IonButton>
+
+        <IonButton 
+          routerLink="/predicoes"
+          fill={location.pathname === '/predicoes' ? 'solid' : 'clear'}
+          className='nav-button'
+        >
+          <IonIcon icon={personCircleOutline} />
+        </IonButton>
+
+        <IonButton 
+          routerLink="/planos"
+          fill={location.pathname === '/planos' ? 'solid' : 'clear'}
+          className='nav-button'
+        >
+          <IonIcon icon={personCircleOutline} />
+        </IonButton>
+        
+        <IonButton 
+          routerLink="/educacional"
+          fill={location.pathname === '/educacional' ? 'solid' : 'clear'}
+          className='nav-button'
+        >
+          <IonIcon icon={personCircleOutline} />
+        </IonButton>
+
       </IonToolbar>
     </IonFooter>
   );

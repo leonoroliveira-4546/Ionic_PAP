@@ -8,7 +8,7 @@ import {
 import {
   personOutline, mailOutline, lockClosedOutline, notificationsOutline,
   moonOutline, languageOutline, shieldOutline, logOutOutline, chevronForwardOutline,
-  cameraOutline
+  cameraOutline, createOutline, checkmarkOutline, ribbonOutline, trophyOutline
 } from 'ionicons/icons';
 import { useAuth } from '../../AuthContext';
 import { useHistory } from 'react-router-dom';
@@ -18,9 +18,22 @@ const ProfileSettings: React.FC = () => {
   const { user, logout } = useAuth();
   const history = useHistory();
 
+  const [isEditing, setIsEditing] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState(true);
   const [showLogoutAlert, setShowLogoutAlert] = useState(false);
+  const [activeTab, setActiveTab] = useState<'personal' | 'stats'>('personal');
+
+  // Editable fields
+  const [editName, setEditName] = useState(user?.name || '');
+  const [editUsername, setEditUsername] = useState(user?.username || '');
+  const [editBelt, setEditBelt] = useState(user?.belt || 'Branca');
+
+  const handleSave = () => {
+    // In a real app, this would update the user profile
+    console.log('Saving profile:', { editName, editUsername, editBelt });
+    setIsEditing(false);
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -33,6 +46,8 @@ const ProfileSettings: React.FC = () => {
     sensei: 'Sensei',
     admin: 'Admin',
   };
+
+  const beltOptions = ['Branca', 'Amarela', 'Laranja', 'Verde', 'Azul', 'Vermelha', 'Marrom', 'Preta'];
 
   if (!user) return null;
 
@@ -65,7 +80,7 @@ const ProfileSettings: React.FC = () => {
           </div>
 
           <IonText style={{ marginTop: 12 }}>
-            <h2 style={{ margin: 0, fontWeight: 700 }}>{user.username}</h2>
+            <h2 style={{ margin: 0, fontWeight: 700 }}>{user.name || user.username}</h2>
           </IonText>
           <IonText color="medium">
             <p style={{ margin: '4px 0 8px' }}>{user.email}</p>
@@ -75,19 +90,56 @@ const ProfileSettings: React.FC = () => {
           </IonChip>
         </div>
 
-        {/* Account Section */}
+        {/* Edit/Save Button */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+          <IonButton
+            onClick={isEditing ? handleSave : () => setIsEditing(true)}
+            color={isEditing ? 'success' : 'primary'}
+          >
+            <IonIcon icon={isEditing ? checkmarkOutline : createOutline} slot="start" />
+            {isEditing ? 'Guardar' : 'Editar Perfil'}
+          </IonButton>
+        </div>
+
+        {/* Personal Data Section */}
         <IonText color="medium">
-          <p style={{ paddingLeft: 16, marginBottom: 4, fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 }}>Conta</p>
+          <p style={{ paddingLeft: 16, marginBottom: 4, fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 }}>Dados Pessoais</p>
         </IonText>
         <IonList inset lines="inset">
           <IonItem>
             <IonIcon icon={personOutline} slot="start" color="primary" />
             <IonLabel>
               <IonInput
+                label="Nome completo"
+                labelPlacement="stacked"
+                value={isEditing ? editName : (user.name || '')}
+                onIonChange={e => setEditName(e.detail.value!)}
+                readonly={!isEditing}
+              />
+            </IonLabel>
+          </IonItem>
+
+          <IonItem>
+            <IonIcon icon={personOutline} slot="start" color="primary" />
+            <IonLabel>
+              <IonInput
                 label="Nome de usuário"
                 labelPlacement="stacked"
-                value={user.username}
-                readonly
+                value={isEditing ? editUsername : user.username}
+                onIonChange={e => setEditUsername(e.detail.value!)}
+                readonly={!isEditing}
+              />
+            </IonLabel>
+          </IonItem>
+
+          <IonItem>
+            <IonIcon icon={ribbonOutline} slot="start" color="primary" />
+            <IonLabel>
+              <IonInput
+                label="Faixa"
+                labelPlacement="stacked"
+                value={isEditing ? editBelt : (user.belt || 'Branca')}
+                readonly={!isEditing}
               />
             </IonLabel>
           </IonItem>
@@ -107,6 +159,48 @@ const ProfileSettings: React.FC = () => {
           <IonItem button detail detailIcon={chevronForwardOutline}>
             <IonIcon icon={lockClosedOutline} slot="start" color="primary" />
             <IonLabel>Alterar Senha</IonLabel>
+          </IonItem>
+        </IonList>
+
+        {/* Stats Section */}
+        <IonText color="medium">
+          <p style={{ paddingLeft: 16, marginBottom: 4, marginTop: 16, fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 }}>Estatísticas</p>
+        </IonText>
+        <IonList inset lines="inset">
+          <IonItem>
+            <IonIcon icon={trophyOutline} slot="start" color="warning" />
+            <IonLabel>
+              <h3>Pontos Totais</h3>
+              <p>Estatísticas de gamificação</p>
+            </IonLabel>
+            <IonText color="primary" slot="end" style={{ fontWeight: 'bold' }}>{user.points || 0}</IonText>
+          </IonItem>
+
+          <IonItem>
+            <IonIcon icon={ribbonOutline} slot="start" color="secondary" />
+            <IonLabel>
+              <h3>Ranking Atual</h3>
+              <p>Posição no ranking geral</p>
+            </IonLabel>
+            <IonText color="success" slot="end" style={{ fontWeight: 'bold' }}>#{user.ranking || 'N/A'}</IonText>
+          </IonItem>
+
+          <IonItem>
+            <IonIcon icon={trophyOutline} slot="start" color="tertiary" />
+            <IonLabel>
+              <h3>Torneios Participados</h3>
+              <p>Total de competições</p>
+            </IonLabel>
+            <IonText color="medium" slot="end" style={{ fontWeight: 'bold' }}>3</IonText>
+          </IonItem>
+
+          <IonItem>
+            <IonIcon icon={trophyOutline} slot="start" color="danger" />
+            <IonLabel>
+              <h3>Vitórias</h3>
+              <p>Torneios vencidos</p>
+            </IonLabel>
+            <IonText color="danger" slot="end" style={{ fontWeight: 'bold' }}>1</IonText>
           </IonItem>
         </IonList>
 

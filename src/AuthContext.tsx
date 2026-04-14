@@ -5,6 +5,7 @@ interface User {
     _id: string;
     authUid?: string;
     username: string;
+    name?: string;
     profilePic?: string | null;
     email: string;
     emailVerified?: boolean;
@@ -14,6 +15,9 @@ interface User {
     dojoId?: string | null;
     status?: string;
     absences?: number;
+    belt?: string;
+    points?: number;
+    ranking?: number;
     childrens?: {
         _id?: string;
         username: string;
