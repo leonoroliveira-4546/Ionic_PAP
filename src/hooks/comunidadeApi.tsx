@@ -6,12 +6,18 @@ export interface Post {
     title: string,
     message: string,
     imagens: string[],
+    likes: any[],
     comments: any[]
 }
 
 export const comunidadeApi = () => {
-    const getPosts = async () => {
-        const { data } = await api.get(`/comunidade`);
+    const getNews = async () => {
+        const { data } = await api.get('/news');
+        return data;
+    };
+
+    const getPosts = async (community: string = 'geral') => {
+        const { data } = await api.get(`/comunidade?community=${community}`);
         return data;
     };
 
@@ -20,7 +26,8 @@ export const comunidadeApi = () => {
         return data;
     };
 
-    const createPost = async (post: FormData) => {
+    const createPost = async (post: FormData, community: string = 'geral') => {
+        post.append('community', community);
         const { data } = await api.post("/posts", post);
         return data;
     };
@@ -50,7 +57,12 @@ export const comunidadeApi = () => {
         return data;
     };
 
-    return { getPosts, getPostDetails, createPost, updatePost, deletePost, addComment, editComment, deleteComment }
+    const likePost = async (postId: string) => {
+        const { data } = await api.post(`/posts/${postId}/like`);
+        return data;
+    };
+
+    return { getNews, getPosts, getPostDetails, createPost, updatePost, deletePost, addComment, editComment, deleteComment, likePost }
 }
 
 export default comunidadeApi;

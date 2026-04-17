@@ -1,0 +1,13 @@
+OQ FALTA NA HOME: 
+    LADO SENSEI - 
+        .nao anda guardando o needsImprovement;
+        .convidar atletas para o clube;
+    
+    Ambos-
+        .criar notificações na propria app;
+    
+    Lado Atleta -
+        .Receber e aceitar o convide ou rejeitar o convite
+      do entrar no dojo
+        .caso nao tivesse ainda em nenhum dojo, nao mostrar nada
+    
