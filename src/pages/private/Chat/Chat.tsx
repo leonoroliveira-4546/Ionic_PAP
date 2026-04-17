@@ -1,43 +1,74 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonList, IonItem, IonLabel, IonAvatar, IonCard, IonCardContent, IonInput, IonButton, IonIcon } from '@ionic/react';
 import { send, arrowBackCircleOutline, key } from 'ionicons/icons';
 import { useAuth } from '../../../AuthContext';
 import Navbar from '../../../components/MainLayout';
-import { mockConversations } from '../../../mockData/chat';
+import api from '../../../components/AxiosInstance';
 import '../../../pages/StylesPages.css';
 
 const Chat: React.FC = () => {
   const { user } = useAuth();
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
+  const [conversations, setConversations] = useState<any[]>([]);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      fetchConversations();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (selectedConversation) {
+      fetchMessages(selectedConversation);
+    }
+  }, [selectedConversation]);
+
+  const fetchConversations = async () => {
+    try {
+      const response = await api.get('/conversations');
+      setConversations(response.data);
+    } catch (error) {
+      console.error('Error fetching conversations:', error);
+    }
+  };
+
+  const fetchMessages = async (conversationId: string) => {
+    try {
+      setLoading(true);
+      const response = await api.get(`/conversations/${conversationId}/messages`);
+      setMessages(response.data);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!user) return null;
 
-  // Use type-based mock conversations for the current user
-  const getConversationTitle = (conv: any) => {
-    return conv.title;
-  };
-
-  const userConversations = mockConversations.filter(conv => {
-    if (user.type === 'athlete' || user.type === 'atleta') return conv.type === 'atleta';
-    if (user.type === 'sensei') return conv.type === 'atleta' || conv.type === 'responsavel';
-    if (user.type === 'responsavel' || user.type === 'responsible') return conv.type === 'responsavel';
-    return false;
-  });
-
-  const selectedConv = selectedConversation ? mockConversations.find(c => c._id === selectedConversation) : null;
-
-  const handleSendMessage = () => {
-    if (!newMessage.trim() || !selectedConv) return;
-    // In a real app, this would send to backend
-    // For now, just clear the input
-    setNewMessage('');
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !selectedConversation) return;
+    const conv = conversations.find(c => c._id === selectedConversation);
+    if (!conv) return;
+    try {
+      await api.post('/messages', {
+        recipientId: conv.otherUser._id,
+        content: newMessage
+      });
+      setNewMessage('');
+      fetchMessages(selectedConversation); // Refetch messages
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
   };
 
   const renderConversationList = () => (
     <div className="page chat-page background">
         <IonList className="chat-list">
-            {userConversations.map(conv => (
+            {conversations.map(conv => (
                 <IonItem
                     key={conv._id}
                     className="chat-item"
@@ -51,7 +82,7 @@ const Chat: React.FC = () => {
                     </IonAvatar>
 
                     <IonLabel>
-                        <h3 className="chat-name">{getConversationTitle(conv)}</h3>
+                        <h3 className="chat-name">{conv.title}</h3>
                         <p className="chat-last">{conv.lastMessage}</p>
                     </IonLabel>
                 </IonItem>
@@ -61,14 +92,15 @@ const Chat: React.FC = () => {
   );
 
   const renderChatView = () => {
-    if (!selectedConv) return null;
+    if (!selectedConversation) return null;
+    const conv = conversations.find(c => c._id === selectedConversation);
+    if (!conv) return null;
 
     return (
         <div className="chat-container">
       <div className="chat-messages">
-        {selectedConv.messages.map(msg => {
-            const isMe =
-              msg.senderId === user._id || msg.senderId === '1'; // fallback mock
+        {messages.map(msg => {
+            const isMe = msg.senderId._id === user._id;
             return (
               <div
                 key={msg._id}
@@ -112,7 +144,7 @@ const Chat: React.FC = () => {
                         className="back-icon"
                         onClick={() => setSelectedConversation(null)}
                     />
-                    <h3>{selectedConv?.title}</h3>
+                    <h3>{conversations.find(c => c._id === selectedConversation)?.title}</h3>
                 </div>
             : <IonTitle className=''>Chat</IonTitle>}
         </IonToolbar>

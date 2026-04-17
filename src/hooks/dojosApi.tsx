@@ -21,7 +21,7 @@ export const dojosApi = () => {
   };
 
   const joinDojo = async (dojoId: string, userId: string) => {
-    const { data } = await api.post("/join_dojo", { dojoId });
+    const { data } = await api.post("/join_dojo", { dojoId, userId });
     return data;
   };
 

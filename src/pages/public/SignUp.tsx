@@ -208,9 +208,9 @@ const Signup: React.FC = () => {
     const res = await signup(finalPayload);
 
     if (res.success) {
-      const userId = res.data.user;
+      const userId = res.user._id;
 
-      if (credentials.type === "sensei" && newDojo.name) {
+      if (res.user.type === "sensei" && newDojo.name) {
         const dojoRes = await createDojo({
           name: newDojo.name,
           city: newDojo.city,
