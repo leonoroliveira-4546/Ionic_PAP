@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonList, IonItem, IonLabel, IonAvatar, IonCard, IonCardContent, IonInput, IonButton, IonIcon } from '@ionic/react';
 import { send, arrowBackCircleOutline, key } from 'ionicons/icons';
 import { useAuth } from '../../../AuthContext';
 import Navbar from '../../../components/MainLayout';
-import api from '../../../components/AxiosInstance';
+import api from "../../../components/AxiosInstance"
+import { io, Socket } from 'socket.io-client';
 import '../../../pages/StylesPages.css';
 
 const Chat: React.FC = () => {
@@ -13,10 +14,55 @@ const Chat: React.FC = () => {
   const [conversations, setConversations] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
     if (user) {
+      // Initialize socket connection
+      socketRef.current = io('http://localhost:8001', {
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        reconnectionAttempts: 5
+      });
+
+      // Emit join event with userId
+      socket.on('connect', () => {
+        socket.emit('join', user._id);
+      });
+
+      // Listen for incoming messages
+      socketRef.current.on('receive_message', (data: any) => {
+        console.log('Received message:', data);
+        // If message is from current conversation, add to messages
+        if (data.conversationId === selectedConversation) {
+          setMessages((prev) => [...prev, data.message]);
+        }
+        // Update last message in conversations
+        setConversations((prev) =>
+          prev.map((conv) =>
+            conv._id === data.conversationId
+              ? { ...conv, lastMessage: data.message.content, timestamp: data.message.timestamp }
+              : conv
+          )
+        );
+      });
+
+      socketRef.current.on('message_sent', (data: any) => {
+        console.log('Message sent confirmation:', data);
+      });
+
+      socketRef.current.on('error', (data: any) => {
+        console.error('Socket error:', data);
+      });
+
       fetchConversations();
+
+      return () => {
+        if (socketRef.current) {
+          socketRef.current.disconnect();
+        }
+      };
     }
   }, [user]);
 
@@ -49,19 +95,20 @@ const Chat: React.FC = () => {
 
   if (!user) return null;
 
-  const handleSendMessage = async () => {
+  const handleSendMessage = () => {
     if (!newMessage.trim() || !selectedConversation) return;
     const conv = conversations.find(c => c._id === selectedConversation);
     if (!conv) return;
-    try {
-      await api.post('/messages', {
+
+    if (socketRef.current) {
+      // Emit message via socket
+      socketRef.current.emit('send_message', {
+        conversationId: selectedConversation,
         recipientId: conv.otherUser._id,
         content: newMessage
       });
       setNewMessage('');
-      fetchMessages(selectedConversation); // Refetch messages
-    } catch (error) {
-      console.error('Error sending message:', error);
+      fetchMessages(selectedConversation);
     }
   };
 
@@ -125,7 +172,7 @@ const Chat: React.FC = () => {
           onIonChange={(e) => setNewMessage(e.detail.value!)}
         />
 
-        <div className="send-btn" onClick={handleSendMessage}>
+        <div className="send-btn" onClick={handleSendMessage()}>
           <IonIcon icon={send} />
         </div>
       </div>
