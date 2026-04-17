@@ -27,9 +27,7 @@ const Chat: React.FC = () => {
       });
 
       // Emit join event with userId
-      socket.on('connect', () => {
-        socket.emit('join', user._id);
-      });
+      socketRef.current.emit('join', user._id);
 
       // Listen for incoming messages
       socketRef.current.on('receive_message', (data: any) => {
