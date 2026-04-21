@@ -170,7 +170,7 @@ const Chat: React.FC = () => {
           onIonChange={(e) => setNewMessage(e.detail.value!)}
         />
 
-        <div className="send-btn" onClick={handleSendMessage()}>
+        <div className="send-btn" onClick={() => handleSendMessage()}>
           <IonIcon icon={send} />
         </div>
       </div>
