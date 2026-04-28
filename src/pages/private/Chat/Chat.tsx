@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonList, IonItem, IonLabel, IonAvatar, IonCard, IonCardContent, IonInput, IonButton, IonIcon } from '@ionic/react';
-import { send, arrowBackCircleOutline, key } from 'ionicons/icons';
+import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonList, IonItem, IonLabel, IonAvatar, IonInput, IonIcon } from '@ionic/react';
+import { send, arrowBackCircleOutline } from 'ionicons/icons';
 import { useAuth } from '../../../AuthContext';
 import Navbar from '../../../components/MainLayout';
-import api from "../../../components/AxiosInstance"
+import chatApi from '../../../hooks/chatApi';
 import { io, Socket } from 'socket.io-client';
 import '../../../pages/StylesPages.css';
 
 const Chat: React.FC = () => {
   const { user } = useAuth();
+  const { fetchConversations, fetchMessages: getMessages } = chatApi();
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [conversations, setConversations] = useState<any[]>([]);
@@ -18,7 +19,6 @@ const Chat: React.FC = () => {
 
   useEffect(() => {
     if (user) {
-      // Initialize socket connection
       socketRef.current = io('http://localhost:8001', {
         reconnection: true,
         reconnectionDelay: 1000,
@@ -26,17 +26,12 @@ const Chat: React.FC = () => {
         reconnectionAttempts: 5
       });
 
-      // Emit join event with userId
       socketRef.current.emit('join', user._id);
 
-      // Listen for incoming messages
       socketRef.current.on('receive_message', (data: any) => {
-        console.log('Received message:', data);
-        // If message is from current conversation, add to messages
         if (data.conversationId === selectedConversation) {
           setMessages((prev) => [...prev, data.message]);
         }
-        // Update last message in conversations
         setConversations((prev) =>
           prev.map((conv) =>
             conv._id === data.conversationId
@@ -46,15 +41,11 @@ const Chat: React.FC = () => {
         );
       });
 
-      socketRef.current.on('message_sent', (data: any) => {
-        console.log('Message sent confirmation:', data);
-      });
-
       socketRef.current.on('error', (data: any) => {
         console.error('Socket error:', data);
       });
 
-      fetchConversations();
+      loadConversations();
 
       return () => {
         if (socketRef.current) {
@@ -66,24 +57,24 @@ const Chat: React.FC = () => {
 
   useEffect(() => {
     if (selectedConversation) {
-      fetchMessages(selectedConversation);
+      loadMessages(selectedConversation);
     }
   }, [selectedConversation]);
 
-  const fetchConversations = async () => {
+  const loadConversations = async () => {
     try {
-      const response = await api.get('/conversations');
-      setConversations(response.data);
+      const data = await fetchConversations();
+      setConversations(data);
     } catch (error) {
       console.error('Error fetching conversations:', error);
     }
   };
 
-  const fetchMessages = async (conversationId: string) => {
+  const loadMessages = async (conversationId: string) => {
     try {
       setLoading(true);
-      const response = await api.get(`/conversations/${conversationId}/messages`);
-      setMessages(response.data);
+      const data = await getMessages(conversationId);
+      setMessages(data);
     } catch (error) {
       console.error('Error fetching messages:', error);
     } finally {
@@ -99,14 +90,12 @@ const Chat: React.FC = () => {
     if (!conv) return;
 
     if (socketRef.current) {
-      // Emit message via socket
       socketRef.current.emit('send_message', {
         conversationId: selectedConversation,
         recipientId: conv.otherUser._id,
         content: newMessage
       });
       setNewMessage('');
-      fetchMessages(selectedConversation);
     }
   };
 

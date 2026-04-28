@@ -13,9 +13,11 @@ import {
 import { useAuth } from '../../AuthContext';
 import { useHistory } from 'react-router-dom';
 import Navbar from '../../components/MainLayout';
+import authApi from '../../hooks/authApi';
 
 const ProfileSettings: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, Login, logout } = useAuth();
+  const { updateProfile } = authApi(Login);
   const history = useHistory();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -29,9 +31,15 @@ const ProfileSettings: React.FC = () => {
   const [editUsername, setEditUsername] = useState(user?.username || '');
   const [editBelt, setEditBelt] = useState(user?.belt || 'Branca');
 
-  const handleSave = () => {
-    // In a real app, this would update the user profile
-    console.log('Saving profile:', { editName, editUsername, editBelt });
+  const handleSave = async () => {
+    try {
+      const res = await updateProfile({ username: editUsername, belt: editBelt });
+      if (res.success) {
+        Login(res.user);
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+    }
     setIsEditing(false);
   };
 

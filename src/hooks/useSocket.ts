@@ -8,7 +8,7 @@ const useSocket = (userId: string | undefined) => {
     if (!userId) return;
 
     // Create socket connection
-    socketRef.current = io('http://localhost:8000', {
+    socketRef.current = io('http://localhost:8001', {
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,

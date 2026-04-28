@@ -3,35 +3,33 @@ import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
   IonText, IonSpinner, IonSearchbar
 } from '@ionic/react';
-import { trophyOutline } from 'ionicons/icons';
 import Navbar from '../../components/MainLayout';
 import RankingItem from '../../components/RankingItem';
-import { mockUsers, User } from '../../mockData/users';
+import { useAuth } from '../../AuthContext';
+import authApi from '../../hooks/authApi';
 
 const Ranking: React.FC = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const { Login } = useAuth();
+  const { getRanking } = authApi(Login);
+  const [users, setUsers] = useState<any[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    // Simulate API call
     const loadUsers = async () => {
       setLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Sort users by points (descending)
-      const sortedUsers = [...mockUsers].sort((a, b) => b.points - a.points);
-
-      // Update rankings
-      const usersWithRankings = sortedUsers.map((user, index) => ({
-        ...user,
-        ranking: index + 1
-      }));
-
-      setUsers(usersWithRankings);
-      setFilteredUsers(usersWithRankings);
-      setLoading(false);
+      try {
+        const res = await getRanking();
+        if (res.success) {
+          setUsers(res.data);
+          setFilteredUsers(res.data);
+        }
+      } catch (error) {
+        console.error('Error loading ranking:', error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadUsers();
@@ -42,7 +40,6 @@ const Ranking: React.FC = () => {
       setFilteredUsers(users);
     } else {
       const filtered = users.filter(user =>
-        user.name.toLowerCase().includes(search.toLowerCase()) ||
         user.username.toLowerCase().includes(search.toLowerCase())
       );
       setFilteredUsers(filtered);

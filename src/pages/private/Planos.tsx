@@ -2,92 +2,51 @@ import React, { useState } from 'react';
 import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
   IonText, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
-  IonButton, IonIcon, IonBadge, IonList, IonItem, IonLabel
+  IonButton, IonIcon, IonBadge, IonList, IonItem, IonLabel, IonSpinner
 } from '@ionic/react';
 import { checkmarkCircle, star, starOutline } from 'ionicons/icons';
 import Navbar from '../../components/MainLayout';
-
-interface Plan {
-  id: string;
-  name: string;
-  price: number;
-  period: string;
-  description: string;
-  features: string[];
-  popular?: boolean;
-  color: string;
-}
+import usePlansApi from '../../hooks/usePlansApi';
 
 const Planos: React.FC = () => {
+  const { plans, currentPlan, loading, error, subscribePlan } = usePlansApi();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-
-  const plans: Plan[] = [
-    {
-      id: 'free',
-      name: 'Free',
-      price: 0,
-      period: 'gratuito',
-      description: 'Perfeito para começar',
-      color: 'medium',
-      features: [
-        'Comunidade básica',
-        'Chat com outros membros',
-        'Calendário de treinos',
-        'Predições limitadas',
-        'Acesso a notícias'
-      ]
-    },
-    {
-      id: 'economico',
-      name: 'Econômico',
-      price: 9.99,
-      period: 'mês',
-      description: 'Para karatecas dedicados',
-      color: 'primary',
-      features: [
-        'Tudo do plano Free',
-        'IA básica para treinos',
-        'Relatórios simples de progresso',
-        'Descontos na loja (10%)',
-        'Predições ilimitadas',
-        'Acesso prioritário ao chat'
-      ]
-    },
-    {
-      id: 'premium',
-      name: 'Premium',
-      price: 19.99,
-      period: 'mês',
-      description: 'Experiência completa',
-      color: 'warning',
-      popular: true,
-      features: [
-        'Tudo do plano Econômico',
-        'Conteúdo educacional completo',
-        'Relatórios detalhados de progresso',
-        'Descontos na loja (25%)',
-        'Acesso a lives e eventos exclusivos',
-        'Suporte prioritário',
-        'Certificados de participação',
-        'Mentoria personalizada'
-      ]
-    }
-  ];
 
   const handleSelectPlan = (planId: string) => {
     setSelectedPlan(planId);
   };
 
-  const handleSubscribe = (plan: Plan) => {
+  const handleSubscribe = async (plan: any) => {
     if (plan.price === 0) {
       alert('Você já tem o plano Free ativo!');
       return;
     }
 
-    // Simulate subscription
-    console.log('Subscribing to plan:', plan.name);
-    alert(`Assinatura do plano ${plan.name} solicitada! Em breve você receberá as instruções de pagamento.`);
+    const response = await subscribePlan(plan.id);
+    if (response.success) {
+      alert(`Plano ${plan.name} ativado com sucesso!`);
+    } else {
+      alert(response.message || 'Não foi possível atualizar o plano.');
+    }
   };
+
+  if (loading) {
+    return (
+      <IonPage>
+        <IonHeader>
+          <IonToolbar>
+            <IonTitle>💳 Planos</IonTitle>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent className="ion-padding">
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
+            <IonSpinner name="crescent" />
+          </div>
+        </IonContent>
+        <Navbar />
+      </IonPage>
+    );
+  }
 
   return (
     <IonPage>
@@ -187,17 +146,24 @@ const Planos: React.FC = () => {
                   expand="block"
                   color={plan.color}
                   style={{ marginTop: 20 }}
+                  disabled={currentPlan === plan.id}
                   onClick={(e) => {
                     e.stopPropagation();
                     handleSubscribe(plan);
                   }}
                 >
-                  {plan.price === 0 ? 'Plano Atual' : 'Escolher Plano'}
+                  {currentPlan === plan.id ? 'Plano Atual' : 'Escolher Plano'}
                 </IonButton>
               </IonCardContent>
             </IonCard>
           ))}
         </div>
+
+        {error && (
+          <IonText color="danger">
+            <p style={{ marginTop: 0 }}>{error}</p>
+          </IonText>
+        )}
 
         {/* FAQ Section */}
         <div style={{ marginTop: 32 }}>

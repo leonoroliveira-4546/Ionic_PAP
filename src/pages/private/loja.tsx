@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
   IonSearchbar, IonChip, IonLabel, IonCard, IonCardContent,
-  IonBadge, IonButton, IonIcon, IonText, IonToast, IonRippleEffect
+  IonBadge, IonButton, IonIcon, IonText, IonToast, IonRippleEffect, IonSpinner
 } from '@ionic/react';
 import { cartOutline, starSharp, starHalfOutline, starOutline } from 'ionicons/icons';
-import { mockProducts, Product } from '../../mockData/shop';
 import Navbar from '../../components/MainLayout';
+import useShopApi, { ShopProduct } from '../../hooks/useShopApi';
 
 type Category = 'Todos' | 'Kimono' | 'Equipamento' | 'Faixa' | 'Acessório';
 
@@ -29,7 +29,7 @@ const Stars: React.FC<{ rating: number }> = ({ rating }) => {
   );
 };
 
-const ProductCard: React.FC<{ product: Product; onAdd: (name: string) => void }> = ({ product, onAdd }) => (
+const ProductCard: React.FC<{ product: ShopProduct; onAdd: (name: string) => void }> = ({ product, onAdd }) => (
   <IonCard
     style={{
       borderRadius: 16,
@@ -115,16 +115,35 @@ const ProductCard: React.FC<{ product: Product; onAdd: (name: string) => void }>
 );
 
 const Loja: React.FC = () => {
+  const { products, loading, error } = useShopApi();
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<Category>('Todos');
   const [toastMessage, setToastMessage] = useState('');
 
-  const filtered = mockProducts.filter(p => {
+  const filtered = products.filter(p => {
     const matchesCategory = activeCategory === 'Todos' || p.category === activeCategory;
     const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.description.toLowerCase().includes(search.toLowerCase());
     return matchesCategory && matchesSearch;
   });
+
+  if (loading) {
+    return (
+      <IonPage>
+        <IonHeader>
+          <IonToolbar>
+            <IonTitle>Loja</IonTitle>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent className="ion-padding">
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
+            <IonSpinner name="crescent" />
+          </div>
+        </IonContent>
+        <Navbar />
+      </IonPage>
+    );
+  }
 
   return (
     <IonPage>
@@ -158,6 +177,12 @@ const Loja: React.FC = () => {
         </div>
 
         {/* Results count */}
+        {error && (
+          <IonText color="danger">
+            <p style={{ paddingLeft: 16, marginTop: 0 }}>{error}</p>
+          </IonText>
+        )}
+
         <IonText color="medium">
           <p style={{ paddingLeft: 16, margin: '0 0 8px', fontSize: 13 }}>
             {filtered.length} produto{filtered.length !== 1 ? 's' : ''} encontrado{filtered.length !== 1 ? 's' : ''}

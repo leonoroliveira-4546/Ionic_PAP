@@ -6,29 +6,11 @@ import {
 } from '@ionic/react';
 import { checkmarkCircle, closeCircle, timeOutline, trophyOutline } from 'ionicons/icons';
 import Navbar from '../../components/MainLayout';
-import { mockTournaments, mockPredictions, Tournament, Prediction } from '../../mockData/predictions';
-import { useAuth } from '../../AuthContext';
+import usePredictionsApi from '../../hooks/usePredictionsApi';
 
 const Predicoes: React.FC = () => {
-  const { user } = useAuth();
-  const [tournaments, setTournaments] = useState<Tournament[]>([]);
-  const [predictions, setPredictions] = useState<Prediction[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { tournaments, predictions, loading, error, submitPrediction: submitPredictionApi } = usePredictionsApi();
   const [selectedPredictions, setSelectedPredictions] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    // Simulate API call
-    const loadData = async () => {
-      setLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      setTournaments(mockTournaments);
-      setPredictions(mockPredictions.filter(p => p.userId === user?._id));
-      setLoading(false);
-    };
-
-    loadData();
-  }, [user]);
 
   const handlePrediction = (tournamentId: string, participantId: string) => {
     setSelectedPredictions(prev => ({
@@ -37,16 +19,16 @@ const Predicoes: React.FC = () => {
     }));
   };
 
-  const submitPrediction = (tournamentId: string) => {
+  const submitPrediction = async (tournamentId: string) => {
     const predictedWinner = selectedPredictions[tournamentId];
     if (!predictedWinner) return;
 
-    // Simulate API call
-    console.log('Submitting prediction:', { tournamentId, predictedWinner });
-
-    // In a real app, this would save to backend
-    // For now, just show success
-    alert('Predição enviada com sucesso!');
+    const response = await submitPredictionApi(tournamentId, predictedWinner);
+    if (response.success) {
+      alert('Predição enviada com sucesso!');
+    } else {
+      alert(response.message || 'Erro ao enviar predição');
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -116,6 +98,12 @@ const Predicoes: React.FC = () => {
         </div>
 
         {/* Tournaments List */}
+        {error && (
+          <IonText color="danger">
+            <p style={{ marginTop: 0 }}>{error}</p>
+          </IonText>
+        )}
+
         {tournaments.map(tournament => {
           const userPrediction = predictions.find(p => p.tournamentId === tournament.id);
           const selectedWinner = selectedPredictions[tournament.id] || userPrediction?.predictedWinner;

@@ -74,7 +74,17 @@ export const authApi = (Login: (userData: any) => void) => {
     return data;
   };
 
-  return { login, signup, logout, calculateAge, inviteResponsavel, confirmResponsavelInvite, addPerformance, getPerformance, addAbsence, getAbsencesByMonth };
+  const getRanking = async () => {
+    const { data } = await api.get('/ranking');
+    return data;
+  };
+
+  const updateProfile = async (fields: { username?: string; name?: string; belt?: string }) => {
+    const { data } = await api.put('/profile', fields);
+    return data;
+  };
+
+  return { login, signup, logout, calculateAge, inviteResponsavel, confirmResponsavelInvite, addPerformance, getPerformance, addAbsence, getAbsencesByMonth, getRanking, updateProfile };
 };
 
 export default authApi;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonList, IonItem, IonText } from '@ionic/react';
+import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonList, IonItem, IonText, IonModal, IonInput, IonTextarea, IonButton } from '@ionic/react';
 import Navbar from '../../../components/MainLayout';
 import FeedPost from '../../../components/FeedPost';
 import YouTubeFeed from '../../../components/YouTubeFeed';
@@ -10,7 +10,15 @@ const Comunidade: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'geral' | 'dojo'>('geral');
   const [news, setNews] = useState<any[]>([]);
   const [posts, setPosts] = useState<any[]>([]);
-  const { getNews, getPosts: fetchPosts, likePost } = comunidadeApi();
+  const [showCreatePostModal, setShowCreatePostModal] = useState(false);
+  const [newPostTitle, setNewPostTitle] = useState('');
+  const [newPostMessage, setNewPostMessage] = useState('');
+  const [newPostFile, setNewPostFile] = useState<File | null>(null);
+  const [showCommentModal, setShowCommentModal] = useState(false);
+  const [pendingComment, setPendingComment] = useState('');
+  const [pendingPostId, setPendingPostId] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const { getNews, getPosts: fetchPosts, likePost, createPost, addComment } = comunidadeApi();
 
   const transformPost = (post: any) => ({
     id: post._id,
@@ -60,6 +68,73 @@ const Comunidade: React.FC = () => {
     };
     loadPosts();
   }, [activeTab, fetchPosts]);
+
+  const refreshPosts = async () => {
+    const postsData = await fetchPosts(activeTab);
+    setPosts(postsData.data || []);
+  };
+
+  const handleCreatePost = async () => {
+    if (!newPostMessage.trim()) {
+      alert('A mensagem da publicação é obrigatória.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append('title', newPostTitle || 'Publicação');
+      formData.append('message', newPostMessage);
+      if (newPostFile) {
+        formData.append('file', newPostFile);
+      }
+
+      const response = await createPost(formData, activeTab);
+      if (response.success) {
+        setShowCreatePostModal(false);
+        setNewPostTitle('');
+        setNewPostMessage('');
+        setNewPostFile(null);
+        await refreshPosts();
+      } else {
+        alert(response.message || 'Erro ao criar publicação.');
+      }
+    } catch (error) {
+      console.error('Error creating post:', error);
+      alert('Erro ao criar publicação.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleOpenCommentModal = (postId: string, comment: string) => {
+    if (!comment.trim()) return;
+    setPendingPostId(postId);
+    setPendingComment(comment);
+    setShowCommentModal(true);
+  };
+
+  const handleSubmitComment = async () => {
+    if (!pendingComment.trim() || !pendingPostId) return;
+
+    setSubmitting(true);
+    try {
+      const response = await addComment(pendingPostId, pendingComment);
+      if (response.success) {
+        setShowCommentModal(false);
+        setPendingComment('');
+        setPendingPostId('');
+        await refreshPosts();
+      } else {
+        alert(response.message || 'Erro ao comentar publicação.');
+      }
+    } catch (error) {
+      console.error('Error commenting post:', error);
+      alert('Erro ao comentar publicação.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const renderGeralTab = () => (
     <div className="page background">
@@ -115,10 +190,7 @@ const Comunidade: React.FC = () => {
             fontWeight: 'bold',
             cursor: 'pointer'
           }}
-          onClick={() => {
-            // Simulate creating post
-            console.log('Create new post');
-          }}
+          onClick={() => setShowCreatePostModal(true)}
         >
           ✏️ Criar Publicação
         </button>
@@ -132,14 +204,12 @@ const Comunidade: React.FC = () => {
           onLike={async (postId) => {
             try {
               await likePost(postId);
-              // Refresh posts
-              const postsData = await fetchPosts(activeTab);
-              setPosts(postsData.data || []);
+              await refreshPosts();
             } catch (error) {
               console.error('Error liking post:', error);
             }
           }}
-          onComment={(postId, comment) => console.log('Commented on post:', postId, comment)}
+          onComment={(postId, comment) => handleOpenCommentModal(postId, comment)}
         />
       ))}
 
@@ -179,6 +249,69 @@ const Comunidade: React.FC = () => {
         {activeTab === 'dojo' && renderDojoTab()}
       </IonContent>
       <Navbar />
+
+      <IonModal isOpen={showCreatePostModal} onDidDismiss={() => setShowCreatePostModal(false)}>
+        <IonHeader>
+          <IonToolbar>
+            <IonTitle>Nova Publicação</IonTitle>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent className="ion-padding">
+          <IonInput
+            label="Título"
+            labelPlacement="stacked"
+            placeholder="Título da publicação"
+            value={newPostTitle}
+            onIonInput={(e) => setNewPostTitle(e.detail.value ?? '')}
+          />
+          <IonTextarea
+            label="Mensagem"
+            labelPlacement="stacked"
+            placeholder="Escreve algo para o teu dojo..."
+            value={newPostMessage}
+            onIonInput={(e) => setNewPostMessage(e.detail.value ?? '')}
+            rows={6}
+            style={{ marginTop: 12 }}
+          />
+          <input
+            type="file"
+            accept="image/*"
+            style={{ marginTop: 12 }}
+            onChange={(e) => setNewPostFile(e.target.files?.[0] || null)}
+          />
+
+          <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+            <IonButton expand="block" fill="outline" onClick={() => setShowCreatePostModal(false)}>
+              Cancelar
+            </IonButton>
+            <IonButton expand="block" onClick={handleCreatePost} disabled={submitting}>
+              Publicar
+            </IonButton>
+          </div>
+        </IonContent>
+      </IonModal>
+
+      <IonModal isOpen={showCommentModal} onDidDismiss={() => setShowCommentModal(false)}>
+        <IonHeader>
+          <IonToolbar>
+            <IonTitle>Confirmar Comentário</IonTitle>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent className="ion-padding">
+          <IonText>
+            <p style={{ marginTop: 0 }}>Queres publicar este comentário?</p>
+            <p style={{ fontWeight: 600 }}>{pendingComment}</p>
+          </IonText>
+          <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+            <IonButton expand="block" fill="outline" onClick={() => setShowCommentModal(false)}>
+              Cancelar
+            </IonButton>
+            <IonButton expand="block" onClick={handleSubmitComment} disabled={submitting}>
+              Enviar
+            </IonButton>
+          </div>
+        </IonContent>
+      </IonModal>
     </IonPage>
   );
 };

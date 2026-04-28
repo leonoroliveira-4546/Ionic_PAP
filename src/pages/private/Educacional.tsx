@@ -6,38 +6,20 @@ import {
 import { bookOutline, playOutline } from 'ionicons/icons';
 import Navbar from '../../components/MainLayout';
 import VideoCard from '../../components/VideoCard';
-import { mockVideos, Video } from '../../mockData/videos';
+import useEducationalApi, { EducationalVideo } from '../../hooks/useEducationalApi';
 
 type Category = 'all' | 'historia' | 'filosofia' | 'tecnicas';
 
 const Educacional: React.FC = () => {
-  const [videos, setVideos] = useState<Video[]>([]);
-  const [filteredVideos, setFilteredVideos] = useState<Video[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { videos, loading, error } = useEducationalApi();
+  const [filteredVideos, setFilteredVideos] = useState<EducationalVideo[]>([]);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<Category>('all');
 
   useEffect(() => {
-    // Simulate API call
-    const loadVideos = async () => {
-      setLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Filter educational videos
-      const educationalVideos = mockVideos.filter(video =>
-        ['historia', 'filosofia', 'tecnicas'].includes(video.category)
-      );
-
-      setVideos(educationalVideos);
-      setFilteredVideos(educationalVideos);
-      setLoading(false);
-    };
-
-    loadVideos();
-  }, []);
-
-  useEffect(() => {
-    let filtered = videos;
+    let filtered = videos.filter(video =>
+      ['historia', 'filosofia', 'tecnicas'].includes(video.category)
+    );
 
     // Filter by category
     if (activeCategory !== 'all') {
@@ -104,6 +86,12 @@ const Educacional: React.FC = () => {
         </div>
 
         {/* Search */}
+        {error && (
+          <IonText color="danger">
+            <p style={{ marginTop: 0 }}>{error}</p>
+          </IonText>
+        )}
+
         <IonSearchbar
           value={search}
           onIonInput={e => setSearch(e.detail.value ?? '')}
