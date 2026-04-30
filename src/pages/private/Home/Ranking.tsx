@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import {
-  IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
-  IonText, IonSpinner, IonSearchbar
-} from '@ionic/react';
-import Navbar from '../../components/MainLayout';
-import RankingItem from '../../components/RankingItem';
-import { useAuth } from '../../AuthContext';
-import authApi from '../../hooks/authApi';
+import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonText, IonSpinner, IonSearchbar } from '@ionic/react';
+import Navbar from '../../../components/MainLayout';
+import RankingItem from '../../../components/RankingItem';
+import { useAuth } from '../../../AuthContext';
+import authApi from '../../../hooks/authApi';
 
 const Ranking: React.FC = () => {
   const { Login } = useAuth();
@@ -26,12 +23,11 @@ const Ranking: React.FC = () => {
           setFilteredUsers(res.data);
         }
       } catch (error) {
-        console.error('Error loading ranking:', error);
+        alert('Erro ao carregar ranking: ' + (error instanceof Error ? error.message : 'Unknown error'));
       } finally {
         setLoading(false);
       }
     };
-
     loadUsers();
   }, []);
 

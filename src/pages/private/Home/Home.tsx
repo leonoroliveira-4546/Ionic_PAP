@@ -1,11 +1,11 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonList, IonItem, IonLabel, IonButton, IonSelect, IonSelectOption, IonModal, IonInput, IonDatetime, IonIcon, IonGrid, IonRow, IonCol } from '@ionic/react';
-import { close, add, chevronBack, create, trash, eye } from 'ionicons/icons';
+import React, { useEffect, useState } from 'react';
+import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonList, IonItem, IonLabel, IonButton, IonSelect, IonSelectOption, IonModal, IonInput, IonDatetime, IonIcon } from '@ionic/react';
+import { close, add, chevronBack, trash, eye } from 'ionicons/icons';
 import { useAuth } from '../../../AuthContext';
 import Navbar from '../../../components/MainLayout';
-import '../../../pages/StylesPages.css';
 import authApi from '../../../hooks/authApi';
 import dojosApi from '../../../hooks/dojosApi';
+import '../../../pages/StylesPages.css';
 
 const Home: React.FC = () => {
   const { user } = useAuth();
@@ -33,7 +33,6 @@ const Home: React.FC = () => {
   const [absenceReason, setAbsenceReason] = useState<'disease' | 'other' | null>(null);
   const [absenceReasons, setAbsenceReasons] = useState<Record<string, 'disease' | 'other'>>({});
   const [memberAbsences, setMemberAbsences] = useState<number>(0);
-  const [performanceAction, setPerformanceAction] = useState<'add' | 'edit' | null>(null);
 
   // Modais
   const [showScheduleModal, setShowScheduleModal] = useState(false);
@@ -149,58 +148,6 @@ const Home: React.FC = () => {
     }
   };
 
-  const handleMarkAttendance = (memberId: string) => {
-    if (!attendanceToday.includes(memberId)) {
-      setAttendanceToday([...attendanceToday, memberId]);
-    }
-  };
-
-  const handleMarkAbsence = async (member: any) => {
-    if (!user) return;
-
-    try {
-      const date = new Date().toISOString();
-      const payload: any = { userId: user._id, date };
-
-      if (member.parentId) {
-        payload.userId = member.parentId;
-        payload.childId = member._id;
-      } else {
-        payload.userId = member._id;
-      }
-
-      const result = await addAbsence(payload);
-      if (!result.success) {
-        alert(result.error);
-        return;
-      }
-
-      if (!absencesMarkedToday.includes(member._id)) {
-        setAbsencesMarkedToday([...absencesMarkedToday, member._id]);
-      }
-      alert('Falta registrada com sucesso!');
-    } catch (err) {
-      alert('Erro ao registrar falta: ' + err);
-    }
-  };
-
-  const handleAddTrainingSchedule = async () => {
-    if (!user.dojoId) return;
-
-    try {
-      const data = await addTrainingSchedule(user.dojoId, newSchedule);
-      if (!data.success) {
-        alert(data.error);
-      } else {
-        alert('Horário adicionado com sucesso!');
-        setNewSchedule({ day: '', time: '', location: '' });
-        fetchDojoData();
-      }
-    } catch (err) {
-      alert('Erro ao adicionar horário: ' + err);
-    }
-  };
-
   const handleSaveScheduleChanges = async () => {
     if (!user.dojoId) return;
     try {
@@ -230,7 +177,6 @@ const Home: React.FC = () => {
 
   const handleViewMemberDetails = async (member: any) => {
     setSelectedMemberDetails(member);
-    // Reset attendance status - será definido baseado nos dados atuais
     setAttendanceStatus(null);
     setAbsenceReason(null);
 
@@ -245,7 +191,6 @@ const Home: React.FC = () => {
           setPerformance(perfData.performance || null);
         }
 
-        // Buscar faltas do filho
         const month = new Date().toISOString().slice(0, 7);
         const child = user.childrens?.find((c: any) => c._id === member._id);
         const abs = child?.absences?.find((a: any) => a.month === month)?.count || 0;
@@ -260,7 +205,6 @@ const Home: React.FC = () => {
           setPerformance(perfData.performance || null);
         }
 
-        // Buscar faltas do usuário
         const month = new Date().toISOString().slice(0, 7);
         const absData = await getAbsencesByMonth(member._id, month);
         if (!absData.success) {
@@ -272,14 +216,12 @@ const Home: React.FC = () => {
       }
 
       // Verificar se já houve marcação de presença hoje
-      const today = new Date().toDateString();
       if (attendanceToday.includes(member._id)) {
         setAttendanceStatus('present');
       } else if (absencesMarkedToday.includes(member._id)) {
         setAttendanceStatus('absent');
         setAbsenceReason(absenceReasons[member._id] || null);
       }
-
     } catch (err) {
       alert('Erro ao buscar dados: ' + err);
     }
@@ -288,9 +230,7 @@ const Home: React.FC = () => {
 
   const handleAddPerformanceToMember = async () => {
     if (!selectedMemberDetails) return;
-
     try {
-      // Filtrar e validar os arrays de feedback
       const improvements = newPerformance.improvements
         .split(',')
         .map(i => i.trim())
@@ -301,7 +241,6 @@ const Home: React.FC = () => {
         .map(i => i.trim())
         .filter(i => i.length > 0);
 
-      // Validar se pelo menos um campo de feedback foi preenchido
       if (improvements.length === 0 && needsImprovement.length === 0) {
         alert('Por favor, preencha pelo menos um campo de feedback (melhorias ou pontos a melhorar).');
         return;
@@ -313,8 +252,6 @@ const Home: React.FC = () => {
         needsImprovement: needsImprovement
       };
 
-      console.log('Enviando performance data:', performanceData); // Debug log
-
       if (selectedMemberDetails.parentId) {
         // Se for um filho, adicionar performance com childId
         performanceData.athleteId = selectedMemberDetails.parentId;
@@ -324,17 +261,12 @@ const Home: React.FC = () => {
         performanceData.athleteId = selectedMemberDetails._id;
       }
 
-      // Se já existe performance, o backend vai atualizar a do mês atual
-      // Se não existe, vai criar uma nova
       const data = await addPerformance(performanceData);
-      console.log('Resposta da API:', data); // Debug log
-
       if (!data.success) {
         alert(data.error);
       } else {
         alert(performance ? 'Performance atualizada com sucesso!' : 'Performance adicionada com sucesso!');
         setNewPerformance({ rating: 0, improvements: '', needsImprovement: '' });
-        // Recarregar dados do membro para atualizar a performance exibida
         if (selectedMemberDetails.parentId) {
           const perfData = await getPerformance({ athleteId: selectedMemberDetails.parentId, childId: selectedMemberDetails._id });
           if (perfData.success) {
@@ -348,17 +280,14 @@ const Home: React.FC = () => {
         }
       }
     } catch (err) {
-      console.error('Erro ao adicionar performance:', err); // Debug log
       alert('Erro ao adicionar/atualizar performance: ' + err);
     }
   };
 
   const handleMarkAttendanceInDetails = async (member: any) => {
     if (!user || !attendanceStatus) return;
-
     try {
       if (attendanceStatus === 'absent') {
-        // Marcar como falta
         const date = new Date().toISOString();
         const payload: any = { userId: user._id, date };
 
@@ -369,7 +298,6 @@ const Home: React.FC = () => {
           payload.userId = member._id;
         }
 
-        // Incluir o motivo da falta se foi selecionado
         if (absenceReason) {
           payload.reason = absenceReason;
         }
@@ -380,25 +308,20 @@ const Home: React.FC = () => {
           return;
         }
 
-        // Adicionar à lista de faltas do dia
         if (!absencesMarkedToday.includes(member._id)) {
           setAbsencesMarkedToday([...absencesMarkedToday, member._id]);
         }
-        // Armazenar motivo para mostrar ao reabrir
         if (absenceReason) {
           setAbsenceReasons({ ...absenceReasons, [member._id]: absenceReason });
         }
-        // Remover da lista de presenças se estava lá
         if (attendanceToday.includes(member._id)) {
           setAttendanceToday(attendanceToday.filter(id => id !== member._id));
         }
 
       } else if (attendanceStatus === 'present') {
-        // Marcar como presente
         if (!attendanceToday.includes(member._id)) {
           setAttendanceToday([...attendanceToday, member._id]);
         }
-        // Remover da lista de faltas se estava lá
         if (absencesMarkedToday.includes(member._id)) {
           setAbsencesMarkedToday(absencesMarkedToday.filter(id => id !== member._id));
         }
@@ -417,7 +340,6 @@ const Home: React.FC = () => {
     if (!selectedMemberDetails) return;
 
     try {
-      // Salvar presença se foi selecionada
       if (attendanceStatus) {
         await handleMarkAttendanceInDetails(selectedMemberDetails);
       }
@@ -426,11 +348,8 @@ const Home: React.FC = () => {
       setShowMemberDetailsModal(false);
       setAttendanceStatus(null);
       setAbsenceReason(null);
-
-      // Recarregar dados do dojo para atualizar faltas e presenças
       fetchDojoData();
 
-      // Se foi marcada uma falta, recarregar também os dados de performance/absences do membro
       if (attendanceStatus === 'absent' && selectedMemberDetails) {
         const month = new Date().toISOString().slice(0, 7);
         if (selectedMemberDetails.parentId) {
@@ -448,7 +367,6 @@ const Home: React.FC = () => {
           }
         }
       }
-
     } catch (err) {
       alert('Erro ao salvar alterações: ' + err);
     }
@@ -460,7 +378,6 @@ const Home: React.FC = () => {
       return;
     }
     try {
-      // Remove deleted tournaments
       for (let i = 0; i < tournaments.length; i++) {
         const existingTournament = editingTournaments.find((t: any) => t._id === tournaments[i]._id);
         if (!existingTournament) {
@@ -468,7 +385,6 @@ const Home: React.FC = () => {
         }
       }
 
-      // Update or create tournaments
       for (const tournament of editingTournaments) {
         if (tournament._id) {
           await updateTournament(tournament._id, { name: tournament.name, date: tournament.date, location: tournament.location });
@@ -508,13 +424,10 @@ const Home: React.FC = () => {
     }
   }, [user]);
 
-  // Limpar estados de presença/falta quando muda de dia
   useEffect(() => {
     const today = new Date().toDateString();
     const lastCheckedDate = localStorage.getItem('lastAttendanceDate');
-
     if (lastCheckedDate !== today) {
-      // É um novo dia, limpar os estados de presença/falta
       setAttendanceToday([]);
       setAbsencesMarkedToday([]);
       localStorage.setItem('lastAttendanceDate', today);
@@ -531,7 +444,6 @@ const Home: React.FC = () => {
     return (
       <div className="page background">
         <h2>Dashboard do Atleta</h2>
-
         <IonCard>
           <IonCardHeader>
             <IonCardTitle>Horário de Treinos</IonCardTitle>
@@ -547,7 +459,6 @@ const Home: React.FC = () => {
             </IonList>
           </IonCardContent>
         </IonCard>
-
         <IonCard>
           <IonCardHeader>
             <IonCardTitle>Desempenho no Karate</IonCardTitle>
@@ -565,7 +476,6 @@ const Home: React.FC = () => {
             <h4>Faltas por Mês: {absences}</h4>
           </IonCardContent>
         </IonCard>
-
         <IonCard>
           <IonCardHeader>
             <IonCardTitle>Próximos Torneios</IonCardTitle>
@@ -590,8 +500,6 @@ const Home: React.FC = () => {
   const renderSenseiDashboard = () => (
     <div className="page background">
       <h2>Dashboard do Sensei</h2>
-
-      {/* Horários */}
       <IonCard>
         <IonCardHeader>
           <IonCardTitle>Horários de Treino</IonCardTitle>
@@ -619,8 +527,6 @@ const Home: React.FC = () => {
           </IonButton>
         </IonCardContent>
       </IonCard>
-
-      {/* Membros */}
       <IonCard>
         <IonCardHeader>
           <IonCardTitle>Membros do Dojo</IonCardTitle>
@@ -641,8 +547,6 @@ const Home: React.FC = () => {
           </IonList>
         </IonCardContent>
       </IonCard>
-
-      {/* Torneios */}
       <IonCard>
         <IonCardHeader>
           <IonCardTitle>Torneios</IonCardTitle>
@@ -671,7 +575,6 @@ const Home: React.FC = () => {
         </IonCardContent>
       </IonCard>
 
-      {/* Modal Horários */}
       <IonModal isOpen={showScheduleModal} onDidDismiss={() => setShowScheduleModal(false)}>
         <IonHeader>
           <IonToolbar>
@@ -696,18 +599,14 @@ const Home: React.FC = () => {
                 <IonSelectOption value="Sábado">Sábado</IonSelectOption>
                 <IonSelectOption value="Domingo">Domingo</IonSelectOption>
               </IonSelect>
-
               <IonInput placeholder="Hora (ex: 18:00)" value={newSchedule.time} onIonChange={e => setNewSchedule({...newSchedule, time: e.detail.value || ''})}></IonInput>
-
               <IonInput placeholder="Local" value={newSchedule.location} onIonChange={e => setNewSchedule({...newSchedule, location: e.detail.value || ''})}></IonInput>
-
               <IonButton expand="block" onClick={handleAddScheduleInModal}>
                 <IonIcon slot="start" icon={add}></IonIcon>
                 Adicionar
               </IonButton>
             </IonCardContent>
           </IonCard>
-
           <IonCard>
             <IonCardHeader>
               <IonCardTitle>Horários Atuais</IonCardTitle>
@@ -738,7 +637,6 @@ const Home: React.FC = () => {
         </IonContent>
       </IonModal>
 
-      {/* Modal Detalhes do Membro */}
       <IonModal isOpen={showMemberDetailsModal} onDidDismiss={() => setShowMemberDetailsModal(false)}>
         <IonHeader>
           <IonToolbar>
@@ -760,7 +658,6 @@ const Home: React.FC = () => {
                   {selectedMemberDetails.birthDate && <p><strong>Data de Nascimento:</strong> {new Date(selectedMemberDetails.birthDate).toLocaleDateString()}</p>}
                 </IonCardContent>
               </IonCard>
-
               <IonCard>
                 <IonCardHeader>
                   <IonCardTitle>Marcação de Presença Hoje</IonCardTitle>
@@ -775,7 +672,6 @@ const Home: React.FC = () => {
                     <IonSelectOption value="present">Presente</IonSelectOption>
                     <IonSelectOption value="absent">Faltou</IonSelectOption>
                   </IonSelect>
-
                   {attendanceStatus === 'absent' && (
                     <div style={{ marginTop: '1rem' }}>
                       <IonSelect placeholder="Selecione o motivo" value={absenceReason} onIonChange={e => setAbsenceReason(e.detail.value)}>
@@ -784,7 +680,6 @@ const Home: React.FC = () => {
                       </IonSelect>
                     </div>
                   )}
-
                   {attendanceStatus && (
                     <div style={{ marginTop: '1rem' }}>
                       <p><strong>Status atual:</strong> {attendanceStatus === 'present' ? 'Presente' : 'Faltou'}</p>
@@ -795,7 +690,6 @@ const Home: React.FC = () => {
                   )}
                 </IonCardContent>
               </IonCard>
-
               <IonCard>
                 <IonCardHeader>
                   <IonCardTitle>Informações de Desempenho</IonCardTitle>
@@ -824,7 +718,6 @@ const Home: React.FC = () => {
                     </>
                   )}
                   <IonButton expand="block" color="primary" onClick={() => {
-                    // Preencher o formulário com dados existentes se houver
                     if (performance) {
                       setNewPerformance({
                         rating: performance.rating || 0,
@@ -847,14 +740,11 @@ const Home: React.FC = () => {
               }}>
                 Remover Atleta
               </IonButton>
-
               <IonButton expand="block" color="success" onClick={() => {
-                // Guardar presença e performance
                 handleSaveMemberDetailsChanges();
               }}>
                 Guardar Alterações
               </IonButton>
-
               <IonButton expand="block" onClick={() => setShowMemberDetailsModal(false)}>
                 Cancelar
               </IonButton>
@@ -863,7 +753,6 @@ const Home: React.FC = () => {
         </IonContent>
       </IonModal>
 
-      {/* Modal Performance */}
       <IonModal isOpen={showPerformanceModal} onDidDismiss={() => setShowPerformanceModal(false)}>
         <IonHeader>
           <IonToolbar>
@@ -877,9 +766,7 @@ const Home: React.FC = () => {
           <IonCard>
             <IonCardContent>
               <IonInput placeholder="Avaliação (1-5)" type="number" min={1} max={5} value={newPerformance.rating} onIonChange={e => setNewPerformance({...newPerformance, rating: Number(e.detail.value)})}></IonInput>
-
               <IonInput placeholder="Melhorias (separadas por vírgula)" value={newPerformance.improvements} onIonChange={e => setNewPerformance({...newPerformance, improvements: e.detail.value || ''})}></IonInput>
-
               <IonInput placeholder="O que precisa melhorar (separadas por vírgula)" value={newPerformance.needsImprovement} onIonChange={e => setNewPerformance({...newPerformance, needsImprovement: e.detail.value || ''})}></IonInput>
 
               <IonButton expand="block" color="success" onClick={() => {
@@ -888,7 +775,6 @@ const Home: React.FC = () => {
               }}>
                 Guardar Alterações
               </IonButton>
-
               <IonButton expand="block" color="medium" onClick={() => setShowPerformanceModal(false)}>
                 Cancelar
               </IonButton>
@@ -897,7 +783,6 @@ const Home: React.FC = () => {
         </IonContent>
       </IonModal>
 
-      {/* Modal Torneios */}
       <IonModal isOpen={showTournamentModal} onDidDismiss={() => setShowTournamentModal(false)}>
         <IonHeader>
           <IonToolbar>
@@ -926,7 +811,6 @@ const Home: React.FC = () => {
               </IonButton>
             </IonCardContent>
           </IonCard>
-
           <IonCard>
             <IonCardHeader>
               <IonCardTitle>Torneios Atuais</IonCardTitle>
@@ -947,7 +831,6 @@ const Home: React.FC = () => {
               </IonList>
             </IonCardContent>
           </IonCard>
-
           <IonButton expand="block" color="success" onClick={handleSaveTournamentChanges}>
             Salvar Alterações
           </IonButton>
@@ -991,7 +874,6 @@ const Home: React.FC = () => {
 
     const athleteId = selectedChild || children[0]._id || children[0].username;
     const currentChild = children.find((c: any) => c._id === athleteId);
-    
     return (
       <>
         {children.length > 1 && (

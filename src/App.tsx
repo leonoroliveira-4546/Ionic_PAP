@@ -10,15 +10,14 @@ import Signup from './pages/public/SignUp';
 import PrivateRoute from './components/PrivadeRoute';
 import InicialPage from './pages/public/InicialPage';
 import Comunidade from './pages/private/Comunidade/Comunidade';
-import DetalhesPost from './pages/private/Comunidade/temporario/DetailsPost';
 import Chat from './pages/private/Chat/Chat';
 import ConfirmResponsavel from './pages/public/ConfirmResponsavel';
-import ProfileSettings from './pages/private/ProfileSettings';
-import Shop from './pages/private/loja';
-import Ranking from './pages/private/Ranking';
-import Educacional from './pages/private/Educacional';
-import Predicoes from './pages/private/Predicoes';
-import Planos from './pages/private/Planos';
+import ProfileSettings from './pages/private/Profile/ProfileSettings';
+import Shop from './pages/private/Shop/Shop';
+import Ranking from './pages/private/Home/Ranking';
+import Educacional from './pages/private/Home/Educacional';
+import Predicoes from './pages/private/Predictions/Predictions';
+import Planos from './pages/private/Profile/Plans';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -74,7 +73,6 @@ const InnerApp: React.FC = () => {
           {/* Rotas privadas */}
           <PrivateRoute exact path='/home' component={Home}/>
           <PrivateRoute exact path='/comunidade' component={Comunidade}/>
-          <PrivateRoute exact path='/comunidade/post/:id' component={DetalhesPost}/>
           <PrivateRoute exact path='/chat' component={Chat}/>
           <PrivateRoute exact path='/perfil' component={ProfileSettings}/>
           <PrivateRoute exact path='/shop' component={Shop}/>

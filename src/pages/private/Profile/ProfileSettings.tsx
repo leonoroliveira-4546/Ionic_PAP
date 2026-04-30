@@ -1,19 +1,10 @@
 import React, { useState } from 'react';
-import {
-  IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
-  IonAvatar, IonButton, IonIcon, IonList, IonItem, IonLabel,
-  IonInput, IonToggle, IonSelect, IonSelectOption, IonAlert,
-  IonText, IonChip
-} from '@ionic/react';
-import {
-  personOutline, mailOutline, lockClosedOutline, notificationsOutline,
-  moonOutline, languageOutline, shieldOutline, logOutOutline, chevronForwardOutline,
-  cameraOutline, createOutline, checkmarkOutline, ribbonOutline, trophyOutline
-} from 'ionicons/icons';
-import { useAuth } from '../../AuthContext';
+import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonAvatar, IonButton, IonIcon, IonList, IonItem, IonLabel, IonInput, IonToggle, IonSelect, IonSelectOption, IonAlert, IonText, IonChip } from '@ionic/react';
+import { personOutline, mailOutline, lockClosedOutline, notificationsOutline, moonOutline, languageOutline, shieldOutline, logOutOutline, chevronForwardOutline, cameraOutline, createOutline, checkmarkOutline, ribbonOutline, trophyOutline } from 'ionicons/icons';
+import { useAuth } from '../../../AuthContext';
 import { useHistory } from 'react-router-dom';
-import Navbar from '../../components/MainLayout';
-import authApi from '../../hooks/authApi';
+import Navbar from '../../../components/MainLayout';
+import authApi from '../../../hooks/authApi';
 
 const ProfileSettings: React.FC = () => {
   const { user, Login, logout } = useAuth();
@@ -24,7 +15,6 @@ const ProfileSettings: React.FC = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState(true);
   const [showLogoutAlert, setShowLogoutAlert] = useState(false);
-  const [activeTab, setActiveTab] = useState<'personal' | 'stats'>('personal');
 
   // Editable fields
   const [editName, setEditName] = useState(user?.name || '');
@@ -38,14 +28,18 @@ const ProfileSettings: React.FC = () => {
         Login(res.user);
       }
     } catch (error) {
-      console.error('Error updating profile:', error);
+      alert('Erro ao atualizar perfil: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
     setIsEditing(false);
   };
 
   const handleLogout = async () => {
-    await logout();
-    history.replace('/login');
+    const result = await logout();
+    if (result.success) {
+      history.replace('/login');
+    } else {
+      alert('Erro ao sair da conta: ' + (result.error instanceof Error ? result.error: 'Unknown error'));
+    }
   };
 
   const typeLabel: Record<string, string> = {
@@ -55,10 +49,7 @@ const ProfileSettings: React.FC = () => {
     admin: 'Admin',
   };
 
-  const beltOptions = ['Branca', 'Amarela', 'Laranja', 'Verde', 'Azul', 'Vermelha', 'Marrom', 'Preta'];
-
   if (!user) return null;
-
   return (
     <IonPage>
       <IonHeader>
@@ -68,8 +59,6 @@ const ProfileSettings: React.FC = () => {
       </IonHeader>
 
       <IonContent className="ion-padding background">
-
-        {/* Avatar + Info */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px 0 16px' }}>
           <div style={{ position: 'relative' }}>
             <IonAvatar style={{ width: 90, height: 90 }}>
@@ -98,7 +87,6 @@ const ProfileSettings: React.FC = () => {
           </IonChip>
         </div>
 
-        {/* Edit/Save Button */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
           <IonButton
             onClick={isEditing ? handleSave : () => setIsEditing(true)}
@@ -109,10 +97,10 @@ const ProfileSettings: React.FC = () => {
           </IonButton>
         </div>
 
-        {/* Personal Data Section */}
         <IonText color="medium">
           <p style={{ paddingLeft: 16, marginBottom: 4, fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 }}>Dados Pessoais</p>
         </IonText>
+
         <IonList inset lines="inset">
           <IonItem>
             <IonIcon icon={personOutline} slot="start" color="primary" />
@@ -126,7 +114,6 @@ const ProfileSettings: React.FC = () => {
               />
             </IonLabel>
           </IonItem>
-
           <IonItem>
             <IonIcon icon={personOutline} slot="start" color="primary" />
             <IonLabel>
@@ -139,7 +126,6 @@ const ProfileSettings: React.FC = () => {
               />
             </IonLabel>
           </IonItem>
-
           <IonItem>
             <IonIcon icon={ribbonOutline} slot="start" color="primary" />
             <IonLabel>
@@ -151,7 +137,6 @@ const ProfileSettings: React.FC = () => {
               />
             </IonLabel>
           </IonItem>
-
           <IonItem>
             <IonIcon icon={mailOutline} slot="start" color="primary" />
             <IonLabel>
@@ -163,17 +148,16 @@ const ProfileSettings: React.FC = () => {
               />
             </IonLabel>
           </IonItem>
-
           <IonItem button detail detailIcon={chevronForwardOutline}>
             <IonIcon icon={lockClosedOutline} slot="start" color="primary" />
             <IonLabel>Alterar Senha</IonLabel>
           </IonItem>
         </IonList>
 
-        {/* Stats Section */}
         <IonText color="medium">
           <p style={{ paddingLeft: 16, marginBottom: 4, marginTop: 16, fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 }}>Estatísticas</p>
         </IonText>
+
         <IonList inset lines="inset">
           <IonItem>
             <IonIcon icon={trophyOutline} slot="start" color="warning" />
@@ -183,7 +167,6 @@ const ProfileSettings: React.FC = () => {
             </IonLabel>
             <IonText color="primary" slot="end" style={{ fontWeight: 'bold' }}>{user.points || 0}</IonText>
           </IonItem>
-
           <IonItem>
             <IonIcon icon={ribbonOutline} slot="start" color="secondary" />
             <IonLabel>
@@ -192,7 +175,6 @@ const ProfileSettings: React.FC = () => {
             </IonLabel>
             <IonText color="success" slot="end" style={{ fontWeight: 'bold' }}>#{user.ranking || 'N/A'}</IonText>
           </IonItem>
-
           <IonItem>
             <IonIcon icon={trophyOutline} slot="start" color="tertiary" />
             <IonLabel>
@@ -201,7 +183,6 @@ const ProfileSettings: React.FC = () => {
             </IonLabel>
             <IonText color="medium" slot="end" style={{ fontWeight: 'bold' }}>3</IonText>
           </IonItem>
-
           <IonItem>
             <IonIcon icon={trophyOutline} slot="start" color="danger" />
             <IonLabel>
@@ -212,10 +193,10 @@ const ProfileSettings: React.FC = () => {
           </IonItem>
         </IonList>
 
-        {/* Preferences Section */}
         <IonText color="medium">
           <p style={{ paddingLeft: 16, marginBottom: 4, marginTop: 16, fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 }}>Preferências</p>
         </IonText>
+
         <IonList inset lines="inset">
           <IonItem>
             <IonIcon icon={moonOutline} slot="start" color="primary" />
@@ -226,7 +207,6 @@ const ProfileSettings: React.FC = () => {
               onIonChange={e => setDarkMode(e.detail.checked)}
             />
           </IonItem>
-
           <IonItem>
             <IonIcon icon={notificationsOutline} slot="start" color="primary" />
             <IonLabel>Notificações</IonLabel>
@@ -236,7 +216,6 @@ const ProfileSettings: React.FC = () => {
               onIonChange={e => setNotifications(e.detail.checked)}
             />
           </IonItem>
-
           <IonItem>
             <IonIcon icon={languageOutline} slot="start" color="primary" />
             <IonLabel>Idioma</IonLabel>
@@ -247,7 +226,6 @@ const ProfileSettings: React.FC = () => {
           </IonItem>
         </IonList>
 
-        {/* Security Section */}
         <IonText color="medium">
           <p style={{ paddingLeft: 16, marginBottom: 4, marginTop: 16, fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 }}>Segurança</p>
         </IonText>
@@ -258,7 +236,6 @@ const ProfileSettings: React.FC = () => {
           </IonItem>
         </IonList>
 
-        {/* Logout */}
         <div style={{ padding: '24px 16px' }}>
           <IonButton
             expand="block"
@@ -282,7 +259,6 @@ const ProfileSettings: React.FC = () => {
           onDidDismiss={() => setShowLogoutAlert(false)}
         />
       </IonContent>
-
       <Navbar />
     </IonPage>
   );

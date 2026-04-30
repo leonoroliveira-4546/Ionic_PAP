@@ -5,8 +5,8 @@ import {
   IonBadge, IonButton, IonIcon, IonText, IonToast, IonRippleEffect, IonSpinner
 } from '@ionic/react';
 import { cartOutline, starSharp, starHalfOutline, starOutline } from 'ionicons/icons';
-import Navbar from '../../components/MainLayout';
-import useShopApi, { ShopProduct } from '../../hooks/useShopApi';
+import Navbar from '../../../components/MainLayout';
+import useShopApi, { ShopProduct } from '../../../hooks/useShopApi';
 
 type Category = 'Todos' | 'Kimono' | 'Equipamento' | 'Faixa' | 'Acessório';
 

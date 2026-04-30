@@ -14,7 +14,6 @@ const Chat: React.FC = () => {
   const [newMessage, setNewMessage] = useState('');
   const [conversations, setConversations] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
@@ -27,7 +26,6 @@ const Chat: React.FC = () => {
       });
 
       socketRef.current.emit('join', user._id);
-
       socketRef.current.on('receive_message', (data: any) => {
         if (data.conversationId === selectedConversation) {
           setMessages((prev) => [...prev, data.message]);
@@ -42,11 +40,10 @@ const Chat: React.FC = () => {
       });
 
       socketRef.current.on('error', (data: any) => {
-        console.error('Socket error:', data);
+        alert('Erro na conexão do chat: ' + data.message);
       });
 
       loadConversations();
-
       return () => {
         if (socketRef.current) {
           socketRef.current.disconnect();
@@ -66,19 +63,16 @@ const Chat: React.FC = () => {
       const data = await fetchConversations();
       setConversations(data);
     } catch (error) {
-      console.error('Error fetching conversations:', error);
+      alert('Erro ao carregar conversas');
     }
   };
 
   const loadMessages = async (conversationId: string) => {
     try {
-      setLoading(true);
       const data = await getMessages(conversationId);
       setMessages(data);
     } catch (error) {
-      console.error('Error fetching messages:', error);
-    } finally {
-      setLoading(false);
+      alert('Erro ao carregar mensagens');
     }
   };
 
@@ -88,7 +82,6 @@ const Chat: React.FC = () => {
     if (!newMessage.trim() || !selectedConversation) return;
     const conv = conversations.find(c => c._id === selectedConversation);
     if (!conv) return;
-
     if (socketRef.current) {
       socketRef.current.emit('send_message', {
         conversationId: selectedConversation,
@@ -114,7 +107,6 @@ const Chat: React.FC = () => {
                             {conv.title.charAt(0)}
                         </div>
                     </IonAvatar>
-
                     <IonLabel>
                         <h3 className="chat-name">{conv.title}</h3>
                         <p className="chat-last">{conv.lastMessage}</p>
@@ -129,11 +121,10 @@ const Chat: React.FC = () => {
     if (!selectedConversation) return null;
     const conv = conversations.find(c => c._id === selectedConversation);
     if (!conv) return null;
-
     return (
-        <div className="chat-container">
-      <div className="chat-messages">
-        {messages.map(msg => {
+      <div className="chat-container">
+        <div className="chat-messages">
+          {messages.map(msg => {
             const isMe = msg.senderId._id === user._id;
             return (
               <div
@@ -148,23 +139,20 @@ const Chat: React.FC = () => {
                 </div>
               </div>
             );
-        })}
-      </div>
-
-      {/* INPUT FIXO EM BAIXO */}
-      <div className="chat-input">
-        <IonInput
-          value={newMessage}
-          placeholder="Mensagem..."
-          onIonChange={(e) => setNewMessage(e.detail.value!)}
-        />
-
-        <div className="send-btn" onClick={() => handleSendMessage()}>
-          <IonIcon icon={send} />
+          })}
+        </div>
+        <div className="chat-input">
+          <IonInput
+            value={newMessage}
+            placeholder="Mensagem..."
+            onIonChange={(e) => setNewMessage(e.detail.value!)}
+          />
+          <div className="send-btn" onClick={() => handleSendMessage()}>
+            <IonIcon icon={send} />
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
   };
 
   return (

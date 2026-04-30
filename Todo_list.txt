@@ -10,4 +10,15 @@ OQ FALTA NA HOME:
         .Receber e aceitar o convide ou rejeitar o convite
       do entrar no dojo
         .caso nao tivesse ainda em nenhum dojo, nao mostrar nada
-    
+
+Comunidade:
+    -Acabar de implementar o api de youtube;
+    -Corrigir e adicionar oque falta de modais;
+    -Depois testes;
+
+Chat:
+    -Corrigir a cena do socket
+
+Ranking:
+    -Fazer funicionar com Backend, mas so depois de arrametar o profile
+

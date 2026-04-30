@@ -6,7 +6,6 @@ const useSocket = (userId: string | undefined) => {
 
   useEffect(() => {
     if (!userId) return;
-
     // Create socket connection
     socketRef.current = io('http://localhost:8001', {
       reconnection: true,
@@ -15,12 +14,7 @@ const useSocket = (userId: string | undefined) => {
       reconnectionAttempts: 5
     });
 
-    // Emit join event
     socketRef.current.emit('join', userId);
-
-    console.log('Socket connected with userId:', userId);
-
-    // Cleanup on unmount
     return () => {
       if (socketRef.current) {
         socketRef.current.disconnect();

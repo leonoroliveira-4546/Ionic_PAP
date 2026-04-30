@@ -42,8 +42,8 @@ const Navbar: React.FC = () => {
         </IonButton>
 
         <IonButton 
-          routerLink="/perfil"
-          fill={location.pathname === '/perfil' ? 'solid' : 'clear'}
+          routerLink="/profile"
+          fill={location.pathname === '/profile' ? 'solid' : 'clear'}
           className='nav-button'
         >
           <IonIcon icon={personCircleOutline} />
@@ -58,16 +58,16 @@ const Navbar: React.FC = () => {
         </IonButton>
 
         <IonButton 
-          routerLink="/predicoes"
-          fill={location.pathname === '/predicoes' ? 'solid' : 'clear'}
+          routerLink="/predictions"
+          fill={location.pathname === '/predictions' ? 'solid' : 'clear'}
           className='nav-button'
         >
           <IonIcon icon={personCircleOutline} />
         </IonButton>
 
         <IonButton 
-          routerLink="/planos"
-          fill={location.pathname === '/planos' ? 'solid' : 'clear'}
+          routerLink="/plans"
+          fill={location.pathname === '/plans' ? 'solid' : 'clear'}
           className='nav-button'
         >
           <IonIcon icon={personCircleOutline} />

@@ -5,8 +5,8 @@ import {
   IonButton, IonIcon, IonBadge, IonList, IonItem, IonLabel, IonSpinner
 } from '@ionic/react';
 import { checkmarkCircle, star, starOutline } from 'ionicons/icons';
-import Navbar from '../../components/MainLayout';
-import usePlansApi from '../../hooks/usePlansApi';
+import Navbar from '../../../components/MainLayout';
+import usePlansApi from '../../../hooks/usePlansApi';
 
 const Planos: React.FC = () => {
   const { plans, currentPlan, loading, error, subscribePlan } = usePlansApi();

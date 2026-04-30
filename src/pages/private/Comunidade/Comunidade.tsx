@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonList, IonItem, IonText, IonModal, IonInput, IonTextarea, IonButton } from '@ionic/react';
+import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonList, IonText, IonModal, IonInput, IonTextarea, IonButton } from '@ionic/react';
 import Navbar from '../../../components/MainLayout';
 import FeedPost from '../../../components/FeedPost';
 import YouTubeFeed from '../../../components/YouTubeFeed';
-import '../../../pages/StylesPages.css';
 import comunidadeApi from '../../../hooks/comunidadeApi';
+import '../../../pages/StylesPages.css';
 
 const Comunidade: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'geral' | 'dojo'>('geral');
@@ -51,7 +51,7 @@ const Comunidade: React.FC = () => {
         const newsData = await getNews();
         setNews(newsData.data || []);
       } catch (error) {
-        console.error('Error loading news:', error);
+        alert('Erro ao carregar notícias: ' + (error instanceof Error ? error.message : 'Unknown error'));
       }
     };
     loadData();
@@ -63,7 +63,7 @@ const Comunidade: React.FC = () => {
         const postsData = await fetchPosts(activeTab);
         setPosts(postsData.data || []);
       } catch (error) {
-        console.error('Error loading posts:', error);
+        alert('Erro ao carregar publicações: ' + (error instanceof Error ? error.message : 'Unknown error'));
       }
     };
     loadPosts();
@@ -100,7 +100,6 @@ const Comunidade: React.FC = () => {
         alert(response.message || 'Erro ao criar publicação.');
       }
     } catch (error) {
-      console.error('Error creating post:', error);
       alert('Erro ao criar publicação.');
     } finally {
       setSubmitting(false);
@@ -116,7 +115,6 @@ const Comunidade: React.FC = () => {
 
   const handleSubmitComment = async () => {
     if (!pendingComment.trim() || !pendingPostId) return;
-
     setSubmitting(true);
     try {
       const response = await addComment(pendingPostId, pendingComment);
@@ -129,7 +127,6 @@ const Comunidade: React.FC = () => {
         alert(response.message || 'Erro ao comentar publicação.');
       }
     } catch (error) {
-      console.error('Error commenting post:', error);
       alert('Erro ao comentar publicação.');
     } finally {
       setSubmitting(false);
@@ -138,9 +135,8 @@ const Comunidade: React.FC = () => {
 
   const renderGeralTab = () => (
     <div className="page background">
-      <h2>🌍 Comunidade Geral</h2>
+      <h2>Geral</h2>
 
-      {/* News Section */}
       <IonText color="medium" style={{ paddingLeft: 16, marginBottom: 8, fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 }}>
         Notícias
       </IonText>
@@ -174,7 +170,7 @@ const Comunidade: React.FC = () => {
 
   const renderDojoTab = () => (
     <div className="page background">
-      <h2>🥋 Comunidade do Dojo</h2>
+      <h2>Dojo</h2>
 
       {/* Create Post Button */}
       <div style={{ padding: '16px 0' }}>
@@ -206,7 +202,7 @@ const Comunidade: React.FC = () => {
               await likePost(postId);
               await refreshPosts();
             } catch (error) {
-              console.error('Error liking post:', error);
+              alert('Erro ao curtir publicação: ' + (error instanceof Error ? error.message : 'Unknown error'));
             }
           }}
           onComment={(postId, comment) => handleOpenCommentModal(postId, comment)}

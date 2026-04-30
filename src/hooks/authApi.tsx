@@ -23,7 +23,6 @@ export const authApi = (Login: (userData: any) => void) => {
   const login = async (idToken: string): Promise<any> => {
     const { data } = await api.post("/login", { idToken });
     Login(data.user);
-
     return data;
   };
 
@@ -32,10 +31,11 @@ export const authApi = (Login: (userData: any) => void) => {
     return data;
   };
 
-  const logout = async () => {
+  const logout = async (): Promise<any> => {
     Login(null);
     Cookies.remove('auth')
-    await api.post("/logout");
+    const { data } = await api.post("/logout");
+    return data;
   };
 
   const calculateAge = async (birthDate: string) => {

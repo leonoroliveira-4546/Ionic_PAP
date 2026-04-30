@@ -9,7 +9,6 @@ type UserType = "athlete" | "responsavel" | "sensei";
 
 const saveSignupDraft = (data: any) => {
   const { password, ...safeData } = data;
-
   const responsavelId = safeData.responsavelId || localStorage.getItem("responsavelId");
   localStorage.setItem("signupDraft", JSON.stringify({ ...safeData, responsavelId: responsavelId || "" }));
 };
