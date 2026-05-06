@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonList, IonItem, IonLabel, IonAvatar, IonCard, IonCardContent, IonInput, IonButton, IonIcon } from '@ionic/react';
-import { send, arrowBackCircleOutline, key, sendSharp } from 'ionicons/icons';
+import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonList, IonItem, IonLabel, IonAvatar, IonInput, IonIcon } from '@ionic/react';
+import { send, arrowBackCircleOutline } from 'ionicons/icons';
 import { useAuth } from '../../../AuthContext';
 import Navbar from '../../../components/MainLayout';
 import api from "../../../components/AxiosInstance"
@@ -15,6 +15,11 @@ const Chat: React.FC = () => {
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const socketRef = useRef<Socket | null>(null);
+  const selectedConversationRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    selectedConversationRef.current = selectedConversation;
+  }, [selectedConversation]);
 
   useEffect(() => {
     if (user) {
@@ -32,15 +37,21 @@ const Chat: React.FC = () => {
       // Listen for incoming messages
       socketRef.current.on('receive_message', (data: any) => {
         console.log('Received message:', data);
+        const incomingMessage = data.message;
+
         // If message is from current conversation, add to messages
-        if (data.conversationId === selectedConversation) {
-          setMessages((prev) => [...prev, data.message]);
+        if (data.conversationId === selectedConversationRef.current) {
+          setMessages((prev) => {
+            const alreadyExists = prev.some((message) => message._id === incomingMessage._id);
+            return alreadyExists ? prev : [...prev, incomingMessage];
+          });
         }
+
         // Update last message in conversations
         setConversations((prev) =>
           prev.map((conv) =>
             conv._id === data.conversationId
-              ? { ...conv, lastMessage: data.message.content, timestamp: data.message.timestamp }
+              ? { ...conv, lastMessage: incomingMessage.content, timestamp: incomingMessage.timestamp }
               : conv
           )
         );
@@ -99,18 +110,34 @@ const Chat: React.FC = () => {
 
   if (!user) return null;
 
+  const getSenderId = (message: any) => {
+    if (!message?.senderId) return null;
+    return typeof message.senderId === 'string' ? message.senderId : message.senderId._id;
+  };
+
   const handleSendMessage = () => {
     if (!newMessage.trim() || !selectedConversation) return;
     const conv = conversations.find(c => c._id === selectedConversation);
     if (!conv) return;
+
+    const messageContent = newMessage.trim();
 
     if (socketRef.current) {
       // Emit message via socket
       socketRef.current.emit('send_message', {
         conversationId: selectedConversation,
         recipientId: conv.otherUser._id,
-        content: newMessage
+        content: messageContent
       });
+
+      setConversations((prev) =>
+        prev.map((conversation) =>
+          conversation._id === selectedConversation
+            ? { ...conversation, lastMessage: messageContent, timestamp: new Date().toISOString() }
+            : conversation
+        )
+      );
+
       setNewMessage('');
     }
   };
@@ -150,7 +177,7 @@ const Chat: React.FC = () => {
         <div className="chat-container">
       <div className="chat-messages">
         {messages.map(msg => {
-            const isMe = msg.senderId._id === user._id;
+            const isMe = getSenderId(msg) === user._id;
             return (
               <div
                 key={msg._id}
