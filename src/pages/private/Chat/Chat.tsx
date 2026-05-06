@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonList, IonItem, IonLabel, IonAvatar, IonCard, IonCardContent, IonInput, IonButton, IonIcon } from '@ionic/react';
-import { send, arrowBackCircleOutline, key } from 'ionicons/icons';
+import { send, arrowBackCircleOutline, key, sendSharp } from 'ionicons/icons';
 import { useAuth } from '../../../AuthContext';
 import Navbar from '../../../components/MainLayout';
 import api from "../../../components/AxiosInstance"
@@ -70,6 +70,12 @@ const Chat: React.FC = () => {
     }
   }, [selectedConversation]);
 
+  useEffect(() => {
+    if (selectedConversation && socketRef.current) {
+      socketRef.current.emit('join_room', selectedConversation);
+    }
+  }, [selectedConversation]);
+
   const fetchConversations = async () => {
     try {
       const response = await api.get('/conversations');
@@ -106,7 +112,6 @@ const Chat: React.FC = () => {
         content: newMessage
       });
       setNewMessage('');
-      fetchMessages(selectedConversation);
     }
   };
 

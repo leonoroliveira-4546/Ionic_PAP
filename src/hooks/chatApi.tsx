@@ -8,19 +8,7 @@ export const chatApi = () => {
   };
 
   
-
-  const signup = async (user: User): Promise<any> => {
-    const { data } = await api.post("/register", user);
-    return data;
-  };
-
-  const logout = async () => {
-    Login(null);
-    Cookies.remove('auth')
-    await api.post("/logout");
-  };
-
-  return { login, signup, logout, calculateAge, inviteResponsavel, confirmResponsavelInvite, addPerformance, getPerformance, addAbsence, getAbsencesByMonth };
+  return { fetchConversations };
 };
 
-export default authApi;
+export default chatApi;
