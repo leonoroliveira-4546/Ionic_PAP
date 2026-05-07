@@ -10,4 +10,8 @@ OQ FALTA NA HOME:
         .Receber e aceitar o convide ou rejeitar o convite
       do entrar no dojo
         .caso nao tivesse ainda em nenhum dojo, nao mostrar nada
+
+Oq Falta no Chat:
+    dar scrooll automatico quando recebe uma nova mensagem, pois senao tenho que
+  sempre dar scroll para baixo.
     
