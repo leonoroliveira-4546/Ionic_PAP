@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import api from "../components/AxiosInstance"
 
 export interface Post {
@@ -11,58 +12,68 @@ export interface Post {
 }
 
 export const comunidadeApi = () => {
-    const getNews = async () => {
+    const getNews = useCallback(async () => {
         const { data } = await api.get('/news');
         return data;
-    };
+    }, []);
 
-    const getPosts = async (community: string = 'geral') => {
+    const getPosts = useCallback(async (community: string = 'geral') => {
         const { data } = await api.get(`/comunidade?community=${community}`);
         return data;
-    };
+    }, []);
 
-    const getPostDetails = async (id: string) => {
+    const getPostDetails = useCallback(async (id: string) => {
         const { data } = await api.get(`/posts/${id}`);
         return data;
-    };
+    }, []);
 
-    const createPost = async (post: FormData, community: string = 'geral') => {
+    const createPost = useCallback(async (post: FormData, community: string = 'geral') => {
         post.append('community', community);
         const { data } = await api.post("/posts", post);
         return data;
-    };
+    }, []);
 
-    const updatePost = async (id: string, formData: FormData) => {
+    const updatePost = useCallback(async (id: string, formData: FormData) => {
         const { data } = await api.put(`/posts/${id}`, formData);
         return data;
-    };
+    }, []);
 
-    const deletePost = async (id: string) => {
+    const deletePost = useCallback(async (id: string) => {
         const { data } = await api.delete(`/posts/${id}`);
         return data;
-    };
+    }, []);
 
-    const addComment = async (postId: string, message: string) => {
+    const addComment = useCallback(async (postId: string, message: string) => {
         const { data } = await api.post(`/posts/${postId}/comments`, { message });
         return data;
-    };
+    }, []);
 
-    const editComment = async (commentId: string, message: string) => {
+    const editComment = useCallback(async (commentId: string, message: string) => {
         const { data } = await api.put(`/comments/${commentId}`, { message });
         return data;
-    };
+    }, []);
 
-    const deleteComment = async (commentId: string): Promise<any> => {
+    const deleteComment = useCallback(async (commentId: string): Promise<any> => {
         const { data } = await api.delete(`/comments/${commentId}`);
         return data;
-    };
+    }, []);
 
-    const likePost = async (postId: string) => {
+    const likePost = useCallback(async (postId: string) => {
         const { data } = await api.post(`/posts/${postId}/like`);
         return data;
-    };
+    }, []);
 
-    return { getNews, getPosts, getPostDetails, createPost, updatePost, deletePost, addComment, editComment, deleteComment, likePost }
+    const getYoutubeVideos = useCallback(async (limit: number = 10) => {
+        const { data } = await api.get(`/youtube/fnk/videos?maxResults=${limit}`);
+        return data;
+    }, []);
+
+    const getLives = useCallback(async (limit: number = 5) => {
+        const { data } = await api.get(`/youtube/fnk/lives?maxResults=${limit}`);
+        return data;
+    }, []);
+
+    return { getNews, getPosts, getPostDetails, createPost, updatePost, deletePost, addComment, editComment, deleteComment, likePost, getYoutubeVideos, getLives }
 }
 
 export default comunidadeApi;

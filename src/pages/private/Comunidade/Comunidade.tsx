@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonList, IonItem, IonText } from '@ionic/react';
+import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonList } from '@ionic/react';
 import Navbar from '../../../components/MainLayout';
 import FeedPost from '../../../components/FeedPost';
 import YouTubeFeed from '../../../components/YouTubeFeed';
@@ -66,34 +66,40 @@ const Comunidade: React.FC = () => {
       <h2>🌍 Comunidade Geral</h2>
 
       {/* News Section */}
-      <IonText color="medium" style={{ paddingLeft: 16, marginBottom: 8, fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 }}>
-        Notícias
-      </IonText>
-      <IonList className='background'>
-        {news.map(item => (
-          <IonCard key={item._id} style={{ margin: '8px 0' }}>
-            <IonCardHeader>
-              <IonCardTitle style={{ fontSize: 16 }}>{item.title}</IonCardTitle>
-            </IonCardHeader>
-            <IonCardContent>
-              <p style={{ margin: '8px 0', lineHeight: 1.4 }}>{item.content}</p>
-              <small style={{ color: 'var(--ion-color-medium)' }}>{new Date(item.createdAt).toLocaleDateString()}</small>
-            </IonCardContent>
-          </IonCard>
-        ))}
-      </IonList>
+      <div className="news-section">
+        <div className="news-label">📰 Notícias</div>
+        <IonList className='background'>
+          {news.length > 0 ? (
+            news.map(item => (
+              <IonCard key={item._id} className="news-card">
+                <IonCardHeader>
+                  <IonCardTitle>{item.title}</IonCardTitle>
+                </IonCardHeader>
+                <IonCardContent>
+                  <p>{item.content}</p>
+                  <small>{new Date(item.createdAt).toLocaleDateString('pt-BR')}</small>
+                </IonCardContent>
+              </IonCard>
+            ))
+          ) : (
+            <div className="empty-state">
+              <p>Sem notícias no momento</p>
+            </div>
+          )}
+        </IonList>
+      </div>
 
       {/* Lives Section */}
-      <IonText color="medium" style={{ paddingLeft: 16, margin: '24px 0 8px', fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 }}>
-        Ao Vivo Agora
-      </IonText>
-      <YouTubeFeed category="lives" limit={3} />
+      <div className="news-section">
+        <div className="news-label">🔴 Ao Vivo Agora</div>
+        <YouTubeFeed category="lives" limit={3} />
+      </div>
 
       {/* Videos Section */}
-      <IonText color="medium" style={{ paddingLeft: 16, margin: '24px 0 8px', fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 }}>
-        Vídeos
-      </IonText>
-      <YouTubeFeed category="videos" limit={5} />
+      <div className="news-section">
+        <div className="news-label">🎥 Vídeos em Destaque</div>
+        <YouTubeFeed category="videos" limit={5} />
+      </div>
     </div>
   );
 
@@ -102,52 +108,38 @@ const Comunidade: React.FC = () => {
       <h2>🥋 Comunidade do Dojo</h2>
 
       {/* Create Post Button */}
-      <div style={{ padding: '16px 0' }}>
-        <button
-          style={{
-            width: '100%',
-            padding: '12px 16px',
-            backgroundColor: 'var(--ion-color-primary)',
-            color: 'white',
-            border: 'none',
-            borderRadius: 8,
-            fontSize: 16,
-            fontWeight: 'bold',
-            cursor: 'pointer'
-          }}
-          onClick={() => {
-            // Simulate creating post
-            console.log('Create new post');
-          }}
-        >
-          ✏️ Criar Publicação
-        </button>
-      </div>
+      <button
+        className="create-post-btn"
+        onClick={() => {
+          // Simulate creating post
+          console.log('Create new post');
+        }}
+      >
+        ✏️ Criar Publicação
+      </button>
 
       {/* Posts Feed */}
-      {posts.map(post => (
-        <FeedPost
-          key={post._id}
-          post={transformPost(post)}
-          onLike={async (postId) => {
-            try {
-              await likePost(postId);
-              // Refresh posts
-              const postsData = await fetchPosts(activeTab);
-              setPosts(postsData.data || []);
-            } catch (error) {
-              console.error('Error liking post:', error);
-            }
-          }}
-          onComment={(postId, comment) => console.log('Commented on post:', postId, comment)}
-        />
-      ))}
-
-      {posts.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-          <IonText color="medium">
-            <p>Sem publicações no momento.</p>
-          </IonText>
+      {posts.length > 0 ? (
+        posts.map(post => (
+          <FeedPost
+            key={post._id}
+            post={transformPost(post)}
+            onLike={async (postId) => {
+              try {
+                await likePost(postId);
+                // Refresh posts
+                const postsData = await fetchPosts(activeTab);
+                setPosts(postsData.data || []);
+              } catch (error) {
+                console.error('Error liking post:', error);
+              }
+            }}
+            onComment={(postId, comment) => console.log('Commented on post:', postId, comment)}
+          />
+        ))
+      ) : (
+        <div className="empty-state">
+          <p>Sem publicações no momento. Seja o primeiro a publicar! 🎉</p>
         </div>
       )}
     </div>

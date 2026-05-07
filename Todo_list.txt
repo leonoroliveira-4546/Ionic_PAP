@@ -14,4 +14,7 @@ OQ FALTA NA HOME:
 Oq Falta no Chat:
     dar scrooll automatico quando recebe uma nova mensagem, pois senao tenho que
   sempre dar scroll para baixo.
+    Por o editar e remover mensagens
+
+
     

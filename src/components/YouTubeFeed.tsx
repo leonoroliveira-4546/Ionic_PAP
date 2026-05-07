@@ -1,45 +1,66 @@
 import React, { useState, useEffect } from 'react';
 import { IonText, IonSpinner } from '@ionic/react';
 import VideoCard from './VideoCard';
-import { Video, mockVideos } from '../mockData/videos';
+import comunidadeApi from '../hooks/comunidadeApi';
+
+interface YouTubeVideo {
+  videoId: string;
+  title: string;
+  description: string;
+  thumbnail: string;
+  publishedAt: string;
+}
 
 interface YouTubeFeedProps {
-  category?: 'noticias' | 'lives' | 'videos';
+  category?: 'lives' | 'videos';
   limit?: number;
 }
 
-const YouTubeFeed: React.FC<YouTubeFeedProps> = ({ category, limit = 10 }) => {
-  const [videos, setVideos] = useState<Video[]>([]);
+const YouTubeFeed: React.FC<YouTubeFeedProps> = ({ category = 'videos', limit = 10 }) => {
+  const [videos, setVideos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { getYoutubeVideos, getLives } = comunidadeApi();
 
   useEffect(() => {
-    // Simulate API call
     const loadVideos = async () => {
-      setLoading(true);
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      try {
+        setLoading(true);
+        let data: any = [];
 
-      let filteredVideos = mockVideos;
-
-      if (category) {
         if (category === 'lives') {
-          filteredVideos = mockVideos.filter(v => v.isLive);
-        } else if (category === 'noticias') {
-          filteredVideos = mockVideos.filter(v => v.category === 'noticias');
+          data = await getLives(limit);
         } else {
-          filteredVideos = mockVideos.filter(v => v.category !== 'historia' && v.category !== 'filosofia' && v.category !== 'tecnicas');
+          data = await getYoutubeVideos(limit);
         }
+
+        // Handle both array and {data: array} response formats
+        const videoArray = Array.isArray(data) ? data : (data?.data || []);
+
+        // Transform API response to VideoCard format
+        const transformedVideos = videoArray.map((video: YouTubeVideo) => ({
+          id: video.videoId,
+          videoId: video.videoId,
+          title: video.title,
+          description: video.description,
+          thumbnail: video.thumbnail,
+          publishedAt: video.publishedAt,
+          url: `https://www.youtube.com/watch?v=${video.videoId}`,
+          isLive: category === 'lives',
+          channel: 'FNK Portugal',
+          views: 0
+        }));
+
+        setVideos(transformedVideos);
+      } catch (error) {
+        console.error(`Error loading ${category}:`, error);
+        setVideos([]);
+      } finally {
+        setLoading(false);
       }
-
-      // Sort by published date (newest first)
-      filteredVideos.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
-
-      setVideos(filteredVideos.slice(0, limit));
-      setLoading(false);
     };
 
     loadVideos();
-  }, [category, limit]);
+  }, [category, limit, getYoutubeVideos, getLives]);
 
   if (loading) {
     return (
@@ -63,12 +84,11 @@ const YouTubeFeed: React.FC<YouTubeFeedProps> = ({ category, limit = 10 }) => {
     <div>
       {videos.map(video => (
         <VideoCard
-          key={video.id}
+          key={video.videoId}
           video={video}
           onClick={() => {
-            // Simulate opening video
-            console.log('Opening video:', video.url);
-            // In a real app, this would open the video URL
+            // Open video URL in new window
+            window.open(video.url, '_blank');
           }}
         />
       ))}

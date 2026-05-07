@@ -407,3 +407,144 @@
 .nav-button {
   color: #800505;
 }
+
+/* COMUNIDADE STYLES */
+.community-tabs {
+  display: flex;
+  gap: 0;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  padding: 4px;
+  margin: 0 16px;
+}
+
+.community-tab-btn {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  color: #666;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.community-tab-btn.active {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+}
+
+.community-tab-btn:hover:not(.active) {
+  color: #333;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* News Section */
+.news-section {
+  margin-bottom: 32px;
+}
+
+.news-label {
+  padding-left: 16px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  font-weight: 700;
+  color: #999;
+}
+
+.news-card {
+  margin: 12px 0 !important;
+  border-radius: 12px !important;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  border: none !important;
+}
+
+.news-card ion-card-header {
+  background: linear-gradient(135deg, rgba(255, 107, 107, 0.1) 0%, rgba(238, 90, 111, 0.1) 100%);
+  border-bottom: 2px solid rgba(255, 107, 107, 0.2);
+  padding: 12px 16px !important;
+}
+
+.news-card ion-card-title {
+  color: #2b0000;
+  font-weight: 700 !important;
+  font-size: 15px !important;
+}
+
+.news-card ion-card-content {
+  padding: 14px 16px !important;
+}
+
+.news-card p {
+  color: #444;
+  line-height: 1.6;
+  margin: 8px 0 !important;
+  font-size: 14px;
+}
+
+.news-card small {
+  color: #999;
+  font-size: 12px;
+}
+
+/* Section Titles */
+.section-title {
+  padding-left: 16px;
+  margin-top: 28px;
+  margin-bottom: 14px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  font-weight: 700;
+  color: #999;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Create Post Button */
+.create-post-btn {
+  width: 100% !important;
+  padding: 14px 16px !important;
+  margin: 16px 0 !important;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 10px !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 16px rgba(255, 107, 107, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.create-post-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 107, 107, 0.4);
+}
+
+.create-post-btn:active {
+  transform: translateY(0);
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #999;
+}
+
+.empty-state p {
+  font-size: 14px;
+  color: #999;
+}
