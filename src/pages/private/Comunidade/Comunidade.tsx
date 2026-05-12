@@ -130,15 +130,12 @@ const Comunidade: React.FC = () => {
     <div className="page background">
       <h2>🌍 Comunidade Geral</h2>
 
-      {isAdmin && (
         <div style={{ marginBottom: 16 }}>
           <IonButton expand="block" onClick={() => setShowNewsModal(true)}>
             ✍️ Adicionar notícia
           </IonButton>
         </div>
-      )}
 
-      {news.length > 0 && (
         <div className="news-section">
           <div className="news-label">📰 Notícias</div>
           <IonList className='background'>
@@ -248,7 +245,6 @@ const Comunidade: React.FC = () => {
             ))}
           </IonList>
         </div>
-      )}
 
       <div style={{ display: videosCount === 0 ? 'none' : 'block' }}>
         <div className="news-section">
