@@ -9,6 +9,7 @@ interface YouTubeVideo {
   description: string;
   thumbnail: string;
   publishedAt: string;
+  duration?: string;
 }
 
 interface YouTubeFeedProps {
@@ -19,6 +20,7 @@ interface YouTubeFeedProps {
 const YouTubeFeed: React.FC<YouTubeFeedProps> = ({ category = 'videos', limit = 10 }) => {
   const [videos, setVideos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const { getYoutubeVideos, getLives } = comunidadeApi();
 
   useEffect(() => {
@@ -44,10 +46,8 @@ const YouTubeFeed: React.FC<YouTubeFeedProps> = ({ category = 'videos', limit = 
           description: video.description,
           thumbnail: video.thumbnail,
           publishedAt: video.publishedAt,
-          url: `https://www.youtube.com/watch?v=${video.videoId}`,
-          isLive: category === 'lives',
-          channel: 'FNK Portugal',
-          views: 0
+          duration: video.duration || 'PT0S',
+          isLive: category === 'lives'
         }));
 
         setVideos(transformedVideos);
@@ -82,14 +82,26 @@ const YouTubeFeed: React.FC<YouTubeFeedProps> = ({ category = 'videos', limit = 
 
   return (
     <div>
+      {selectedVideoId && (
+        <div style={{ marginBottom: 16, width: '100%', overflow: 'hidden', borderRadius: 12 }}>
+          <iframe
+            width="100%"
+            height="280"
+            src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1&rel=0&modestbranding=1`}
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            title="YouTube video player"
+            style={{ borderRadius: 12, minHeight: 200 }}
+          />
+        </div>
+      )}
+
       {videos.map(video => (
         <VideoCard
           key={video.videoId}
           video={video}
-          onClick={() => {
-            // Open video URL in new window
-            window.open(video.url, '_blank');
-          }}
+          onClick={() => setSelectedVideoId(prev => (prev === video.videoId ? null : video.videoId))}
         />
       ))}
     </div>

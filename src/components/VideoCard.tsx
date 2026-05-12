@@ -1,5 +1,5 @@
 import React from 'react';
-import { IonCard, IonCardContent, IonText, IonAvatar, IonIcon } from '@ionic/react';
+import { IonCard, IonCardContent, IonText, IonIcon } from '@ionic/react';
 import { play, timeOutline } from 'ionicons/icons';
 
 interface VideoCardProps {
@@ -8,10 +8,18 @@ interface VideoCardProps {
 }
 
 const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
-  const formatViews = (views: number) => {
-    if (views >= 1000000) return `${(views / 1000000).toFixed(1)}M`;
-    if (views >= 1000) return `${(views / 1000).toFixed(1)}K`;
-    return views.toString();
+  const formatDuration = (duration: string) => {
+    if (!duration) return '00:00';
+    const matches = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+    if (!matches) return duration;
+    const hours = Number(matches[1] || 0);
+    const minutes = Number(matches[2] || 0);
+    const seconds = Number(matches[3] || 0);
+    const parts = [];
+    if (hours > 0) parts.push(hours.toString());
+    parts.push(hours > 0 ? minutes.toString().padStart(2, '0') : minutes.toString());
+    parts.push(seconds.toString().padStart(2, '0'));
+    return parts.join(':');
   };
 
   const formatDate = (dateString: string) => {
@@ -26,11 +34,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
     return date.toLocaleDateString('pt-BR');
   };
 
-  // Provide default values for optional properties
-  const channelName = video.channelName || video.channel || 'FNK Portugal';
-  const channelAvatar = video.channelAvatar || 'https://yt3.googleusercontent.com/ytc/AIdro_moYaXO4Ot0i8F-khP_WYiXqFZ6g4Yvmq0h0OE=s88-c-k-c0x00ffffff-no-rj';
-  const views = video.views || 0;
-  const duration = video.duration || '00:00';
+  const durationText = formatDuration(video.duration || 'PT0S');
 
   return (
     <IonCard
@@ -90,7 +94,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
           ) : (
             <>
               <IonIcon icon={timeOutline} style={{ fontSize: 10 }} />
-              {duration}
+              {durationText}
             </>
           )}
         </div>
@@ -122,17 +126,8 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
           {video.title}
         </IonText>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-          <IonAvatar style={{ width: 24, height: 24 }}>
-            <img src={channelAvatar} alt={channelName} />
-          </IonAvatar>
-          <IonText color="medium" style={{ fontSize: 13 }}>
-            {channelName}
-          </IonText>
-        </div>
-
         <IonText color="medium" style={{ fontSize: 12 }}>
-          {formatViews(views)} visualizações • {formatDate(video.publishedAt)}
+          {formatDate(video.publishedAt)}
         </IonText>
       </IonCardContent>
 
