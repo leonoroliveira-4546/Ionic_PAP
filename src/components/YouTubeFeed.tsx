@@ -15,9 +15,10 @@ interface YouTubeVideo {
 interface YouTubeFeedProps {
   category?: 'lives' | 'videos';
   limit?: number;
+  onLoaded?: (count: number) => void;
 }
 
-const YouTubeFeed: React.FC<YouTubeFeedProps> = ({ category = 'videos', limit = 10 }) => {
+const YouTubeFeed: React.FC<YouTubeFeedProps> = ({ category = 'videos', limit = 10, onLoaded }) => {
   const [videos, setVideos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);

@@ -73,7 +73,27 @@ export const comunidadeApi = () => {
         return data;
     }, []);
 
-    return { getNews, getPosts, getPostDetails, createPost, updatePost, deletePost, addComment, editComment, deleteComment, likePost, getYoutubeVideos, getLives }
+    const addNews = useCallback(async (formData: FormData) => {
+        const { data } = await api.post('/news', formData);
+        return data;
+    }, []);
+
+    const likeNews = useCallback(async (newsId: string) => {
+        const { data } = await api.post(`/news/${newsId}/like`);
+        return data;
+    }, []);
+
+    const addCommentToNews = useCallback(async (newsId: string, message: string) => {
+        const { data } = await api.post(`/news/${newsId}/comments`, { message });
+        return data;
+    }, []);
+
+    const removeCommentFromNews = useCallback(async (commentId: string) => {
+        const { data } = await api.delete(`/news/comments/${commentId}`);
+        return data;
+    }, []);
+
+    return { getNews, addNews, likeNews, addCommentToNews, removeCommentFromNews, getPosts, getPostDetails, createPost, updatePost, deletePost, addComment, editComment, deleteComment, likePost, getYoutubeVideos, getLives }
 }
 
 export default comunidadeApi;
