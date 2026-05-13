@@ -4,47 +4,52 @@ import api from "../components/AxiosInstance"
 export interface Post {
     _id: string
     author: any,
+    type: 'post' | 'news' | 'tournament',
     title: string,
-    message: string,
+    message?: string,
+    content?: string,
+    link?: string,
     imagens: string[],
     likes: any[],
     comments: any[]
 }
 
 export const comunidadeApi = () => {
-    const getNews = useCallback(async () => {
-        const { data } = await api.get('/news');
+    const getContents = useCallback(async (type?: string, community: string = 'geral') => {
+        const { data } = await api.get(`/contents?type=${type || ''}&community=${community}`);
         return data;
     }, []);
 
-    const getPosts = useCallback(async (community: string = 'geral') => {
-        const { data } = await api.get(`/comunidade?community=${community}`);
+    const getContentDetails = useCallback(async (id: string) => {
+        const { data } = await api.get(`/contents/${id}`);
         return data;
     }, []);
 
-    const getPostDetails = useCallback(async (id: string) => {
-        const { data } = await api.get(`/posts/${id}`);
+    const createContent = useCallback(async (formData: FormData, type: string = 'post', community: string = 'geral') => {
+        formData.append('type', type);
+        formData.append('community', community);
+
+        const { data } = await api.post("/contents", formData);
         return data;
     }, []);
 
-    const createPost = useCallback(async (post: FormData, community: string = 'geral') => {
-        post.append('community', community);
-        const { data } = await api.post("/posts", post);
+    const updateContent = useCallback(async (id: string, formData: FormData) => {
+        const { data } = await api.put(`/contents/${id}`, formData);
         return data;
     }, []);
 
-    const updatePost = useCallback(async (id: string, formData: FormData) => {
-        const { data } = await api.put(`/posts/${id}`, formData);
+    const deleteContent = useCallback(async (id: string) => {
+        const { data } = await api.delete(`/contents/${id}`);
         return data;
     }, []);
 
-    const deletePost = useCallback(async (id: string) => {
-        const { data } = await api.delete(`/posts/${id}`);
+    const likeContent = useCallback(async (id: string) => {
+        const { data } = await api.post(`/contents/${id}/like`);
         return data;
     }, []);
 
-    const addComment = useCallback(async (postId: string, message: string) => {
-        const { data } = await api.post(`/posts/${postId}/comments`, { message });
+    const addComment = useCallback(async (contentId: string, message: string) => {
+        const { data } = await api.post(`/contents/${contentId}/comments`, { message });
         return data;
     }, []);
 
@@ -53,13 +58,8 @@ export const comunidadeApi = () => {
         return data;
     }, []);
 
-    const deleteComment = useCallback(async (commentId: string): Promise<any> => {
+    const deleteComment = useCallback(async (commentId: string) => {
         const { data } = await api.delete(`/comments/${commentId}`);
-        return data;
-    }, []);
-
-    const likePost = useCallback(async (postId: string) => {
-        const { data } = await api.post(`/posts/${postId}/like`);
         return data;
     }, []);
 
@@ -73,27 +73,7 @@ export const comunidadeApi = () => {
         return data;
     }, []);
 
-    const addNews = useCallback(async (formData: FormData) => {
-        const { data } = await api.post('/news', formData);
-        return data;
-    }, []);
-
-    const likeNews = useCallback(async (newsId: string) => {
-        const { data } = await api.post(`/news/${newsId}/like`);
-        return data;
-    }, []);
-
-    const addCommentToNews = useCallback(async (newsId: string, message: string) => {
-        const { data } = await api.post(`/news/${newsId}/comments`, { message });
-        return data;
-    }, []);
-
-    const removeCommentFromNews = useCallback(async (commentId: string) => {
-        const { data } = await api.delete(`/news/comments/${commentId}`);
-        return data;
-    }, []);
-
-    return { getNews, addNews, likeNews, addCommentToNews, removeCommentFromNews, getPosts, getPostDetails, createPost, updatePost, deletePost, addComment, editComment, deleteComment, likePost, getYoutubeVideos, getLives }
+    return { getContents, getContentDetails, createContent, updateContent, deleteContent, likeContent, addComment, editComment, deleteComment, getYoutubeVideos, getLives };
 }
 
 export default comunidadeApi;

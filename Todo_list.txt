@@ -16,7 +16,20 @@ Oq Falta no Chat:
   sempre dar scroll para baixo.
     Por o editar e remover mensagens, e mostrar que o outra ta a digitar
 
+Oq falta na Comunidade:
+    Noticias:
+        remover new;
+        responder comment;
+        ver mais se text é muito longo;
+        por imagens;
+
+    Mostrar o modal apenas ao admin;
+    Se nao tiver live ou videos, nao mostra o topico;
 
 
+Em TODOS:
+    - STYLE PARA TODOS (usar uma library)
+    - FAZER DIMENSÔES PARA CADA TELEMOVEL
+    - LIMPAR CONSOLES DESNECESSÀRIOS E INDIREITAR Código
 
     
