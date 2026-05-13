@@ -9,7 +9,7 @@ import Login from './pages/public/Login';
 import Signup from './pages/public/SignUp';
 import PrivateRoute from './components/PrivadeRoute';
 import InicialPage from './pages/public/InicialPage';
-// import Comunidade from './pages/private/Comunidade/Comunidade';
+import Comunidade from './pages/private/Comunidade/Comunidade';
 import Chat from './pages/private/Chat/Chat';
 import ConfirmResponsavel from './pages/public/ConfirmResponsavel';
 import ProfileSettings from './pages/private/ProfileSettings';
@@ -72,7 +72,7 @@ const InnerApp: React.FC = () => {
 
           {/* Rotas privadas */}
           <PrivateRoute exact path='/home' component={Home}/>
-          {/* <PrivateRoute exact path='/comunidade' component={Comunidade}/> */}
+          <PrivateRoute exact path='/comunidade' component={Comunidade}/>
           <PrivateRoute exact path='/chat' component={Chat}/>
           <PrivateRoute exact path='/perfil' component={ProfileSettings}/>
           <PrivateRoute exact path='/shop' component={Shop}/>

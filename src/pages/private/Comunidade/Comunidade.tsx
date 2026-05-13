@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonList, IonModal, IonButton, IonInput, IonTextarea, IonIcon, IonItem, IonLabel, IonAvatar } from '@ionic/react';
 import '../../../pages/StylesPages.css';
-import './DojoPostModal.css';
 import { heart, heartOutline, chatbubbleOutline, trash } from 'ionicons/icons';
 import Navbar from '../../../components/MainLayout';
 import YouTubeFeed from '../../../components/YouTubeFeed';
@@ -37,7 +36,10 @@ const Comunidade: React.FC = () => {
   // ---------------- LOAD ----------------
   const loadContents = useCallback(async () => {
     try {
-      const res = await getContents(undefined, activeTab);
+      const res = await getContents(
+        activeTab === 'geral' ? 'news' : 'posts',
+        activeTab
+      );
       setContents(res.data || []);
     } catch (err) {
       console.error(err);
@@ -287,18 +289,22 @@ const Comunidade: React.FC = () => {
       </IonList>
     </div>
 
-    <div style={{ display: videosCount === 0 ? 'none' : 'block' }}>
-      <div className="news-section">
-        <div className="news-label">🔴 Ao Vivo Agora</div>
-        <YouTubeFeed category="lives" limit={3} onLoaded={count => setLivesCount(count)} />
-      </div>
+    <div className="news-section">
+      <div className="news-label">🔴 Ao Vivo Agora</div>
+      <YouTubeFeed
+        category="lives"
+        limit={3}
+        onLoaded={setLivesCount}
+      />
     </div>
 
-    <div style={{ display: videosCount === 0 ? 'none' : 'block' }}>
-      <div className="news-section">
-        <div className="news-label">🎥 Vídeos em Destaque</div>
-        <YouTubeFeed category="videos" limit={5} onLoaded={count => setVideosCount(count)} />
-      </div>
+    <div className="news-section">
+      <div className="news-label">🎥 Vídeos em Destaque</div>
+      <YouTubeFeed
+        category="videos"
+        limit={5}
+        onLoaded={setVideosCount}
+      />
     </div>
   </div>
 );

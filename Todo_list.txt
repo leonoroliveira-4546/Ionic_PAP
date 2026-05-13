@@ -31,5 +31,6 @@ Em TODOS:
     - STYLE PARA TODOS (usar uma library)
     - FAZER DIMENSÔES PARA CADA TELEMOVEL
     - LIMPAR CONSOLES DESNECESSÀRIOS E INDIREITAR Código
-
+    - Dimuinir os requests
+    -
     
