@@ -35,7 +35,7 @@ const InicialPage: React.FC = () => {
         <div className="page">
 
           <div className="logo">
-            <img src="/public/logo.png" alt="" />
+            <img src="/logo.png" alt="" />
             <h2>Warera Dojo</h2>
           </div>
 
