@@ -495,6 +495,38 @@
   font-size: 12px;
 }
 
+.community-attachment {
+  width: 100%;
+  max-height: 300px;
+  object-fit: cover;
+  margin-bottom: 12px;
+  border-radius: 8px;
+}
+
+.community-empty-card {
+  text-align: center;
+}
+
+.community-empty-card p {
+  margin: 0 !important;
+  color: #777;
+}
+
+.community-modal-content {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.community-file-input {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 100%;
+  background: #fff;
+}
+
 /* Section Titles */
 .section-title {
   padding-left: 16px;

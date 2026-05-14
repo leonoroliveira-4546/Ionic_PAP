@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonList, IonModal, IonButton, IonInput, IonTextarea, IonIcon, IonItem, IonLabel, IonAvatar } from '@ionic/react';
+import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonList, IonModal, IonButton, IonInput, IonTextarea, IonIcon, IonLabel, IonAvatar } from '@ionic/react';
 import '../../../pages/StylesPages.css';
 import { heart, heartOutline, chatbubbleOutline, trash } from 'ionicons/icons';
 import Navbar from '../../../components/MainLayout';
@@ -7,21 +7,74 @@ import YouTubeFeed from '../../../components/YouTubeFeed';
 import comunidadeApi from '../../../hooks/comunidadeApi';
 import { useAuth } from '../../../AuthContext';
 
+type CommunityAuthor = {
+  _id?: string;
+  username?: string;
+  profilePic?: string;
+};
+
+type CommunityComment = {
+  _id: string;
+  author?: CommunityAuthor;
+  message: string;
+  createdAt: string;
+};
+
+type CommunityAttachment = {
+  type: 'image' | 'video' | 'link';
+  url: string;
+  title?: string;
+};
+
+type CommunityPollOption = {
+  text: string;
+  votes: string[];
+};
+
+type CommunityPoll = {
+  _id: string;
+  question: string;
+  options: CommunityPollOption[];
+};
+
+type CommunityContent = {
+  _id: string;
+  author?: CommunityAuthor;
+  community?: 'geral' | 'dojo';
+  type?: 'news' | 'post' | 'tournament';
+  title: string;
+  message?: string;
+  content?: string;
+  link?: string;
+  createdAt: string;
+  imagens?: string[];
+  likes?: string[];
+  comments?: CommunityComment[];
+  attachments?: CommunityAttachment[];
+  poll?: CommunityPoll | null;
+};
+
 const Comunidade: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'geral' | 'dojo'>('geral');
-  const [contents, setContents] = useState<any[]>([]);
+  const [contents, setContents] = useState<CommunityContent[]>([]);
   const [selectedNewsForComments, setSelectedNewsForComments] = useState<string | null>(null);
   const [selectedDojoPostForComments, setSelectedDojoPostForComments] = useState<string | null>(null);
 
   const [showNewsModal, setShowNewsModal] = useState(false);
+  const [showDojoModal, setShowDojoModal] = useState(false);
   const [newNewsTitle, setNewNewsTitle] = useState('');
   const [newNewsContent, setNewNewsContent] = useState('');
   const [newNewsLink, setNewNewsLink] = useState('');
+  const [newDojoTitle, setNewDojoTitle] = useState('');
+  const [newDojoContent, setNewDojoContent] = useState('');
+  const [newDojoLink, setNewDojoLink] = useState('');
   const [newComment, setNewComment] = useState('');
   const [newNewsImage, setNewNewsImage] = useState<File | null>(null);
+  const [newDojoImage, setNewDojoImage] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [livesCount, setLivesCount] = useState<number>(0);
-  const [videosCount, setVideosCount] = useState<number>(0);
+  const [, setLivesCount] = useState<number>(0);
+  const [, setVideosCount] = useState<number>(0);
 
   const { user } = useAuth();
 
@@ -54,24 +107,66 @@ const Comunidade: React.FC = () => {
   const news = contents.filter(c => c.type === 'news');
   const dojoPosts = contents.filter(c => c.community === 'dojo');
 
+  const resetNewsForm = () => {
+    setNewNewsTitle('');
+    setNewNewsContent('');
+    setNewNewsLink('');
+    setNewNewsImage(null);
+  };
+
+  const resetDojoForm = () => {
+    setNewDojoTitle('');
+    setNewDojoContent('');
+    setNewDojoLink('');
+    setNewDojoImage(null);
+  };
+
   // ---------------- NEWS ----------------
   const handleCreateNews = async () => {
+    if (!newNewsTitle.trim() || !newNewsContent.trim() || isSubmitting) return;
+
     try {
+      setIsSubmitting(true);
       const form = new FormData();
-      form.append('title', newNewsTitle);
-      form.append('message', newNewsContent);
-      if (newNewsLink) form.append('link', newNewsLink);
+      form.append('title', newNewsTitle.trim());
+      form.append('content', newNewsContent.trim());
+      form.append('message', newNewsContent.trim());
+      if (newNewsLink.trim()) form.append('link', newNewsLink.trim());
+      if (newNewsImage) form.append('file', newNewsImage);
 
       await createContent(form, 'news', 'geral');
 
       setShowNewsModal(false);
-      setNewNewsTitle('');
-      setNewNewsContent('');
-      setNewNewsLink('');
-
-      loadContents();
+      resetNewsForm();
+      await loadContents();
     } catch (err) {
       console.error(err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCreateDojoPost = async () => {
+    if (!newDojoTitle.trim() || !newDojoContent.trim() || isSubmitting) return;
+
+    try {
+      setIsSubmitting(true);
+      const form = new FormData();
+      form.append('title', newDojoTitle.trim());
+      form.append('message', newDojoContent.trim());
+      form.append('content', newDojoContent.trim());
+      if (newDojoLink.trim()) form.append('link', newDojoLink.trim());
+      if (newDojoImage) form.append('file', newDojoImage);
+
+      await createContent(form, 'post', 'dojo');
+
+      setShowDojoModal(false);
+      resetDojoForm();
+      await loadContents();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -85,11 +180,6 @@ const Comunidade: React.FC = () => {
   const handleAddComment = async (id: string) => {
     await addComment(id, newComment);
     setNewComment('');
-    loadContents();
-  };
-
-  const handleDeleteComment = async (commentId: string) => {
-    await deleteComment(commentId);
     loadContents();
   };
 
@@ -107,11 +197,6 @@ const Comunidade: React.FC = () => {
 
   const handleDeleteDojoComment = async (commentId: string) => {
     await deleteComment(commentId);
-    loadContents();
-  };
-
-  const handleDeleteDojoPost = async (id: string) => {
-    await deleteComment(id); // (ou deleteContent se tiveres endpoint)
     loadContents();
   };
 
@@ -158,7 +243,7 @@ const Comunidade: React.FC = () => {
             </IonCardHeader>
 
             <IonCardContent>
-              {item.imagens?.length > 0 && (
+              {item.imagens?.[0] && (
                 <img
                   src={item.imagens[0]}
                   alt={item.title}
@@ -166,7 +251,7 @@ const Comunidade: React.FC = () => {
                 />
               )}
 
-              <p>{item.content}</p>
+              <p>{item.content || item.message}</p>
 
               {item.link && (
                 <a
@@ -197,10 +282,10 @@ const Comunidade: React.FC = () => {
                     alignItems: 'center',
                     gap: 4,
                     fontSize: 14,
-                    color: item.likes?.includes(user?._id) ? '#e74c3c' : '#999'
+                    color: user?._id && item.likes?.includes(user._id) ? '#e74c3c' : '#999'
                   }}
                 >
-                  <IonIcon icon={item.likes?.includes(user?._id) ? heart : heartOutline} />
+                  <IonIcon icon={user?._id && item.likes?.includes(user._id) ? heart : heartOutline} />
                   {item.likes?.length || 0}
                 </button>
 
@@ -231,17 +316,17 @@ const Comunidade: React.FC = () => {
                 <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #ddd' }}>
 
                   <div style={{ marginBottom: 12, maxHeight: 200, overflowY: 'auto' }}>
-                    {item.comments?.length > 0 ? (
-                      item.comments.map((comment: any) => (
+                    {(item.comments?.length ?? 0) > 0 ? (
+                      (item.comments ?? []).map((comment: CommunityComment) => (
                         <div key={comment._id} style={{ marginBottom: 10, paddingBottom: 10, borderBottom: '1px solid #eee' }}>
                           <div style={{ display: 'flex', gap: 8 }}>
                             <IonAvatar style={{ width: 24, height: 24 }}>
                               <img
                                 src={
                                   comment.author?.profilePic ||
-                                  'https://ui-avatars.com/api/?name=' + comment.author?.username
+                                  'https://ui-avatars.com/api/?name=' + (comment.author?.username || 'User')
                                 }
-                                alt={comment.author?.username}
+                                alt={comment.author?.username || 'User'}
                               />
                             </IonAvatar>
 
@@ -310,22 +395,75 @@ const Comunidade: React.FC = () => {
 );
 
   const renderDojoTab = () => (
-    <div className="page">
+    <div className="page background">
       <h2>🥋 Dojo</h2>
 
+      <div style={{ marginBottom: 16 }}>
+        <IonButton expand="block" onClick={() => setShowDojoModal(true)}>
+          📝 Adicionar post do dojo
+        </IonButton>
+      </div>
+
+      <div className="news-section">
+        <div className="news-label">🥋 Feed do Dojo</div>
+
+        {dojoPosts.length === 0 && (
+          <IonCard className="news-card community-empty-card">
+            <IonCardContent>
+              <p>Ainda não existem publicações no dojo.</p>
+            </IonCardContent>
+          </IonCard>
+        )}
+
       {dojoPosts.map(post => (
-        <IonCard key={post._id}>
+        <IonCard key={post._id} className="news-card" style={{ marginBottom: 16 }}>
           <IonCardHeader>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <IonAvatar style={{ width: 32, height: 32 }}>
+                <img
+                  src={post.author?.profilePic || 'https://ui-avatars.com/api/?name=Dojo'}
+                  alt={post.author?.username}
+                />
+              </IonAvatar>
+
+              <div style={{ flex: 1 }}>
+                <strong>{post.author?.username || 'Dojo'}</strong>
+                <div style={{ fontSize: 12, color: '#999' }}>
+                  {new Date(post.createdAt).toLocaleDateString('pt-BR')}{' '}
+                  {new Date(post.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                </div>
+              </div>
+            </div>
+
             <IonCardTitle>{post.title}</IonCardTitle>
           </IonCardHeader>
 
           <IonCardContent>
-            <p>{post.message}</p>
+            {post.imagens?.[0] && (
+              <img
+                src={post.imagens[0]}
+                alt={post.title}
+                className="community-attachment"
+              />
+            )}
+
+            <p>{post.message || post.content}</p>
+
+            {post.link && (
+              <a
+                href={post.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: '#007bff', textDecoration: 'none', fontSize: 12 }}
+              >
+                🔗 {post.link}
+              </a>
+            )}
 
             {/* ATTACHMENTS */}
-            {post.attachments?.map((att: any, i: number) => (
+            {post.attachments?.map((att: CommunityAttachment, i: number) => (
               <div key={i}>
-                {att.type === 'image' && <img src={att.url} style={{ width: '100%' }} />}
+                {att.type === 'image' && <img src={att.url} className="community-attachment" />}
                 {att.type === 'video' && <video src={att.url} controls />}
                 {att.type === 'link' && <a href={att.url}>{att.title}</a>}
               </div>
@@ -334,12 +472,12 @@ const Comunidade: React.FC = () => {
             {/* POLL */}
             {post.poll && (
               <div>
-                <strong>{post.poll.question}</strong>
-                {post.poll.options.map((o: any, i: number) => (
+                <strong>{post.poll?.question}</strong>
+                {post.poll?.options.map((o: CommunityPollOption, i: number) => (
                   <div key={i}>
                     <input
                       type="radio"
-                      onChange={() => handleVotePoll(post.poll._id, i)}
+                      onChange={() => post.poll?._id && handleVotePoll(post.poll._id, i)}
                     />
                     {o.text} ({o.votes.length})
                   </div>
@@ -348,17 +486,47 @@ const Comunidade: React.FC = () => {
             )}
 
             {/* LIKE + COMMENTS */}
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <button onClick={() => handleLikeDojoPost(post._id)}>
-                <IonIcon icon={post.likes?.includes(user?._id) ? heart : heartOutline} />
+            <div style={{
+              marginTop: 12,
+              paddingTop: 12,
+              borderTop: '1px solid #ddd',
+              display: 'flex',
+              justifyContent: 'space-between'
+            }}>
+              <button
+                onClick={() => handleLikeDojoPost(post._id)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  fontSize: 14,
+                  color: user?._id && post.likes?.includes(user._id) ? '#e74c3c' : '#999'
+                }}
+              >
+                <IonIcon icon={user?._id && post.likes?.includes(user._id) ? heart : heartOutline} />
                 {post.likes?.length || 0}
               </button>
 
-              <button onClick={() =>
-                setSelectedDojoPostForComments(
-                  selectedDojoPostForComments === post._id ? null : post._id
-                )
-              }>
+              <button
+                onClick={() =>
+                  setSelectedDojoPostForComments(
+                    selectedDojoPostForComments === post._id ? null : post._id
+                  )
+                }
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  fontSize: 14,
+                  color: '#999'
+                }}
+              >
                 <IonIcon icon={chatbubbleOutline} />
                 {post.comments?.length || 0}
               </button>
@@ -366,11 +534,29 @@ const Comunidade: React.FC = () => {
 
             {/* COMMENTS */}
             {selectedDojoPostForComments === post._id && (
-              <div>
-                {post.comments?.map((c: any) => (
-                  <div key={c._id}>
-                    <strong>{c.author?.username}</strong>
-                    <p>{c.message}</p>
+              <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #ddd' }}>
+                {(post.comments ?? []).map((c: CommunityComment) => (
+                  <div key={c._id} style={{ marginBottom: 10, paddingBottom: 10, borderBottom: '1px solid #eee' }}>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <IonAvatar style={{ width: 24, height: 24 }}>
+                        <img
+                          src={
+                            c.author?.profilePic ||
+                            'https://ui-avatars.com/api/?name=' + (c.author?.username || 'User')
+                          }
+                          alt={c.author?.username || 'User'}
+                        />
+                      </IonAvatar>
+
+                      <div style={{ flex: 1 }}>
+                        <strong style={{ fontSize: 12 }}>{c.author?.username}</strong>
+                        <p style={{ margin: '4px 0', fontSize: 13 }}>{c.message}</p>
+
+                        <small style={{ color: '#999' }}>
+                          {new Date(c.createdAt).toLocaleDateString('pt-BR')}
+                        </small>
+                      </div>
+                    </div>
 
                     <IonButton
                       fill="clear"
@@ -382,19 +568,24 @@ const Comunidade: React.FC = () => {
                   </div>
                 ))}
 
-                <IonInput
-                  value={newComment}
-                  onIonChange={e => setNewComment(e.detail.value!)}
-                />
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <IonInput
+                    placeholder="Adicionar comentário..."
+                    value={newComment}
+                    onIonChange={e => setNewComment(e.detail.value || '')}
+                    style={{ flex: 1 }}
+                  />
 
-                <IonButton onClick={() => handleAddDojoComment(post._id)}>
-                  Enviar
-                </IonButton>
+                  <IonButton fill="clear" onClick={() => handleAddDojoComment(post._id)}>
+                    Enviar
+                  </IonButton>
+                </div>
               </div>
             )}
           </IonCardContent>
         </IonCard>
       ))}
+      </div>
     </div>
   );
 
@@ -425,7 +616,10 @@ const Comunidade: React.FC = () => {
       </IonContent>
 
       {/* News Creation Modal */}
-      <IonModal isOpen={showNewsModal} onDidDismiss={() => setShowNewsModal(false)}>
+      <IonModal isOpen={showNewsModal} onDidDismiss={() => {
+        setShowNewsModal(false);
+        resetNewsForm();
+      }}>
         <IonHeader>
           <IonToolbar>
             <IonTitle>Adicionar Notícia</IonTitle>
@@ -435,7 +629,7 @@ const Comunidade: React.FC = () => {
           </IonToolbar>
         </IonHeader>
         <IonContent>
-          <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div className="community-modal-content">
             <div>
               <IonLabel>Título *</IonLabel>
               <IonInput
@@ -470,16 +664,90 @@ const Comunidade: React.FC = () => {
                 type="file"
                 accept="image/*"
                 onChange={e => setNewNewsImage(e.target.files?.[0] || null)}
-                style={{ padding: 8, border: '1px solid #ddd', borderRadius: 4, width: '100%' }}
+                className="community-file-input"
               />
               {newNewsImage && <p style={{ marginTop: 8, fontSize: 12, color: '#666' }}>✓ {newNewsImage.name}</p>}
             </div>
 
             <div style={{ display: 'flex', gap: 8 }}>
-              <IonButton expand="block" fill="solid" onClick={handleCreateNews}>
+              <IonButton expand="block" fill="solid" onClick={handleCreateNews} disabled={isSubmitting}>
                 Publicar Notícia
               </IonButton>
-              <IonButton expand="block" fill="clear" onClick={() => setShowNewsModal(false)}>
+              <IonButton expand="block" fill="clear" onClick={() => {
+                setShowNewsModal(false);
+                resetNewsForm();
+              }}>
+                Cancelar
+              </IonButton>
+            </div>
+          </div>
+        </IonContent>
+      </IonModal>
+
+      <IonModal isOpen={showDojoModal} onDidDismiss={() => {
+        setShowDojoModal(false);
+        resetDojoForm();
+      }}>
+        <IonHeader>
+          <IonToolbar>
+            <IonTitle>Adicionar Post do Dojo</IonTitle>
+            <IonButton slot="end" fill="clear" onClick={() => {
+              setShowDojoModal(false);
+              resetDojoForm();
+            }}>
+              Fechar
+            </IonButton>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent>
+          <div className="community-modal-content">
+            <div>
+              <IonLabel>Título *</IonLabel>
+              <IonInput
+                placeholder="Digite o título do post"
+                value={newDojoTitle}
+                onIonChange={e => setNewDojoTitle(e.detail.value || '')}
+              />
+            </div>
+
+            <div>
+              <IonLabel>Conteúdo *</IonLabel>
+              <IonTextarea
+                placeholder="Partilha uma atualização com o dojo"
+                value={newDojoContent}
+                onIonChange={e => setNewDojoContent(e.detail.value || '')}
+                style={{ minHeight: 120 }}
+              />
+            </div>
+
+            <div>
+              <IonLabel>Link Externo (opcional)</IonLabel>
+              <IonInput
+                placeholder="https://exemplo.com"
+                value={newDojoLink}
+                onIonChange={e => setNewDojoLink(e.detail.value || '')}
+              />
+            </div>
+
+            <div>
+              <IonLabel>Imagem (opcional)</IonLabel>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={e => setNewDojoImage(e.target.files?.[0] || null)}
+                className="community-file-input"
+              />
+              {newDojoImage && <p style={{ marginTop: 8, fontSize: 12, color: '#666' }}>✓ {newDojoImage.name}</p>}
+            </div>
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <IonButton expand="block" fill="solid" onClick={handleCreateDojoPost} disabled={isSubmitting}>
+                Publicar Post
+              </IonButton>
+              <IonButton expand="block" fill="clear" onClick={() => {
+                setShowDojoModal(false);
+                resetDojoForm();
+              }}>
                 Cancelar
               </IonButton>
             </div>
