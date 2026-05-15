@@ -29,12 +29,12 @@ export const comunidadeApi = () => {
         formData.append('type', type);
         formData.append('community', community);
 
-        const { data } = await api.post("/contents", formData);
-        return data;
-    }, []);
+const { data } = await api.post("/contents", formData);
+    return data;
+  }, []);
 
-    const updateContent = useCallback(async (id: string, formData: FormData) => {
-        const { data } = await api.put(`/contents/${id}`, formData);
+  const updateContent = useCallback(async (id: string, formData: FormData) => {
+    const { data } = await api.put(`/contents/${id}`, formData);
         return data;
     }, []);
 

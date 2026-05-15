@@ -1,5 +1,5 @@
 import { IonFooter, IonToolbar, IonButton, IonIcon } from '@ionic/react';
-import { home, people, chatbubble, personCircleOutline, cartOutline, cartSharp } from 'ionicons/icons';
+import { home, people, chatbubble, personCircleOutline, cartSharp, trophyOutline, flashOutline, listOutline, bookOutline } from 'ionicons/icons';
 import { useLocation } from 'react-router-dom';
 
 const Navbar: React.FC = () => {
@@ -54,7 +54,7 @@ const Navbar: React.FC = () => {
           fill={location.pathname === '/ranking' ? 'solid' : 'clear'}
           className='nav-button'
         >
-          <IonIcon icon={personCircleOutline} />
+          <IonIcon icon={trophyOutline} />
         </IonButton>
 
         <IonButton 
@@ -62,7 +62,7 @@ const Navbar: React.FC = () => {
           fill={location.pathname === '/predicoes' ? 'solid' : 'clear'}
           className='nav-button'
         >
-          <IonIcon icon={personCircleOutline} />
+          <IonIcon icon={flashOutline} />
         </IonButton>
 
         <IonButton 
@@ -70,17 +70,16 @@ const Navbar: React.FC = () => {
           fill={location.pathname === '/planos' ? 'solid' : 'clear'}
           className='nav-button'
         >
-          <IonIcon icon={personCircleOutline} />
+          <IonIcon icon={listOutline} />
         </IonButton>
-        
+
         <IonButton 
           routerLink="/educacional"
           fill={location.pathname === '/educacional' ? 'solid' : 'clear'}
           className='nav-button'
         >
-          <IonIcon icon={personCircleOutline} />
+          <IonIcon icon={bookOutline} />
         </IonButton>
-
       </IonToolbar>
     </IonFooter>
   );

@@ -1,53 +1,76 @@
 import React, { useState, useEffect } from 'react';
 import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
-  IonText, IonSpinner, IonSearchbar
+  IonText, IonSpinner, IonSearchbar, IonButton
 } from '@ionic/react';
 import { trophyOutline } from 'ionicons/icons';
 import Navbar from '../../components/MainLayout';
 import RankingItem from '../../components/RankingItem';
-import { mockUsers, User } from '../../mockData/users';
+import userApi from '../../hooks/userApi';
+import { User } from '../../mockData/users';
+
+type RankingUser = User;
 
 const Ranking: React.FC = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const [generalUsers, setGeneralUsers] = useState<RankingUser[]>([]);
+  const [dojoUsers, setDojoUsers] = useState<RankingUser[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<RankingUser[]>([]);
+  const [activeTab, setActiveTab] = useState<'general' | 'dojo'>('general');
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const { getRanking } = userApi();
 
   useEffect(() => {
-    // Simulate API call
     const loadUsers = async () => {
       setLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      try {
+        const response = await getRanking();
+        const mapUsers = (list: any[]) => list.map((u: any) => ({
+          _id: u._id,
+          username: u.username,
+          name: u.name || u.username,
+          profilePic: u.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.username)}&background=random&size=100`,
+          email: u.email || `${u.username}@example.com`,
+          type: u.type || 'atleta',
+          dojo: u.dojo || 'Dojo',
+          belt: u.belt || 'Branca',
+          points: u.points || 0,
+          ranking: u.ranking || 0
+        }));
 
-      // Sort users by points (descending)
-      const sortedUsers = [...mockUsers].sort((a, b) => b.points - a.points);
+        const general = response.success ? mapUsers(response.general || []) : [];
+        const dojo = response.success ? mapUsers(response.dojo || []) : [];
 
-      // Update rankings
-      const usersWithRankings = sortedUsers.map((user, index) => ({
-        ...user,
-        ranking: index + 1
-      }));
-
-      setUsers(usersWithRankings);
-      setFilteredUsers(usersWithRankings);
-      setLoading(false);
+        setGeneralUsers(general);
+        setDojoUsers(dojo);
+        setFilteredUsers(activeTab === 'dojo' ? dojo : general);
+      } catch (err) {
+        console.error(err);
+        setGeneralUsers([]);
+        setDojoUsers([]);
+        setFilteredUsers([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadUsers();
-  }, []);
+  }, [getRanking]);
 
   useEffect(() => {
+    const source = activeTab === 'dojo' ? dojoUsers : generalUsers;
+
     if (search.trim() === '') {
-      setFilteredUsers(users);
-    } else {
-      const filtered = users.filter(user =>
-        user.name.toLowerCase().includes(search.toLowerCase()) ||
-        user.username.toLowerCase().includes(search.toLowerCase())
-      );
-      setFilteredUsers(filtered);
+      setFilteredUsers(source);
+      return;
     }
-  }, [search, users]);
+
+    const filtered = source.filter(user =>
+      user.name.toLowerCase().includes(search.toLowerCase()) ||
+      user.username.toLowerCase().includes(search.toLowerCase())
+    );
+    setFilteredUsers(filtered);
+  }, [search, generalUsers, dojoUsers, activeTab]);
 
   if (loading) {
     return (
@@ -84,6 +107,21 @@ const Ranking: React.FC = () => {
           <p style={{ margin: '8px 0', color: 'var(--ion-color-medium)' }}>
             Compita e ganhe pontos através de torneios e atividades
           </p>
+        </div>
+
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginBottom: 16 }}>
+          <IonButton
+            fill={activeTab === 'general' ? 'solid' : 'outline'}
+            onClick={() => setActiveTab('general')}
+          >
+            Geral
+          </IonButton>
+          <IonButton
+            fill={activeTab === 'dojo' ? 'solid' : 'outline'}
+            onClick={() => setActiveTab('dojo')}
+          >
+            Dojô
+          </IonButton>
         </div>
 
         {/* Search */}

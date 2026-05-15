@@ -1,53 +1,133 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
   IonAvatar, IonButton, IonIcon, IonList, IonItem, IonLabel,
-  IonInput, IonToggle, IonSelect, IonSelectOption, IonAlert,
-  IonText, IonChip
+  IonInput, IonAlert, IonText, IonChip, IonModal, IonSelect, IonSelectOption
 } from '@ionic/react';
 import {
-  personOutline, mailOutline, lockClosedOutline, notificationsOutline,
-  moonOutline, languageOutline, shieldOutline, logOutOutline, chevronForwardOutline,
-  cameraOutline, createOutline, checkmarkOutline, ribbonOutline, trophyOutline
+  personOutline, mailOutline, lockClosedOutline,
+  logOutOutline, chevronForwardOutline,
+  createOutline, checkmarkOutline,
+  ribbonOutline, trophyOutline
 } from 'ionicons/icons';
 import { useAuth } from '../../AuthContext';
 import { useHistory } from 'react-router-dom';
 import Navbar from '../../components/MainLayout';
+import userApi from '../../hooks/userApi';
+import authApi from '../../hooks/authApi';
 
 const ProfileSettings: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, Login } = useAuth();
   const history = useHistory();
+  const { getProfile, updateProfile, changePassword } = userApi();
+  const { logout: apiLogout } = authApi(Login);
 
   const [isEditing, setIsEditing] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
-  const [notifications, setNotifications] = useState(true);
+  const [profileFile, setProfileFile] = useState<File | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [showLogoutAlert, setShowLogoutAlert] = useState(false);
-  const [activeTab, setActiveTab] = useState<'personal' | 'stats'>('personal');
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
 
-  // Editable fields
-  const [editName, setEditName] = useState(user?.name || '');
-  const [editUsername, setEditUsername] = useState(user?.username || '');
-  const [editBelt, setEditBelt] = useState(user?.belt || 'Branca');
+  const [editUsername, setEditUsername] = useState('');
+  const [editBelt, setEditBelt] = useState('Branca');
+  const [selectedChildId, setSelectedChildId] = useState('');
+  const [isProfileLoaded, setIsProfileLoaded] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
-  const handleSave = () => {
-    // In a real app, this would update the user profile
-    console.log('Saving profile:', { editName, editUsername, editBelt });
-    setIsEditing(false);
+  type ResponsavelChild = {
+    _id: string;
+    username: string;
+    name?: string;
+    profilePic?: string;
+    belt?: string;
+    points?: number;
+    ranking?: number;
+  };
+
+  const isAthlete = (type: string) => type === 'athlete' || type === 'atleta';
+  const isResponsavel = (type: string) => type === 'responsavel';
+  const isSensei = (type: string) => type === 'sensei';
+
+  useEffect(() => {
+    if (!user) return;
+    setEditUsername(user.username);
+    setEditBelt(user.belt || 'Branca');
+  }, [user]);
+
+  const responsavelChildren = (user ? (user.childrenStats?.length ? user.childrenStats : user.childrens || []) : []) as ResponsavelChild[];
+
+  useEffect(() => {
+    if (!user?.authUid || isProfileLoaded) return;
+
+    const refreshProfile = async () => {
+      try {
+        const response = await getProfile();
+        if (response.success) {
+          Login(response.user);
+          setIsProfileLoaded(true);
+        }
+      } catch (err) {
+        console.error('Erro ao atualizar perfil:', err);
+      }
+    };
+
+    refreshProfile();
+  }, [user?.authUid, getProfile, Login, isProfileLoaded]);
+
+  useEffect(() => {
+    if (!selectedChildId && responsavelChildren?.length > 0) {
+      setSelectedChildId(String(responsavelChildren[0]._id));
+    }
+  }, [selectedChildId, responsavelChildren]);
+
+  const handleSave = async () => {
+    if (!user) return;
+    setSaving(true);
+    setSaveMessage(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('username', editUsername.trim());
+      formData.append('belt', editBelt);
+      if (profileFile) {
+        formData.append('file', profileFile, profileFile.name);
+      }
+
+      const response = await updateProfile(formData);
+      if (response.success) {
+        Login(response.user);
+        setIsEditing(false);
+        setProfileFile(null);
+        setSaveMessage('Perfil atualizado com sucesso.');
+      } else {
+        setSaveMessage('Falha ao atualizar perfil.');
+      }
+    } catch (err) {
+      console.error(err);
+      setSaveMessage('Erro ao atualizar perfil.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleLogout = async () => {
+    await apiLogout();
     await logout();
-    history.replace('/login');
+    history.replace('/');
+    window.location.reload();
   };
 
   const typeLabel: Record<string, string> = {
     atleta: 'Atleta',
+    athlete: 'Atleta',
     responsavel: 'Responsável',
     sensei: 'Sensei',
     admin: 'Admin',
   };
-
-  const beltOptions = ['Branca', 'Amarela', 'Laranja', 'Verde', 'Azul', 'Vermelha', 'Marrom', 'Preta'];
 
   if (!user) return null;
 
@@ -55,28 +135,31 @@ const ProfileSettings: React.FC = () => {
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonTitle>Perfil & Configurações</IonTitle>
+          <IonTitle>Perfil</IonTitle>
         </IonToolbar>
       </IonHeader>
 
       <IonContent className="ion-padding background">
-
-        {/* Avatar + Info */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px 0 16px' }}>
-          <div style={{ position: 'relative' }}>
-            <IonAvatar style={{ width: 90, height: 90 }}>
-              {user.profilePic
-                ? <img src={user.profilePic} alt="avatar" />
-                : <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=random&size=90`} alt="avatar" />
-              }
-            </IonAvatar>
-            <IonButton
-              fill="clear"
-              size="small"
-              style={{ position: 'absolute', bottom: -8, right: -8, '--padding-start': '4px', '--padding-end': '4px' }}
-            >
-              <IonIcon icon={cameraOutline} />
-            </IonButton>
+          <IonAvatar style={{ width: 90, height: 90 }}>
+            {user.profilePic
+              ? <img src={user.profilePic} alt="avatar" />
+              : <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=random&size=90`} alt="avatar" />
+            }
+          </IonAvatar>
+
+          <div style={{ marginTop: 12, width: '100%', textAlign: 'center' }}>
+            <label style={{ display: 'block', marginBottom: 8, fontSize: 14, color: '#666' }}>
+              {isEditing ? 'Escolher nova foto de perfil' : 'Foto de perfil'}
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              disabled={!isEditing}
+              onChange={e => setProfileFile(e.target.files?.[0] || null)}
+              style={{ display: isEditing ? 'inline-block' : 'none' }}
+            />
+            {profileFile && <p style={{ marginTop: 8, fontSize: 12, color: '#666' }}>✓ {profileFile.name}</p>}
           </div>
 
           <IonText style={{ marginTop: 12 }}>
@@ -90,35 +173,29 @@ const ProfileSettings: React.FC = () => {
           </IonChip>
         </div>
 
-        {/* Edit/Save Button */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
           <IonButton
             onClick={isEditing ? handleSave : () => setIsEditing(true)}
             color={isEditing ? 'success' : 'primary'}
+            disabled={saving}
           >
             <IonIcon icon={isEditing ? checkmarkOutline : createOutline} slot="start" />
-            {isEditing ? 'Guardar' : 'Editar Perfil'}
+            {saving ? 'Guardando...' : isEditing ? 'Guardar' : 'Editar Perfil'}
           </IonButton>
         </div>
 
-        {/* Personal Data Section */}
+        {saveMessage && (
+          <div style={{ padding: '0 16px 16px' }}>
+            <IonText color={saveMessage.includes('sucesso') ? 'success' : 'danger'}>
+              {saveMessage}
+            </IonText>
+          </div>
+        )}
+
         <IonText color="medium">
           <p style={{ paddingLeft: 16, marginBottom: 4, fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 }}>Dados Pessoais</p>
         </IonText>
         <IonList inset lines="inset">
-          <IonItem>
-            <IonIcon icon={personOutline} slot="start" color="primary" />
-            <IonLabel>
-              <IonInput
-                label="Nome completo"
-                labelPlacement="stacked"
-                value={isEditing ? editName : (user.name || '')}
-                onIonChange={e => setEditName(e.detail.value!)}
-                readonly={!isEditing}
-              />
-            </IonLabel>
-          </IonItem>
-
           <IonItem>
             <IonIcon icon={personOutline} slot="start" color="primary" />
             <IonLabel>
@@ -139,6 +216,7 @@ const ProfileSettings: React.FC = () => {
                 label="Faixa"
                 labelPlacement="stacked"
                 value={isEditing ? editBelt : (user.belt || 'Branca')}
+                onIonChange={e => setEditBelt(e.detail.value!)}
                 readonly={!isEditing}
               />
             </IonLabel>
@@ -156,55 +234,214 @@ const ProfileSettings: React.FC = () => {
             </IonLabel>
           </IonItem>
 
-          <IonItem button detail detailIcon={chevronForwardOutline}>
+          <IonItem button detail detailIcon={chevronForwardOutline} onClick={() => setShowPasswordModal(true)}>
             <IonIcon icon={lockClosedOutline} slot="start" color="primary" />
             <IonLabel>Alterar Senha</IonLabel>
           </IonItem>
         </IonList>
 
-        {/* Stats Section */}
+        <IonModal isOpen={showPasswordModal} onDidDismiss={() => {
+          setShowPasswordModal(false);
+          setNewPassword('');
+          setConfirmPassword('');
+          setPasswordMessage(null);
+        }}>
+          <IonHeader>
+            <IonToolbar>
+              <IonTitle>Alterar Senha</IonTitle>
+              <IonButton slot="end" fill="clear" onClick={() => setShowPasswordModal(false)}>
+                Fechar
+              </IonButton>
+            </IonToolbar>
+          </IonHeader>
+          <IonContent className="ion-padding background">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <IonItem>
+                <IonLabel position="stacked">Nova senha</IonLabel>
+                <IonInput
+                  type="password"
+                  value={newPassword}
+                  autocomplete="new-password"
+                  autocorrect="off"
+                  autocapitalize="off"
+                  spellCheck={false}
+                  onIonInput={e => setNewPassword(e.detail.value || '')}
+                />
+              </IonItem>
+
+              <IonItem>
+                <IonLabel position="stacked">Confirmar nova senha</IonLabel>
+                <IonInput
+                  type="password"
+                  value={confirmPassword}
+                  autocomplete="new-password"
+                  autocorrect="off"
+                  autocapitalize="off"
+                  spellCheck={false}
+                  onIonInput={e => setConfirmPassword(e.detail.value || '')}
+                />
+              </IonItem>
+
+              {passwordMessage && (
+                <IonText color="danger">{passwordMessage}</IonText>
+              )}
+
+              <IonButton
+                expand="block"
+                disabled={passwordLoading}
+                onClick={async () => {
+                  setPasswordMessage(null);
+
+                  if (!newPassword || newPassword.length < 6) {
+                    setPasswordMessage('A senha deve ter pelo menos 6 caracteres.');
+                    return;
+                  }
+                  if (newPassword !== confirmPassword) {
+                    setPasswordMessage('As senhas não coincidem.');
+                    return;
+                  }
+
+                  setPasswordLoading(true);
+                  try {
+                    const response = await changePassword(newPassword);
+                    if (response.success) {
+                      setPasswordMessage('Senha alterada com sucesso.');
+                      setNewPassword('');
+                      setConfirmPassword('');
+                    } else {
+                      setPasswordMessage(response.message || 'Falha ao alterar senha.');
+                    }
+                  } catch (err) {
+                    console.error(err);
+                    setPasswordMessage('Erro ao alterar senha.');
+                  } finally {
+                    setPasswordLoading(false);
+                  }
+                }}
+              >
+                {passwordLoading ? 'Atualizando...' : 'Atualizar Senha'}
+              </IonButton>
+            </div>
+          </IonContent>
+        </IonModal>
+
         <IonText color="medium">
           <p style={{ paddingLeft: 16, marginBottom: 4, marginTop: 16, fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 }}>Estatísticas</p>
         </IonText>
-        <IonList inset lines="inset">
-          <IonItem>
-            <IonIcon icon={trophyOutline} slot="start" color="warning" />
-            <IonLabel>
-              <h3>Pontos Totais</h3>
-              <p>Estatísticas de gamificação</p>
-            </IonLabel>
-            <IonText color="primary" slot="end" style={{ fontWeight: 'bold' }}>{user.points || 0}</IonText>
-          </IonItem>
 
-          <IonItem>
-            <IonIcon icon={ribbonOutline} slot="start" color="secondary" />
-            <IonLabel>
-              <h3>Ranking Atual</h3>
-              <p>Posição no ranking geral</p>
-            </IonLabel>
-            <IonText color="success" slot="end" style={{ fontWeight: 'bold' }}>#{user.ranking || 'N/A'}</IonText>
-          </IonItem>
+        {isSensei(user.type) ? (
+          <IonList inset lines="inset">
+            <IonItem>
+              <IonIcon icon={trophyOutline} slot="start" color="medium" />
+              <IonLabel>
+                <h3>Sem ranking reservado</h3>
+                <p>Senseis não têm estatísticas de ranking exibidas aqui.</p>
+              </IonLabel>
+            </IonItem>
+          </IonList>
+        ) : isResponsavel(user.type) ? (
+          <>
+            <IonList inset lines="inset">
+              <IonItem>
+                <IonIcon icon={personOutline} slot="start" color="primary" />
+                <IonLabel>
+                  <h3>Responsável</h3>
+                  <p>{responsavelChildren?.length ?? 0} filho(s) associado(s).</p>
+                </IonLabel>
+              </IonItem>
+            </IonList>
 
-          <IonItem>
-            <IonIcon icon={trophyOutline} slot="start" color="tertiary" />
-            <IonLabel>
-              <h3>Torneios Participados</h3>
-              <p>Total de competições</p>
-            </IonLabel>
-            <IonText color="medium" slot="end" style={{ fontWeight: 'bold' }}>3</IonText>
-          </IonItem>
+            <div style={{ padding: '0 16px 16px' }}>
+              <IonText color="medium">
+                <p style={{ margin: '0 0 10px', fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 }}>
+                  Filhos
+                </p>
+              </IonText>
 
-          <IonItem>
-            <IonIcon icon={trophyOutline} slot="start" color="danger" />
-            <IonLabel>
-              <h3>Vitórias</h3>
-              <p>Torneios vencidos</p>
-            </IonLabel>
-            <IonText color="danger" slot="end" style={{ fontWeight: 'bold' }}>1</IonText>
-          </IonItem>
-        </IonList>
+              {responsavelChildren?.length ? (
+                <>
+                  {responsavelChildren.length > 1 && (
+                    <IonItem>
+                      <IonLabel>
+                        <IonSelect
+                          value={selectedChildId}
+                          placeholder="Selecione um filho"
+                          onIonChange={e => setSelectedChildId(String(e.detail.value || ''))}
+                        >
+                          {responsavelChildren.map(child => (
+                            <IonSelectOption key={String(child._id)} value={String(child._id)}>
+                              {child.name || child.username}
+                            </IonSelectOption>
+                          ))}
+                        </IonSelect>
+                      </IonLabel>
+                    </IonItem>
+                  )}
 
-        {/* Preferences Section */}
+                  {(() => {
+                    const selectedChild = responsavelChildren.find(child => String(child._id) === selectedChildId) || responsavelChildren[0];
+                    return (
+                      <IonList inset lines="inset">
+                        <IonItem style={{ marginBottom: 4 }}>
+                          <IonLabel>
+                            <h3>{selectedChild.name || selectedChild.username}</h3>
+                            <p>Pontos: {selectedChild.points ?? 0} • Ranking: #{selectedChild.ranking ?? 'N/A'}</p>
+                          </IonLabel>
+                        </IonItem>
+                      </IonList>
+                    );
+                  })()}
+                </>
+              ) : (
+                <IonText color="medium">
+                  <p>Nenhum filho com dados de ranking encontrado.</p>
+                </IonText>
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            <IonList inset lines="inset">
+              <IonItem>
+                <IonIcon icon={trophyOutline} slot="start" color="warning" />
+                <IonLabel>
+                  <h3>Pontos Totais</h3>
+                  <p>Estatísticas de gamificação</p>
+                </IonLabel>
+                <IonText color="primary" slot="end" style={{ fontWeight: 'bold' }}>{user.points || 0}</IonText>
+              </IonItem>
+
+              <IonItem>
+                <IonIcon icon={ribbonOutline} slot="start" color="secondary" />
+                <IonLabel>
+                  <h3>Ranking Atual</h3>
+                  <p>Posição no ranking geral</p>
+                </IonLabel>
+                <IonText color="success" slot="end" style={{ fontWeight: 'bold' }}>#{user.ranking || 'N/A'}</IonText>
+              </IonItem>
+
+              <IonItem>
+                <IonIcon icon={trophyOutline} slot="start" color="tertiary" />
+                <IonLabel>
+                  <h3>Torneios Participados</h3>
+                  <p>Total de competições</p>
+                </IonLabel>
+                <IonText color="medium" slot="end" style={{ fontWeight: 'bold' }}>{user.tournamentParticipations ?? 0}</IonText>
+              </IonItem>
+
+              <IonItem>
+                <IonIcon icon={trophyOutline} slot="start" color="danger" />
+                <IonLabel>
+                  <h3>Vitórias</h3>
+                  <p>Torneios vencidos</p>
+                </IonLabel>
+                <IonText color="danger" slot="end" style={{ fontWeight: 'bold' }}>{user.tournamentVictories ?? 0}</IonText>
+              </IonItem>
+            </IonList>
+          </>
+        )}
+
+        {/* Preferences Section
         <IonText color="medium">
           <p style={{ paddingLeft: 16, marginBottom: 4, marginTop: 16, fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 }}>Preferências</p>
         </IonText>
@@ -239,7 +476,6 @@ const ProfileSettings: React.FC = () => {
           </IonItem>
         </IonList>
 
-        {/* Security Section */}
         <IonText color="medium">
           <p style={{ paddingLeft: 16, marginBottom: 4, marginTop: 16, fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 }}>Segurança</p>
         </IonText>
@@ -248,7 +484,7 @@ const ProfileSettings: React.FC = () => {
             <IonIcon icon={shieldOutline} slot="start" color="primary" />
             <IonLabel>Autenticação em dois fatores</IonLabel>
           </IonItem>
-        </IonList>
+        </IonList> */}
 
         {/* Logout */}
         <div style={{ padding: '24px 16px' }}>

@@ -18,6 +18,17 @@ interface User {
     belt?: string;
     points?: number;
     ranking?: number;
+    tournamentParticipations?: number;
+    tournamentVictories?: number;
+    childrenStats?: Array<{
+        _id: string;
+        username: string;
+        name?: string;
+        profilePic?: string;
+        belt?: string;
+        points?: number;
+        ranking?: number;
+    }>;
     childrens?: {
         _id?: string;
         username: string;
@@ -76,7 +87,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const firebaseUser = auth.currentUser;
         if (!firebaseUser) return null;
         try {
-            return await firebaseUser.getIdToken(true);
+            return await firebaseUser.getIdToken();
         } catch (error) {
             console.error('Erro ao pegar token: ', error);
             return null;

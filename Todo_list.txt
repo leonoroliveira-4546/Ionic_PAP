@@ -21,10 +21,17 @@ Oq falta na Comunidade:
         remover new;
         responder comment;
         ver mais se text é muito longo;
-        por imagens;
 
     Mostrar o modal apenas ao admin;
     Se nao tiver live ou videos, nao mostra o topico;
+
+    Posts:
+        poder fazer votações;
+        colocar anexos (ficheiros);
+        poder colocar videos;
+
+Oq falta no Profile:
+    
 
 
 Em TODOS:
@@ -32,5 +39,4 @@ Em TODOS:
     - FAZER DIMENSÔES PARA CADA TELEMOVEL
     - LIMPAR CONSOLES DESNECESSÀRIOS E INDIREITAR Código
     - Dimuinir os requests
-    -
-    
+    - Notifications

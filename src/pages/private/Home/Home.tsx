@@ -52,6 +52,10 @@ const Home: React.FC = () => {
   const { addPerformance, getPerformance, getAbsencesByMonth, addAbsence } = authApi(() => {});
   const { getDojoMembers, removeMember, removeChildFromResponsible, addTrainingSchedule, updateTrainingSchedules, createTournament, getDojoTournaments, updateTournament, deleteTournament } = dojosApi();
 
+  const isAthlete = (type: string) => type === 'athlete' || type === 'atleta';
+  const isResponsavel = (type: string) => type === 'responsavel';
+  const isSensei = (type: string) => type === 'sensei';
+
   if (!user) return null;
 
   const fetchAthleteData = async (athleteId: string, isChild: boolean = false) => {
@@ -503,7 +507,7 @@ const Home: React.FC = () => {
   };
 
   useEffect(() => {
-    if (user.type === "sensei") {
+    if (isSensei(user.type)) {
       fetchDojoData();
     }
   }, [user]);
@@ -967,13 +971,17 @@ const Home: React.FC = () => {
           <h2>Selecionar Atleta</h2>
           <IonCard>
             <IonCardContent>
-              <IonSelect placeholder="Escolha seu filho" value={selectedChild} onIonChange={(e) => setSelectedChild(e.detail.value!)}>
+              <IonSelect
+                placeholder="Escolha seu filho"
+                value={selectedChild}
+                onIonChange={(e) => setSelectedChild(String(e.detail.value || ''))}
+              >
                 {children.map((child, idx) => {
-                  const childId = typeof child === 'string' ? child : child._id;
+                  const childId = typeof child === 'string' ? child : String(child._id);
                   const childName = typeof child === 'string' ? child : child.username;
-                  
+
                   return (
-                    <IonSelectOption key={idx} value={childId}>
+                    <IonSelectOption key={childId} value={childId}>
                       {childName}
                     </IonSelectOption>
                   );
@@ -989,8 +997,8 @@ const Home: React.FC = () => {
       return <div className="page"><h2>Responsável</h2><p>Não há atletas associados.</p></div>;
     }
 
-    const athleteId = selectedChild || children[0]._id || children[0].username;
-    const currentChild = children.find((c: any) => c._id === athleteId);
+    const athleteId = selectedChild || String(children[0]._id || children[0].username);
+    const currentChild = children.find((c: any) => String(c._id) === athleteId);
     
     return (
       <>
@@ -1009,9 +1017,9 @@ const Home: React.FC = () => {
   };
 
   useEffect(() => {
-    if (user.type === 'athlete') {
+    if (isAthlete(user.type)) {
       fetchAthleteData(user._id);
-    } else if (user.type === 'responsavel' && (selectedChild || (user.childrens && user.childrens.length === 1))) {
+    } else if (isResponsavel(user.type) && (selectedChild || (user.childrens && user.childrens.length === 1))) {
       const childId = selectedChild || user.childrens?.[0]?._id;
       if (childId) {
         fetchAthleteData(childId, true);
@@ -1020,18 +1028,14 @@ const Home: React.FC = () => {
   }, [user, selectedChild]);
 
   let dashboard;
-  switch (user.type) {
-    case 'athlete':
-      dashboard = renderAthleteDashboard(user._id);
-      break;
-    case 'sensei':
-      dashboard = renderSenseiDashboard();
-      break;
-    case 'responsavel':
-      dashboard = renderResponsavelDashboard();
-      break;
-    default:
-      dashboard = <p>Tipo de usuário não reconhecido.</p>;
+  if (isAthlete(user.type)) {
+    dashboard = renderAthleteDashboard(user._id);
+  } else if (isSensei(user.type)) {
+    dashboard = renderSenseiDashboard();
+  } else if (isResponsavel(user.type)) {
+    dashboard = renderResponsavelDashboard();
+  } else {
+    dashboard = <p>Tipo de usuário não reconhecido.</p>;
   }
 
   return (

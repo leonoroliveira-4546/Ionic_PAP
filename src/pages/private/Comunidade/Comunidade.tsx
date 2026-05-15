@@ -90,7 +90,7 @@ const Comunidade: React.FC = () => {
   const loadContents = useCallback(async () => {
     try {
       const res = await getContents(
-        activeTab === 'geral' ? 'news' : 'posts',
+        activeTab === 'geral' ? 'news' : 'post',
         activeTab
       );
       setContents(res.data || []);
@@ -132,7 +132,7 @@ const Comunidade: React.FC = () => {
       form.append('content', newNewsContent.trim());
       form.append('message', newNewsContent.trim());
       if (newNewsLink.trim()) form.append('link', newNewsLink.trim());
-      if (newNewsImage) form.append('file', newNewsImage);
+      if (newNewsImage) form.append('file', newNewsImage, newNewsImage.name);
 
       await createContent(form, 'news', 'geral');
 
@@ -156,7 +156,7 @@ const Comunidade: React.FC = () => {
       form.append('message', newDojoContent.trim());
       form.append('content', newDojoContent.trim());
       if (newDojoLink.trim()) form.append('link', newDojoLink.trim());
-      if (newDojoImage) form.append('file', newDojoImage);
+      if (newDojoImage) form.append('file', newDojoImage, newDojoImage.name);
 
       await createContent(form, 'post', 'dojo');
 

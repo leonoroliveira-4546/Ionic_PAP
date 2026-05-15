@@ -36,7 +36,7 @@ const Login: React.FC = () => {
       const apiResult = await login(idToken);
 
       if (apiResult.success) {
-        history.push('/home');
+        history.replace('/home');
       } else {
         console.error(apiResult.error);
       }
