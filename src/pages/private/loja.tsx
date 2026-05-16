@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
   IonSearchbar, IonChip, IonLabel, IonCard, IonCardContent,
-  IonBadge, IonButton, IonIcon, IonText, IonToast, IonRippleEffect
+  IonBadge, IonButton, IonIcon, IonText, IonToast, IonRippleEffect, IonSpinner
 } from '@ionic/react';
 import { cartOutline, starSharp, starHalfOutline, starOutline } from 'ionicons/icons';
 import { mockProducts, Product } from '../../mockData/shop';
 import Navbar from '../../components/MainLayout';
+import { shopApi } from '../../hooks/shopApi';
 
 type Category = 'Todos' | 'Kimono' | 'Equipamento' | 'Faixa' | 'Acessório';
 
@@ -115,11 +116,31 @@ const ProductCard: React.FC<{ product: Product; onAdd: (name: string) => void }>
 );
 
 const Loja: React.FC = () => {
+  const { getProducts } = shopApi();
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<Category>('Todos');
   const [toastMessage, setToastMessage] = useState('');
+  const [products, setProducts] = useState<Product[]>(mockProducts);
+  const [loading, setLoading] = useState(false);
 
-  const filtered = mockProducts.filter(p => {
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      try {
+        const data = await getProducts();
+        setProducts(data.products || data || mockProducts);
+      } catch (err) {
+        console.error('Failed to load products', err);
+        setProducts(mockProducts);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, [getProducts]);
+
+  const filtered = products.filter(p => {
     const matchesCategory = activeCategory === 'Todos' || p.category === activeCategory;
     const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.description.toLowerCase().includes(search.toLowerCase());

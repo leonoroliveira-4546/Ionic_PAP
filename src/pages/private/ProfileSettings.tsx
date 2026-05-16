@@ -127,6 +127,7 @@ const ProfileSettings: React.FC = () => {
     responsavel: 'Responsável',
     sensei: 'Sensei',
     admin: 'Admin',
+    praticinador: 'Praticinador'
   };
 
   if (!user) return null;

@@ -6,11 +6,22 @@ import {
 import { bookOutline, playOutline } from 'ionicons/icons';
 import Navbar from '../../components/MainLayout';
 import VideoCard from '../../components/VideoCard';
-import { mockVideos, Video } from '../../mockData/videos';
+import { educationalApi } from '../../hooks/educationalApi';
+
+interface Video {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  url: string;
+  channelName: string;
+  publishedAt: string;
+}
 
 type Category = 'all' | 'historia' | 'filosofia' | 'tecnicas';
 
 const Educacional: React.FC = () => {
+  const { getEducationalContent } = educationalApi();
   const [videos, setVideos] = useState<Video[]>([]);
   const [filteredVideos, setFilteredVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,23 +29,24 @@ const Educacional: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<Category>('all');
 
   useEffect(() => {
-    // Simulate API call
     const loadVideos = async () => {
       setLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Filter educational videos
-      const educationalVideos = mockVideos.filter(video =>
-        ['historia', 'filosofia', 'tecnicas'].includes(video.category)
-      );
-
-      setVideos(educationalVideos);
-      setFilteredVideos(educationalVideos);
-      setLoading(false);
+      try {
+        const data = await getEducationalContent();
+        const educationalVideos = (data.contents || data).filter((video: Video) =>
+          ['historia', 'filosofia', 'tecnicas'].includes(video.category)
+        );
+        setVideos(educationalVideos);
+        setFilteredVideos(educationalVideos);
+      } catch (error) {
+        console.error('Falha ao carregar conteúdo educacional', error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadVideos();
-  }, []);
+  }, [getEducationalContent]);
 
   useEffect(() => {
     let filtered = videos;

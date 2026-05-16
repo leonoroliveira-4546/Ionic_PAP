@@ -18,6 +18,7 @@ import Ranking from './pages/private/Ranking';
 import Educacional from './pages/private/Educacional';
 import Predicoes from './pages/private/Predicoes';
 import Planos from './pages/private/Planos';
+import Admin from './pages/private/Admin';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -80,6 +81,7 @@ const InnerApp: React.FC = () => {
           <PrivateRoute exact path='/educacional' component={Educacional}/>
           <PrivateRoute exact path='/predicoes' component={Predicoes}/>
           <PrivateRoute exact path='/planos' component={Planos}/>
+          <PrivateRoute exact path='/admin' component={Admin} requiredRole="admin" />
         </IonRouterOutlet>
       </IonReactRouter>
     </IonApp>

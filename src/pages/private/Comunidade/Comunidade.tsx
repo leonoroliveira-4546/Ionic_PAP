@@ -77,6 +77,7 @@ const Comunidade: React.FC = () => {
   const [, setVideosCount] = useState<number>(0);
 
   const { user } = useAuth();
+  const isAdmin = user?.type === 'admin';
 
   const {
     getContents,
@@ -102,6 +103,12 @@ const Comunidade: React.FC = () => {
   useEffect(() => {
     loadContents();
   }, [loadContents]);
+
+  useEffect(() => {
+    if (isAdmin && activeTab === 'dojo') {
+      setActiveTab('geral');
+    }
+  }, [activeTab, isAdmin]);
 
   // ---------------- FILTERS ----------------
   const news = contents.filter(c => c.type === 'news');
@@ -398,11 +405,13 @@ const Comunidade: React.FC = () => {
     <div className="page background">
       <h2>🥋 Dojo</h2>
 
-      <div style={{ marginBottom: 16 }}>
-        <IonButton expand="block" onClick={() => setShowDojoModal(true)}>
-          📝 Adicionar post do dojo
-        </IonButton>
-      </div>
+      {!isAdmin && (
+        <div style={{ marginBottom: 16 }}>
+          <IonButton expand="block" onClick={() => setShowDojoModal(true)}>
+            📝 Adicionar post do dojo
+          </IonButton>
+        </div>
+      )}
 
       <div className="news-section">
         <div className="news-label">🥋 Feed do Dojo</div>
@@ -602,17 +611,19 @@ const Comunidade: React.FC = () => {
           >
             Geral
           </button>
-          <button
-            className={`community-tab-btn${activeTab === 'dojo' ? ' active' : ''}`}
-            onClick={() => setActiveTab('dojo')}
-          >
-            Dojo
-          </button>
+          {!isAdmin && (
+            <button
+              className={`community-tab-btn${activeTab === 'dojo' ? ' active' : ''}`}
+              onClick={() => setActiveTab('dojo')}
+            >
+              Dojo
+            </button>
+          )}
         </div>
       </IonHeader>
       <IonContent fullscreen>
         {activeTab === 'geral' && renderGeralTab()}
-        {activeTab === 'dojo' && renderDojoTab()}
+        {activeTab === 'dojo' && !isAdmin && renderDojoTab()}
       </IonContent>
 
       {/* News Creation Modal */}

@@ -6,29 +6,53 @@ import {
 } from '@ionic/react';
 import { checkmarkCircle, closeCircle, timeOutline, trophyOutline } from 'ionicons/icons';
 import Navbar from '../../components/MainLayout';
-import { mockTournaments, mockPredictions, Tournament, Prediction } from '../../mockData/predictions';
 import { useAuth } from '../../AuthContext';
+import { predictionsApi } from '../../hooks/predictionsApi';
+
+interface Tournament {
+  id: string;
+  name: string;
+  date: string;
+  location: string;
+  status: string;
+  participants: { id: string; name: string; belt: string }[];
+  winner?: string;
+}
+
+interface Prediction {
+  tournamentId: string;
+  predictedWinner: string;
+  userId: string;
+  pointsEarned?: number;
+}
 
 const Predicoes: React.FC = () => {
   const { user } = useAuth();
+  const isAdmin = user?.type === 'admin';
+  const { getTournaments, getMyPredictions, submitPrediction } = predictionsApi();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPredictions, setSelectedPredictions] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    // Simulate API call
     const loadData = async () => {
       setLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      try {
+        const tournamentsData = await getTournaments();
+        const predictionsData = await getMyPredictions();
 
-      setTournaments(mockTournaments);
-      setPredictions(mockPredictions.filter(p => p.userId === user?._id));
-      setLoading(false);
+        setTournaments(tournamentsData.tournaments || tournamentsData);
+        setPredictions(predictionsData.predictions || predictionsData);
+      } catch (error) {
+        console.error('Falha ao carregar predições', error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadData();
-  }, [user]);
+  }, [getTournaments, getMyPredictions]);
 
   const handlePrediction = (tournamentId: string, participantId: string) => {
     setSelectedPredictions(prev => ({
@@ -37,16 +61,18 @@ const Predicoes: React.FC = () => {
     }));
   };
 
-  const submitPrediction = (tournamentId: string) => {
+  const submitPredictionForTournament = async (tournamentId: string) => {
     const predictedWinner = selectedPredictions[tournamentId];
     if (!predictedWinner) return;
 
-    // Simulate API call
-    console.log('Submitting prediction:', { tournamentId, predictedWinner });
-
-    // In a real app, this would save to backend
-    // For now, just show success
-    alert('Predição enviada com sucesso!');
+    try {
+      await submitPrediction(tournamentId, predictedWinner);
+      alert('Predição enviada com sucesso!');
+      setPredictions(prev => [...prev, { userId: user?._id || '', tournamentId, predictedWinner }]);
+    } catch (error) {
+      console.error('Falha ao enviar predição', error);
+      alert('Erro ao enviar predição. Tente novamente.');
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -156,8 +182,8 @@ const Predicoes: React.FC = () => {
                           marginBottom: 8,
                           backgroundColor: isSelected ? 'rgba(56, 128, 255, 0.1)' : 'transparent'
                         }}
-                        button={tournament.status === 'open' && !userPrediction}
-                        onClick={() => tournament.status === 'open' && !userPrediction && handlePrediction(tournament.id, participant.id)}
+                        button={tournament.status === 'open' && !userPrediction && !isAdmin}
+                        onClick={() => tournament.status === 'open' && !userPrediction && !isAdmin && handlePrediction(tournament.id, participant.id)}
                       >
                         <div
                           style={{
@@ -204,15 +230,20 @@ const Predicoes: React.FC = () => {
                 )}
 
                 {/* Submit Button */}
-                {tournament.status === 'open' && !userPrediction && selectedWinner && (
+                {tournament.status === 'open' && !userPrediction && selectedWinner && !isAdmin && (
                   <IonButton
                     expand="block"
                     style={{ marginTop: 16 }}
-                    onClick={() => submitPrediction(tournament.id)}
+                    onClick={() => submitPredictionForTournament(tournament.id)}
                   >
                     <IonIcon icon={checkmarkCircle} slot="start" />
                     Enviar Predição
                   </IonButton>
+                )}
+                {isAdmin && tournament.status === 'open' && !userPrediction && (
+                  <div style={{ marginTop: 16, padding: 12, backgroundColor: 'var(--ion-color-light)', borderRadius: 8 }}>
+                    <IonText color="medium">Administradores não podem enviar predições.</IonText>
+                  </div>
                 )}
 
                 {/* Closed Status */}

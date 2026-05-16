@@ -1,21 +1,26 @@
 import { IonFooter, IonToolbar, IonButton, IonIcon } from '@ionic/react';
-import { home, people, chatbubble, personCircleOutline, cartSharp, trophyOutline, flashOutline, listOutline, bookOutline } from 'ionicons/icons';
+import { home, people, chatbubble, personCircleOutline, cartSharp, trophyOutline, flashOutline, listOutline, bookOutline, shieldCheckmarkOutline } from 'ionicons/icons';
 import { useLocation } from 'react-router-dom';
+import { useAuth } from '../AuthContext';
 
 const Navbar: React.FC = () => {
   const location = useLocation();
+  const { user } = useAuth();
+  const isAdmin = user?.type === 'admin';
 
   return (
     <IonFooter>
       <IonToolbar style={{ display: 'flex', justifyContent: 'space-around' }}>
         
-        <IonButton 
-          routerLink="/home"
-          fill={location.pathname === '/home' ? 'solid' : 'clear'}
-          className='nav-button'
-        >
-          <IonIcon icon={home} />
-        </IonButton>
+        {!isAdmin && (
+          <IonButton 
+            routerLink="/home"
+            fill={location.pathname === '/home' ? 'solid' : 'clear'}
+            className='nav-button'
+          >
+            <IonIcon icon={home} />
+          </IonButton>
+        )}
 
         <IonButton 
           routerLink="/comunidade"
@@ -33,13 +38,15 @@ const Navbar: React.FC = () => {
           <IonIcon icon={cartSharp} />
         </IonButton>
 
-        <IonButton 
-          routerLink="/chat"
-          fill={location.pathname === '/chat' ? 'solid' : 'clear'}
-          className='nav-button'
-        >
-          <IonIcon icon={chatbubble} />
-        </IonButton>
+        {!isAdmin && (
+          <IonButton 
+            routerLink="/chat"
+            fill={location.pathname === '/chat' ? 'solid' : 'clear'}
+            className='nav-button'
+          >
+            <IonIcon icon={chatbubble} />
+          </IonButton>
+        )}
 
         <IonButton 
           routerLink="/perfil"
@@ -57,13 +64,15 @@ const Navbar: React.FC = () => {
           <IonIcon icon={trophyOutline} />
         </IonButton>
 
-        <IonButton 
-          routerLink="/predicoes"
-          fill={location.pathname === '/predicoes' ? 'solid' : 'clear'}
-          className='nav-button'
-        >
-          <IonIcon icon={flashOutline} />
-        </IonButton>
+        {!isAdmin && (
+          <IonButton 
+            routerLink="/predicoes"
+            fill={location.pathname === '/predicoes' ? 'solid' : 'clear'}
+            className='nav-button'
+          >
+            <IonIcon icon={flashOutline} />
+          </IonButton>
+        )}
 
         <IonButton 
           routerLink="/planos"
@@ -80,6 +89,16 @@ const Navbar: React.FC = () => {
         >
           <IonIcon icon={bookOutline} />
         </IonButton>
+
+        {isAdmin && (
+          <IonButton 
+            routerLink="/admin"
+            fill={location.pathname === '/admin' ? 'solid' : 'clear'}
+            className='nav-button'
+          >
+            <IonIcon icon={shieldCheckmarkOutline} />
+          </IonButton>
+        )}
       </IonToolbar>
     </IonFooter>
   );
