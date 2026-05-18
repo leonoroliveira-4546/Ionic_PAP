@@ -1,42 +1,156 @@
-OQ FALTA NA HOME: 
-    LADO SENSEI - 
-        .nao anda guardando o needsImprovement;
-        .convidar atletas para o clube;
-    
-    Ambos-
-        .criar notificações na propria app;
-    
-    Lado Atleta -
-        .Receber e aceitar o convide ou rejeitar o convite
-      do entrar no dojo
-        .caso nao tivesse ainda em nenhum dojo, nao mostrar nada
+Sensei:
 
-Oq Falta no Chat:
-    dar scrooll automatico quando recebe uma nova mensagem, pois senao tenho que
-  sempre dar scroll para baixo.
-    Por o editar e remover mensagens, e mostrar que o outra ta a digitar
+ Home:
+   não pode por torneios antes do dia atual de hoje;
+   pesquisar o atleta por nome;
+   convidar um atleta para o seu dojo, pode pesquisar por email;
+   aceitar ou recusar os pedidos para entrar no dojo;
+   nao anda guardando o needsImprovement; (erro)
+   quando um torneio já passou, ele pode editar e colocar 
+  quem participou no torneio;
 
-Oq falta na Comunidade:
-    Noticias:
-        remover new;
-        responder comment;
-        ver mais se text é muito longo;
+ Comunidade:
+   poder remover e editar posts;
+   poder fazer votações e por vídeos;
+   
+ Chat:
+   poder pesquisar a conversa pelo nome do user;
+   
+ Profile:
+   as estatísticas não pode aparecer para o sensei;
+   
+ AreaEducativa:
+    poder por os desafios do dia para apenas o dojo;
+    ver o relatório do desafio;
+    poder editar e remover o desafio;
 
-    Mostrar o modal apenas ao admin;
-    Se nao tiver live ou videos, nao mostra o topico;
+Atleta:
+ 
+ Home:
+   se não tiver num dojo, não aparece nada sem ser algo para
+  pedir para entrar num dojo;
+   receber notificações de convide e aceitação ou rejeição;
+   se não tiver próximos torneios não mostra;
+   mostrar se tiver um novo desafio do dia do dojo, tanto na home
+  como nas notificações;
+   perde points se faltar aos treinos, so se não for por doença;
+   
+ Comunidade:
+   anda a mostrar o botão de criar posts do dojo (bug);
 
-    Posts:
-        poder fazer votações;
-        colocar anexos (ficheiros);
-        poder colocar videos;
+ Profile:
+   As vitórias tem a ver com ter acertos de predições;
+   torneios participações tem a ver que os torneios que participou;
 
-Oq falta no Profile:
-    
+Admin:
+ Login:
+    Quando fazer login deve ir direto para a painel de controlo;
+ 
+ Loja:
+    Na loja deve ter um opção de permissão de produtos ou rejeição;
+    so mostra os permitidos;
+    notificações;
 
+ Rankings:
+    So consegue ver o geral;
 
-Em TODOS:
-    - STYLE PARA TODOS (usar uma library)
-    - FAZER DIMENSÔES PARA CADA TELEMOVEL
-    - LIMPAR CONSOLES DESNECESSÀRIOS E INDIREITAR Código
-    - Dimuinir os requests
-    - Notifications
+ Planos:
+    deve conseguir editar ou remover planos;
+    adicionar os planos;
+ 
+ AreaEducativa:
+    poder adicionar jogos, vídeos e muito mais;
+
+ Predições:
+    ele que adiciona, edita e remove;
+
+ Painel De controlo:
+    deve ter botões que levam as paginas e abrem já os modals para fazer criar cenas
+    mostrar a lista de users por tabela, so 20 por pag;
+    poder remover, editar users;
+    reiniciar o ranking se for necessário;
+
+Praticinador:
+  
+  Home: não tem;
+
+  Loja: 
+    consegue ver sua loja e a geral a qual que os outros veem;
+  
+  Products;
+    aqui tem seus produtos, consegue adicionar e editar ou remover;
+    não consegue mecher depois que foi permitido ou rejeitado por admin;
+
+  Profile: ele tem mas sem estáticas;
+  
+  O resto ele não tem;
+      
+   
+Geral:
+  Home:
+   Notificações;
+
+  Comunidade:
+   anda mostrando o botão de criar News aos outros que não são admin (erro);
+   o botão dos posts do dojo tao a mostrar para quem não é sensei do dojo;
+   poder responder aos comentários;
+
+  Loja:
+   ta a mostrar os produtos de mockdata e não os da database;
+   tem que ter o carrinho;
+   funcionar com o pagamentos;
+   
+  Chat:
+   tem que deletar mensagem e editar;
+   ao entrar tem que ir a ultima mensagem;
+   receber notificação das mensagens;
+   poder ver quando o outro estiver a escrever e ter visto 
+  na mensagem;
+   
+  Profile:
+   quando mudar a senha, fecha o modal uns segundos depois;
+   deve pedir primeiro a password atual e depois a nova se tiver coloca
+  certo a password atual;
+   fazer as preferiencias e segunda autenticação;
+
+  Rankings:
+   No geral só mostrara os dez primeiros;
+   So se pesquisares por o username, mostra o user e que lugar ta;
+   Dojo terá os seus própios pontos;
+   Funciona igual ao geral;
+   quando acaba a época renicia automaticamente os dojos e o geral;
+   
+  Predições:
+   predições são feitas por provas, dentro por kata e kumite e 
+  e depois por categorias entre feminino ou masculino e ai por peso;
+   ao escolher a catogeria escolhe o combate se for kumite e ai decide quem vai
+  ganhar, ele pode mudar antes do dia da prova ou então escolhe a pessoa que acha
+  que vai ganhar se for kata;
+   não podem mais mecher quando for o dia;
+   quando acabar a prova, o admin coloca quem ganhou e depois ai quem acertou
+  recebe points;
+   notificações;
+
+  Planos:
+   por a funcionar;
+   com pagamentos;
+
+  AreaEducativa:
+    Ter jogos ( recebe points), vídeos e muito mais;
+
+  Signup:
+    por a funcionar com a nova estratégia de user;
+    pedir para convidar não adiciona logo no dojo;
+    o user deve ter o nome e username (username deve ser único)
+    o sensei deve criar o dojo no momento, não deve passar a etapa;
+
+  Login:
+    funcionar se tiver segundas autenticações;
+  
+  Todos:
+    Style de uma libray;
+    Segurança;
+    Se der colocar a AI;
+    Home ficara no meio do menu, loja na esquerda e chat na direita, profile no
+   fim direita. rankings do dojo dentro da home, rankings no geral nas predições;
+    planos dentro do profile, como opção;
