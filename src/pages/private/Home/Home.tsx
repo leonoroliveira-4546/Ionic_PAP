@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonList, IonItem, IonLabel, IonButton, IonSelect, IonSelectOption, IonModal, IonInput, IonDatetime, IonIcon } from '@ionic/react';
 import { close, add, chevronBack, create, trash, eye } from 'ionicons/icons';
 import { useAuth } from '../../../AuthContext';
@@ -22,8 +22,11 @@ const Home: React.FC = () => {
   const [pendingRequests, setPendingRequests] = useState<any[]>([]);
   const [tournaments, setTournaments] = useState<any[]>([]);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showManageMembersModal, setShowManageMembersModal] = useState(false);
+  const [showScrollTopButton, setShowScrollTopButton] = useState(false);
   const [inviteTab, setInviteTab] = useState<'invite' | 'requests'>('invite');
   const [attendanceToday, setAttendanceToday] = useState<string[]>([]);
+  const contentRef = useRef<HTMLIonContentElement>(null);
   const [absencesMarkedToday, setAbsencesMarkedToday] = useState<string[]>([]);
   const [newPerformance, setNewPerformance] = useState({
     rating: 0,
@@ -566,6 +569,17 @@ const Home: React.FC = () => {
     }
   }, []);
 
+  const handleContentScroll = (e: any) => {
+    setShowScrollTopButton(e.detail?.scrollTop > 250);
+  };
+
+  const handleScrollToTop = async () => {
+    if (contentRef.current) {
+      await contentRef.current.scrollToTop(300);
+    }
+    setShowScrollTopButton(false);
+  };
+
   const renderAthleteDashboard = (athleteId: string) => {
     const athleteTraining = trainingSchedule.length ? trainingSchedule : [];
     const athletePerformance = performance || {
@@ -574,88 +588,86 @@ const Home: React.FC = () => {
     };
 
     return (
-      <div className="dashboard-content">
-        <section className="card-panel">
-          <div className="section-header">
+      <div className="space-y-8 text-slate-900">
+        <section className="rounded-3xl bg-slate-950/5 p-6 shadow-lg shadow-slate-900/10 ring-1 ring-slate-200/70">
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="section-title">Dashboard do Atleta</p>
-              <p className="section-subtitle">Visão moderna do seu progresso, treinos e próximos desafios.</p>
+              <p className="text-xl font-bold text-slate-900">Dashboard do Atleta</p>
+              <p className="mt-1 text-sm text-slate-600">Visão moderna do seu progresso, treinos e próximos desafios.</p>
             </div>
-            <span className="badge-pill badge-primary">Atleta</span>
+            <span className="rounded-full bg-violet-500/15 px-4 py-2 text-sm font-semibold text-violet-700 ring-1 ring-violet-500/20">
+              Atleta
+            </span>
           </div>
 
-          <div className="stats-grid">
-            <div className="stat-card">
-              <p className="stat-card__label">Treinos agendados</p>
-              <p className="stat-card__value">{athleteTraining.length}</p>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
+              <p className="text-sm font-medium text-slate-500">Treinos agendados</p>
+              <p className="mt-3 text-3xl font-semibold text-slate-900">{athleteTraining.length}</p>
             </div>
-            <div className="stat-card">
-              <p className="stat-card__label">Última avaliação</p>
-              <p className="stat-card__value">{athletePerformance.rating}/5</p>
+            <div className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
+              <p className="text-sm font-medium text-slate-500">Última avaliação</p>
+              <p className="mt-3 text-3xl font-semibold text-slate-900">{athletePerformance.rating}/5</p>
             </div>
-            <div className="stat-card">
-              <p className="stat-card__label">Torneios</p>
-              <p className="stat-card__value">{upcomingTournaments.length}</p>
+            <div className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
+              <p className="text-sm font-medium text-slate-500">Torneios</p>
+              <p className="mt-3 text-3xl font-semibold text-slate-900">{upcomingTournaments.length}</p>
             </div>
-            <div className="stat-card">
-              <p className="stat-card__label">Faltas no mês</p>
-              <p className="stat-card__value">{absences}</p>
+            <div className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
+              <p className="text-sm font-medium text-slate-500">Faltas no mês</p>
+              <p className="mt-3 text-3xl font-semibold text-slate-900">{absences}</p>
             </div>
           </div>
         </section>
 
-        <section className="section-panel">
-          <div className="section-header">
-            <div>
-              <p className="section-title">Horário de Treino</p>
-              <p className="section-subtitle">Organize seu calendário de treino de forma clara.</p>
-            </div>
+        <section className="rounded-3xl bg-white p-6 shadow-lg ring-1 ring-slate-200/70">
+          <div className="mb-6">
+            <p className="text-lg font-semibold text-slate-900">Horário de Treino</p>
+            <p className="mt-2 text-sm text-slate-600">Organize seu calendário de treino de forma clara.</p>
           </div>
           {athleteTraining.length > 0 ? (
-            <div className="visual-list">
+            <div className="space-y-4">
               {athleteTraining.map((schedule, index) => (
-                <div key={index} className="visual-item">
+                <div key={index} className="rounded-3xl border border-slate-200/80 bg-slate-50 p-4 flex items-center justify-between">
                   <div>
-                    <strong>{schedule.day}</strong>
-                    <p>{schedule.location}</p>
+                    <strong className="text-slate-900">{schedule.day}</strong>
+                    <p className="text-sm text-slate-600">{schedule.location}</p>
                   </div>
-                  <div className="badge-pill badge-focus">{schedule.time}</div>
+                  <div className="rounded-full bg-cyan-100 px-3 py-1 text-sm font-semibold text-cyan-700">{schedule.time}</div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="tile-card">
-              <p className="tile-title">Nenhum treino agendado</p>
-              <p className="tile-meta">Adicione horários de treino e mantenha seu dojo em ritmo.</p>
+            <div className="rounded-3xl border border-slate-200/80 bg-slate-50 p-6">
+              <p className="text-lg font-semibold text-slate-900">Nenhum treino agendado</p>
+              <p className="mt-2 text-sm text-slate-600">Adicione horários de treino e mantenha seu dojo em ritmo.</p>
             </div>
           )}
         </section>
 
-        <section className="section-panel">
-          <div className="section-header">
-            <div>
-              <p className="section-title">Performance & Feedback</p>
-              <p className="section-subtitle">Análises claras para evolução de técnica e disciplina.</p>
+        <section className="rounded-3xl bg-white p-6 shadow-lg ring-1 ring-slate-200/70">
+          <div className="mb-6">
+            <p className="text-lg font-semibold text-slate-900">Performance & Feedback</p>
+            <p className="mt-2 text-sm text-slate-600">Análises claras para evolução de técnica e disciplina.</p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="rounded-3xl border border-slate-200/80 bg-slate-50 p-5">
+              <p className="text-sm text-slate-500">Avaliação atual</p>
+              <p className="mt-3 text-2xl font-semibold text-slate-900">{athletePerformance.rating}/5</p>
+            </div>
+            <div className="rounded-3xl border border-slate-200/80 bg-slate-50 p-5">
+              <p className="text-sm text-slate-500">Melhorias</p>
+              <p className="mt-3 text-2xl font-semibold text-slate-900">{athletePerformance.feedback.improvements.length || 0} itens</p>
+            </div>
+            <div className="rounded-3xl border border-slate-200/80 bg-slate-50 p-5">
+              <p className="text-sm text-slate-500">Aprimorar</p>
+              <p className="mt-3 text-2xl font-semibold text-slate-900">{athletePerformance.feedback.needsImprovement.length || 0} itens</p>
             </div>
           </div>
 
-          <div className="tile-grid">
-            <div className="tile-card">
-              <p className="tile-title">Avaliação atual</p>
-              <p className="tile-meta">{athletePerformance.rating}/5</p>
-            </div>
-            <div className="tile-card">
-              <p className="tile-title">Melhorias</p>
-              <p className="tile-meta">{athletePerformance.feedback.improvements.length || 0} itens</p>
-            </div>
-            <div className="tile-card">
-              <p className="tile-title">Aprimorar</p>
-              <p className="tile-meta">{athletePerformance.feedback.needsImprovement.length || 0} itens</p>
-            </div>
-          </div>
-
-          <div className="section-actions" style={{ marginTop: 20 }}>
-            <button className="button-pill primary" onClick={() => {
+          <div className="mt-5 flex flex-wrap gap-3">
+            <button className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800" onClick={() => {
               if (performance) {
                 setNewPerformance({
                   rating: performance.rating || 0,
@@ -672,30 +684,28 @@ const Home: React.FC = () => {
           </div>
         </section>
 
-        <section className="section-panel">
-          <div className="section-header">
-            <div>
-              <p className="section-title">Desafios e Torneios</p>
-              <p className="section-subtitle">Foque nos eventos que estão por vir.</p>
-            </div>
+        <section className="rounded-3xl bg-white p-6 shadow-lg ring-1 ring-slate-200/70">
+          <div className="mb-6">
+            <p className="text-lg font-semibold text-slate-900">Desafios e Torneios</p>
+            <p className="mt-2 text-sm text-slate-600">Foque nos eventos que estão por vir.</p>
           </div>
 
           {upcomingTournaments.length > 0 ? (
-            <div className="visual-list">
+            <div className="space-y-4">
               {upcomingTournaments.map((tournament, index) => (
-                <div key={index} className="visual-item">
+                <div key={index} className="rounded-3xl border border-slate-200/80 bg-slate-50 p-4 flex items-center justify-between">
                   <div>
-                    <strong>{tournament.name}</strong>
-                    <p>{new Date(tournament.date).toLocaleDateString()} • {tournament.location}</p>
+                    <strong className="text-slate-900">{tournament.name}</strong>
+                    <p className="text-sm text-slate-600">{new Date(tournament.date).toLocaleDateString()} • {tournament.location}</p>
                   </div>
-                  <span className="badge-pill badge-primary">Agendado</span>
+                  <span className="rounded-full bg-slate-900/5 px-3 py-1 text-sm font-semibold text-slate-900">Agendado</span>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="tile-card">
-              <p className="tile-title">Sem torneios agendados</p>
-              <p className="tile-meta">Acompanhe os eventos do dojo e prepare-se para o próximo desafio.</p>
+            <div className="rounded-3xl border border-slate-200/80 bg-slate-50 p-6">
+              <p className="text-lg font-semibold text-slate-900">Sem torneios agendados</p>
+              <p className="mt-2 text-sm text-slate-600">Acompanhe os eventos do dojo e prepare-se para o próximo desafio.</p>
             </div>
           )}
         </section>
@@ -724,146 +734,120 @@ const Home: React.FC = () => {
     });
 
     return (
-      <div className="home-shell">
-        <section className="home-hero">
-          <div className="home-hero-copy">
-            <h1 className="hero-title">Seu dojo em destaque.</h1>
-            <p className="hero-subtitle">Acompanhe toda a rotina do seu dojo com organização visual e um visual inspirado no karate.</p>
-            <div className="hero-actions">
-              <button className="button-pill primary" onClick={() => { setInviteTab('invite'); setShowInviteModal(true); }}>
-                Convidar / Pedidos
-              </button>
-              <button className="button-pill outline" onClick={() => {
-                setEditingSchedules(trainingSchedule);
-                setShowScheduleModal(true);
-              }}>
-                Editar Horários
-              </button>
+      <div className="space-y-8 text-slate-900">
+        <section className="rounded-[32px] bg-gradient-to-r from-slate-950/5 via-slate-100/80 to-slate-950/5 p-6 shadow-2xl shadow-slate-900/10 ring-1 ring-slate-200/80">
+          <div className="space-y-6">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+              <div className="max-w-2xl">
+                <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+                  Seu dojo em destaque
+                </h1>
+                <p className="mt-3 text-base leading-7 text-slate-600">
+                  Acompanhe toda a rotina do seu dojo com organização visual e informações diretas ao ponto.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <button className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800"
+                  onClick={() => { setInviteTab('invite'); setShowInviteModal(true); }}>
+                  Convidar / Pedidos
+                </button>
+                <button className="rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50"
+                  onClick={() => {
+                    setEditingSchedules(trainingSchedule);
+                    setShowScheduleModal(true);
+                  }}>
+                  Editar Horários
+                </button>
+              </div>
             </div>
-          </div>
 
-          <div className="hero-stats">
-            <div className="hero-stat">
-              <p className="hero-stat__name">Membros ativos</p>
-              <p className="hero-stat__value">{dojoMembers.length}</p>
-            </div>
-            <div className="hero-stat">
-              <p className="hero-stat__name">Horários</p>
-              <p className="hero-stat__value">{trainingSchedule.length}</p>
-            </div>
-            <div className="hero-stat">
-              <p className="hero-stat__name">Torneios próximos</p>
-              <p className="hero-stat__value">{upcomingTournaments.length}</p>
-            </div>
-            <div className="hero-stat">
-              <p className="hero-stat__name">Pedidos pendentes</p>
-              <p className="hero-stat__value">{pendingRequests.length}</p>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="min-h-[130px] rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70 flex flex-col justify-between">
+                <p className="text-sm text-slate-500">Membros ativos</p>
+                <p className="mt-3 text-3xl font-bold text-slate-900">{dojoMembers.length}</p>
+              </div>
+              <div className="min-h-[130px] rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70 flex flex-col justify-between">
+                <p className="text-sm text-slate-500">Horários</p>
+                <p className="mt-3 text-3xl font-bold text-slate-900">{trainingSchedule.length}</p>
+              </div>
+              <div className="min-h-[130px] rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70 flex flex-col justify-between">
+                <p className="text-sm text-slate-500">Torneios próximos</p>
+                <p className="mt-3 text-3xl font-bold text-slate-900">{upcomingTournaments.length}</p>
+              </div>
+              <div className="min-h-[130px] rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70 flex flex-col justify-between">
+                <p className="text-sm text-slate-500">Pedidos pendentes</p>
+                <p className="mt-3 text-3xl font-bold text-slate-900">{pendingRequests.length}</p>
+              </div>
             </div>
           </div>
         </section>
 
-        <div className="home-card-grid">
-          <section className="home-card">
-            <div className="home-card__header">
-              <div>
-                <h2 className="home-card__title">Horários de Treino</h2>
-                <p className="home-card__subtitle">Rotina semanal pronta para o dojo.</p>
-              </div>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <section className="rounded-3xl bg-white p-6 shadow-lg ring-1 ring-slate-200/70">
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold text-slate-900">Horários de Treino</h2>
+              <p className="mt-2 text-sm text-slate-600">Rotina semanal pronta para o dojo.</p>
             </div>
 
             {trainingSchedule.length > 0 ? (
-              <div className="home-card-list">
+              <div className="space-y-4">
                 {trainingSchedule.map((schedule, index) => (
-                  <div key={index} className="home-card-item">
+                  <div key={index} className="rounded-3xl border border-slate-200/80 bg-slate-50 p-4 flex items-center justify-between">
                     <div>
-                      <strong>{schedule.day}</strong>
-                      <p>{schedule.location}</p>
+                      <strong className="text-slate-900">{schedule.day}</strong>
+                      <p className="text-sm text-slate-600">{schedule.location}</p>
                     </div>
-                    <span className="badge-pill badge-focus">{schedule.time}</span>
+                    <span className="rounded-full bg-cyan-100 px-3 py-1 text-sm font-semibold text-cyan-700">{schedule.time}</span>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="tile-card">
-                <p className="tile-title">Nenhum horário configurado</p>
-                <p className="tile-meta">Defina um plano semanal e mantenha o dojo alinhado.</p>
+              <div className="rounded-3xl border border-slate-200/80 bg-slate-50 p-6">
+                <p className="text-lg font-semibold text-slate-900">Nenhum horário configurado</p>
+                <p className="mt-2 text-sm text-slate-600">Defina um plano semanal e mantenha o dojo alinhado.</p>
               </div>
             )}
           </section>
 
-          <section className="home-card">
-            <div className="home-card__header">
+          <section className="rounded-3xl bg-white p-6 shadow-lg ring-1 ring-slate-200/70">
+            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="home-card__title">Membros do Dojo</h2>
-                <p className="home-card__subtitle">Resumo rápido dos atletas e ações de gestão.</p>
+                <h2 className="text-xl font-semibold text-slate-900">Membros do Dojo</h2>
+                <p className="mt-6 text-sm text-slate-600">Use o gerenciador para pesquisar atletas, ver detalhes e controlar membros do dojo.</p>
               </div>
-              <button className="button-pill secondary" onClick={() => { setInviteTab('invite'); setShowInviteModal(true); }}>
-                Abrir convites
+              <button className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/10 transition hover:bg-slate-800" onClick={() => { setShowManageMembersModal(true); }}>
+                Gerir membros
               </button>
             </div>
-
-            <IonInput
-              placeholder="Pesquisar atleta"
-              value={memberSearchQuery}
-              onIonChange={e => setMemberSearchQuery(e.detail.value || '')}
-              style={{ marginBottom: 16 }}
-            />
-
-            {dojoMembers.filter(m => m.username.toLowerCase().includes(memberSearchQuery.toLowerCase() || '')).length > 0 ? (
-              <div className="home-card-list">
-                {dojoMembers.filter(m => m.username.toLowerCase().includes(memberSearchQuery.toLowerCase() || '')).map(member => (
-                  <div key={member._id} className="home-card-item">
-                    <div>
-                      <strong>{member.username}</strong>
-                      <p>{member.email || 'Email não informado'}</p>
-                    </div>
-                    <div className="section-actions">
-                      <button className="button-pill outline" onClick={() => handleViewMemberDetails(member)}>
-                        Detalhes
-                      </button>
-                      <button className="button-pill danger" onClick={() => handleRemoveMember(member)}>
-                        Remover
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="tile-card">
-                <p className="tile-title">Nenhum membro encontrado</p>
-              </div>
-            )}
           </section>
 
-          <section className="home-card">
-            <div className="home-card__header">
-              <div>
-                <h2 className="home-card__title">Torneios</h2>
-                <p className="home-card__subtitle">Eventos programados e próximos passos.</p>
-              </div>
+          <section className="rounded-3xl bg-white p-6 shadow-lg ring-1 ring-slate-200/70">
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold text-slate-900">Torneios</h2>
+              <p className="mt-2 text-sm text-slate-600">Eventos programados e próximos passos.</p>
             </div>
 
             {upcomingTournaments.length > 0 ? (
-              <div className="home-card-list">
+              <div className="space-y-4">
                 {upcomingTournaments.map((tournament, index) => (
-                  <div key={index} className="home-card-item">
+                  <div key={index} className="rounded-3xl border border-slate-200/80 bg-slate-50 p-4 flex items-center justify-between">
                     <div>
-                      <strong>{tournament.name}</strong>
-                      <p>{new Date(tournament.date).toLocaleDateString()} • {tournament.location}</p>
+                      <strong className="text-slate-900">{tournament.name}</strong>
+                      <p className="text-sm text-slate-600">{new Date(tournament.date).toLocaleDateString()} • {tournament.location}</p>
                     </div>
-                    <span className="badge-pill badge-primary">Próximo</span>
+                    <span className="rounded-full bg-slate-900/5 px-3 py-1 text-sm font-semibold text-slate-900">Próximo</span>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="tile-card">
-                <p className="tile-title">Nenhum torneio agendado</p>
-                <p className="tile-meta">Planeje o próximo evento e envolva seus atletas.</p>
+              <div className="rounded-3xl border border-slate-200/80 bg-slate-50 p-6">
+                <p className="text-lg font-semibold text-slate-900">Nenhum torneio agendado</p>
+                <p className="mt-2 text-sm text-slate-600">Planeje o próximo evento e envolva seus atletas.</p>
               </div>
             )}
 
-            <div className="section-actions" style={{ marginTop: 20 }}>
-              <button className="button-pill primary" onClick={() => {
+            <div className="mt-5 flex flex-wrap gap-3">
+              <button className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800" onClick={() => {
                 setEditingTournaments(tournaments.map((t: any) => ({ ...t, participants: (t.participants || []).map((p: any) => p._id?.toString() || p.userId?.toString() || p) })));
                 setShowTournamentModal(true);
               }}>
@@ -979,6 +963,52 @@ const Home: React.FC = () => {
                 )}
               </div>
             )}
+          </IonContent>
+        </IonModal>
+
+        <IonModal isOpen={showManageMembersModal} onDidDismiss={() => setShowManageMembersModal(false)}>
+          <IonHeader>
+            <IonToolbar>
+              <IonTitle>Gerir Membros</IonTitle>
+              <IonButton slot="end" fill="clear" onClick={() => setShowManageMembersModal(false)}>
+                <IonIcon slot="icon-only" icon={close}></IonIcon>
+              </IonButton>
+            </IonToolbar>
+          </IonHeader>
+          <IonContent className="modal-shell">
+            <div style={{ padding: '1rem' }}>
+              <IonInput
+                placeholder="Pesquisar atleta"
+                value={memberSearchQuery}
+                onIonChange={e => setMemberSearchQuery(e.detail.value || '')}
+                className="mb-4 rounded-3xl bg-slate-100 px-4 py-3 text-sm text-slate-900"
+              />
+
+              {dojoMembers.filter(m => m.username.toLowerCase().includes(memberSearchQuery.toLowerCase() || '')).length > 0 ? (
+                <div className="space-y-4">
+                  {dojoMembers.filter(m => m.username.toLowerCase().includes(memberSearchQuery.toLowerCase() || '')).map(member => (
+                    <div key={member._id} className="rounded-3xl border border-slate-200/80 bg-slate-50 p-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <strong className="text-slate-900 text-lg">{member.username}</strong>
+                        <p className="mt-2 text-sm text-slate-600">{member.email || 'Email não informado'}</p>
+                      </div>
+                      <div className="flex flex-wrap gap-3">
+                        <button className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-slate-50" onClick={() => handleViewMemberDetails(member)}>
+                          Detalhes
+                        </button>
+                        <button className="rounded-full bg-rose-500 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-rose-500/20 transition hover:bg-rose-600" onClick={() => handleRemoveMember(member)}>
+                          Remover
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-3xl border border-slate-200/80 bg-slate-50 p-6">
+                  <p className="text-lg font-semibold text-slate-900">Nenhum membro encontrado</p>
+                </div>
+              )}
+            </div>
           </IonContent>
         </IonModal>
 
@@ -1390,7 +1420,12 @@ const Home: React.FC = () => {
     }
 
     if (!children.length) {
-      return <div className="page"><h2>Responsável</h2><p>Não há atletas associados.</p></div>;
+      return (
+        <div className="rounded-3xl bg-white/90 p-6 shadow-lg ring-1 ring-slate-200/70 text-slate-900">
+          <h2 className="text-xl font-semibold">Responsável</h2>
+          <p className="mt-2 text-sm text-slate-600">Não há atletas associados.</p>
+        </div>
+      );
     }
 
     const athleteId = selectedChild || String(children[0]._id || children[0].username);
@@ -1405,7 +1440,7 @@ const Home: React.FC = () => {
           </IonButton>
         )}
         <div>
-          {currentChild && <p className="subtle-text">{currentChild.username}</p>}
+          {currentChild && <p className="text-slate-700 text-sm mb-4">{currentChild.username}</p>}
           {renderAthleteDashboard(athleteId)}
         </div>
       </>
@@ -1436,10 +1471,18 @@ const Home: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader>
-      </IonHeader>
-      <IonContent fullscreen className='background'>
-        {dashboard}
+      <IonHeader />
+      <IonContent fullscreen className="content" ref={contentRef} onIonScroll={handleContentScroll} scrollEvents={true}>
+        <div className="page">
+          {dashboard}
+        </div>
+        <button
+          type="button"
+          onClick={handleScrollToTop}
+          className={`fixed bottom-5 right-5 z-50 rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-xl transition-opacity duration-200 ${showScrollTopButton ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
+        >
+          Upper
+        </button>
       </IonContent>
       <Navbar />
     </IonPage>
