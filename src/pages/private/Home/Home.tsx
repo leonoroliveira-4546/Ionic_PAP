@@ -1,9 +1,8 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonList, IonItem, IonLabel, IonButton, IonSelect, IonSelectOption, IonModal, IonInput, IonDatetime, IonIcon, IonGrid, IonRow, IonCol } from '@ionic/react';
+import React, { useEffect, useState } from 'react';
+import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonList, IonItem, IonLabel, IonButton, IonSelect, IonSelectOption, IonModal, IonInput, IonDatetime, IonIcon } from '@ionic/react';
 import { close, add, chevronBack, create, trash, eye } from 'ionicons/icons';
 import { useAuth } from '../../../AuthContext';
 import Navbar from '../../../components/MainLayout';
-import '../../../pages/StylesPages.css';
 import authApi from '../../../hooks/authApi';
 import dojosApi from '../../../hooks/dojosApi';
 
@@ -496,18 +495,19 @@ const Home: React.FC = () => {
       // Update or create tournaments
       for (const tournament of editingTournaments) {
         if (tournament._id) {
-          // Atualizar apenas nome, data e localização (não enviar participants)
-          await updateTournament(tournament._id, { 
-            name: tournament.name, 
-            date: tournament.date, 
-            location: tournament.location
+          await updateTournament(tournament._id, {
+            name: tournament.name,
+            date: tournament.date,
+            location: tournament.location,
+            participants: tournament.participants || []
           });
         } else {
           const newTournamentData = {
             name: tournament.name,
             date: tournament.date,
             location: tournament.location,
-            userId: user._id
+            userId: user._id,
+            participants: tournament.participants || []
           };
           const created = await createTournament(user.dojoId, newTournamentData);
           console.log('createTournament response for', newTournamentData, created);
@@ -574,60 +574,131 @@ const Home: React.FC = () => {
     };
 
     return (
-      <div className="page background">
-        <h2>Dashboard do Atleta</h2>
+      <div className="dashboard-content">
+        <section className="card-panel">
+          <div className="section-header">
+            <div>
+              <p className="section-title">Dashboard do Atleta</p>
+              <p className="section-subtitle">Visão moderna do seu progresso, treinos e próximos desafios.</p>
+            </div>
+            <span className="badge-pill badge-primary">Atleta</span>
+          </div>
 
-        <IonCard>
-          <IonCardHeader>
-            <IonCardTitle>Horário de Treinos</IonCardTitle>
-          </IonCardHeader>
-          <IonCardContent>
-            <IonList>
+          <div className="stats-grid">
+            <div className="stat-card">
+              <p className="stat-card__label">Treinos agendados</p>
+              <p className="stat-card__value">{athleteTraining.length}</p>
+            </div>
+            <div className="stat-card">
+              <p className="stat-card__label">Última avaliação</p>
+              <p className="stat-card__value">{athletePerformance.rating}/5</p>
+            </div>
+            <div className="stat-card">
+              <p className="stat-card__label">Torneios</p>
+              <p className="stat-card__value">{upcomingTournaments.length}</p>
+            </div>
+            <div className="stat-card">
+              <p className="stat-card__label">Faltas no mês</p>
+              <p className="stat-card__value">{absences}</p>
+            </div>
+          </div>
+        </section>
+
+        <section className="section-panel">
+          <div className="section-header">
+            <div>
+              <p className="section-title">Horário de Treino</p>
+              <p className="section-subtitle">Organize seu calendário de treino de forma clara.</p>
+            </div>
+          </div>
+          {athleteTraining.length > 0 ? (
+            <div className="visual-list">
               {athleteTraining.map((schedule, index) => (
-                <IonItem key={index}>
-                  <IonLabel>{schedule.day} - {schedule.time}</IonLabel>
-                  <IonLabel slot="end">{schedule.location}</IonLabel>
-                </IonItem>
+                <div key={index} className="visual-item">
+                  <div>
+                    <strong>{schedule.day}</strong>
+                    <p>{schedule.location}</p>
+                  </div>
+                  <div className="badge-pill badge-focus">{schedule.time}</div>
+                </div>
               ))}
-            </IonList>
-          </IonCardContent>
-        </IonCard>
+            </div>
+          ) : (
+            <div className="tile-card">
+              <p className="tile-title">Nenhum treino agendado</p>
+              <p className="tile-meta">Adicione horários de treino e mantenha seu dojo em ritmo.</p>
+            </div>
+          )}
+        </section>
 
-        <IonCard>
-          <IonCardHeader>
-            <IonCardTitle>Desempenho no Karate</IonCardTitle>
-          </IonCardHeader>
-          <IonCardContent>
-            <p><strong>Avaliação:</strong> {athletePerformance.rating}/5</p>
-            <h4>O que melhorou:</h4>
-            <ul>
-              {athletePerformance.feedback.improvements.map((item: string, idx: number) => <li key={idx}>{item}</li>)}
-            </ul>
-            <h4>O que precisa melhorar:</h4>
-            <ul>
-              {athletePerformance.feedback.needsImprovement.map((item: string, idx: number) => <li key={idx}>{item}</li>)}
-            </ul>
-            <h4>Faltas por Mês: {absences}</h4>
-          </IonCardContent>
-        </IonCard>
+        <section className="section-panel">
+          <div className="section-header">
+            <div>
+              <p className="section-title">Performance & Feedback</p>
+              <p className="section-subtitle">Análises claras para evolução de técnica e disciplina.</p>
+            </div>
+          </div>
 
-        <IonCard>
-          <IonCardHeader>
-            <IonCardTitle>Próximos Torneios</IonCardTitle>
-          </IonCardHeader>
-          <IonCardContent>
-            <IonList>
+          <div className="tile-grid">
+            <div className="tile-card">
+              <p className="tile-title">Avaliação atual</p>
+              <p className="tile-meta">{athletePerformance.rating}/5</p>
+            </div>
+            <div className="tile-card">
+              <p className="tile-title">Melhorias</p>
+              <p className="tile-meta">{athletePerformance.feedback.improvements.length || 0} itens</p>
+            </div>
+            <div className="tile-card">
+              <p className="tile-title">Aprimorar</p>
+              <p className="tile-meta">{athletePerformance.feedback.needsImprovement.length || 0} itens</p>
+            </div>
+          </div>
+
+          <div className="section-actions" style={{ marginTop: 20 }}>
+            <button className="button-pill primary" onClick={() => {
+              if (performance) {
+                setNewPerformance({
+                  rating: performance.rating || 0,
+                  improvements: performance.feedback?.improvements?.join(', ') || '',
+                  needsImprovement: performance.feedback?.needsImprovement?.join(', ') || ''
+                });
+              } else {
+                setNewPerformance({ rating: 0, improvements: '', needsImprovement: '' });
+              }
+              setShowPerformanceModal(true);
+            }}>
+              {performance ? 'Editar Performance' : 'Adicionar Performance'}
+            </button>
+          </div>
+        </section>
+
+        <section className="section-panel">
+          <div className="section-header">
+            <div>
+              <p className="section-title">Desafios e Torneios</p>
+              <p className="section-subtitle">Foque nos eventos que estão por vir.</p>
+            </div>
+          </div>
+
+          {upcomingTournaments.length > 0 ? (
+            <div className="visual-list">
               {upcomingTournaments.map((tournament, index) => (
-                <IonItem key={index}>
-                  <IonLabel>
-                    <h3>{tournament.name}</h3>
-                    <p>{tournament.date} - {tournament.location}</p>
-                  </IonLabel>
-                </IonItem>
+                <div key={index} className="visual-item">
+                  <div>
+                    <strong>{tournament.name}</strong>
+                    <p>{new Date(tournament.date).toLocaleDateString()} • {tournament.location}</p>
+                  </div>
+                  <span className="badge-pill badge-primary">Agendado</span>
+                </div>
               ))}
-            </IonList>
-          </IonCardContent>
-        </IonCard>
+            </div>
+          ) : (
+            <div className="tile-card">
+              <p className="tile-title">Sem torneios agendados</p>
+              <p className="tile-meta">Acompanhe os eventos do dojo e prepare-se para o próximo desafio.</p>
+            </div>
+          )}
+        </section>
       </div>
     );
   };
@@ -653,97 +724,154 @@ const Home: React.FC = () => {
     });
 
     return (
-      <div className="page background">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h2>Dashboard do Sensei</h2>
-          <IonButton onClick={() => { setInviteTab('invite'); setShowInviteModal(true); }}>
-            Convidar/Pedidos
-          </IonButton>
-        </div>
+      <div className="dashboard-content">
+        <section className="card-panel">
+          <div className="section-header">
+            <div>
+              <p className="section-title">Painel do Sensei</p>
+              <p className="section-subtitle">Controle do dojo com clareza, ações rápidas e foco no progresso.</p>
+            </div>
+            <div className="section-actions">
+              <button className="button-pill primary" onClick={() => { setInviteTab('invite'); setShowInviteModal(true); }}>
+                Convidar / Pedidos
+              </button>
+              <button className="button-pill outline" onClick={() => {
+                setEditingSchedules(trainingSchedule);
+                setShowScheduleModal(true);
+              }}>
+                Editar Horários
+              </button>
+            </div>
+          </div>
 
-        {/* Horários */}
-        <IonCard>
-          <IonCardHeader>
-            <IonCardTitle>Horários de Treino</IonCardTitle>
-          </IonCardHeader>
-          <IonCardContent>
-            <IonList>
-              {trainingSchedule.length > 0 ? (
-                trainingSchedule.map((schedule, index) => (
-                  <IonItem key={index}>
-                    <IonLabel>
-                      <h3>{schedule.day}</h3>
-                      <p>{schedule.time} - {schedule.location}</p>
-                    </IonLabel>
-                  </IonItem>
-                ))
-              ) : (
-                <p>Nenhum horário adicionado ainda.</p>
-              )}
-            </IonList>
-            <IonButton expand="block" color="primary" onClick={() => {
-              setEditingSchedules(trainingSchedule);
-              setShowScheduleModal(true);
-            }}>
-              Editar Horários
-            </IonButton>
-          </IonCardContent>
-        </IonCard>
+          <div className="stats-grid">
+            <div className="stat-card">
+              <p className="stat-card__label">Membros</p>
+              <p className="stat-card__value">{dojoMembers.length}</p>
+            </div>
+            <div className="stat-card">
+              <p className="stat-card__label">Horários</p>
+              <p className="stat-card__value">{trainingSchedule.length}</p>
+            </div>
+            <div className="stat-card">
+              <p className="stat-card__label">Torneios</p>
+              <p className="stat-card__value">{upcomingTournaments.length}</p>
+            </div>
+            <div className="stat-card">
+              <p className="stat-card__label">Pedidos</p>
+              <p className="stat-card__value">{pendingRequests.length}</p>
+            </div>
+          </div>
+        </section>
 
-        {/* Membros */}
-        <IonCard>
-          <IonCardHeader>
-            <IonCardTitle>Membros do Dojo</IonCardTitle>
-          </IonCardHeader>
-          <IonCardContent>
-            <IonInput placeholder="Pesquisar atleta por nome" value={memberSearchQuery} onIonChange={e => setMemberSearchQuery(e.detail.value || '')}></IonInput>
-            <IonList style={{ marginTop: '1rem' }}>
-              {dojoMembers.filter(m => m.username.toLowerCase().includes(memberSearchQuery.toLowerCase() || ''))
-                .map(member => (
-                <IonItem key={member._id}>
-                  <IonLabel>{member.username}</IonLabel>
-                  <IonButton fill="clear" onClick={() => handleViewMemberDetails(member)}>
-                    <IonIcon slot="icon-only" icon={eye}></IonIcon>
-                  </IonButton>
-                  <IonButton fill="clear" color="danger" onClick={() => handleRemoveMember(member)}>
-                    <IonIcon slot="icon-only" icon={trash}></IonIcon>
-                  </IonButton>
-                </IonItem>
-                ))}
-            </IonList>
-          </IonCardContent>
-        </IonCard>
+        <section className="section-panel">
+          <div className="section-header">
+            <div>
+              <p className="section-title">Horários de Treino</p>
+              <p className="section-subtitle">Rotina semanal pronta para o dojo.</p>
+            </div>
+          </div>
 
-        {/* Torneios Próximos */}
-        <IonCard>
-          <IonCardHeader>
-            <IonCardTitle>Próximos Torneios</IonCardTitle>
-          </IonCardHeader>
-          <IonCardContent>
-            {upcomingTournaments.length > 0 ? (
-              <IonList>
-                {upcomingTournaments.map(t => (
-                  <IonItem key={t._id}>
-                    <IonLabel>
-                      <h3>{t.name}</h3>
-                      <p>{new Date(t.date).toLocaleDateString()} - {t.location}</p>
-                    </IonLabel>
-                  </IonItem>
-                ))}
-              </IonList>
-            ) : (
-              <p>Nenhum torneio próximo.</p>
-            )}
-            <IonButton expand="block" color="primary" onClick={() => {
-              setEditingTournaments(tournaments.map((t: any) => ({ ...t, participants: (t.participants || []).map((p: any) => p._id || p) })));
+          {trainingSchedule.length > 0 ? (
+            <div className="visual-list">
+              {trainingSchedule.map((schedule, index) => (
+                <div key={index} className="visual-item">
+                  <div>
+                    <strong>{schedule.day}</strong>
+                    <p>{schedule.location}</p>
+                  </div>
+                  <span className="badge-pill badge-focus">{schedule.time}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="tile-card">
+              <p className="tile-title">Nenhum horário configurado</p>
+              <p className="tile-meta">Defina um plano semanal para manter seu dojo alinhado.</p>
+            </div>
+          )}
+        </section>
+
+        <section className="section-panel">
+          <div className="section-header">
+            <div>
+              <p className="section-title">Membros do Dojo</p>
+              <p className="section-subtitle">Resumo rápido dos atletas e ações de gestão.</p>
+            </div>
+            <button className="button-pill secondary" onClick={() => { setInviteTab('invite'); setShowInviteModal(true); }}>
+              Abrir convites
+            </button>
+          </div>
+
+          <IonInput
+            placeholder="Pesquisar atleta"
+            value={memberSearchQuery}
+            onIonChange={e => setMemberSearchQuery(e.detail.value || '')}
+            style={{ marginBottom: 16 }}
+          />
+
+          {dojoMembers.filter(m => m.username.toLowerCase().includes(memberSearchQuery.toLowerCase() || '')).length > 0 ? (
+            <div className="visual-list">
+              {dojoMembers.filter(m => m.username.toLowerCase().includes(memberSearchQuery.toLowerCase() || '')).map(member => (
+                <div key={member._id} className="visual-item">
+                  <div>
+                    <strong>{member.username}</strong>
+                    <p>{member.email || 'Email não informado'}</p>
+                  </div>
+                  <div className="section-actions">
+                    <button className="button-pill outline" onClick={() => handleViewMemberDetails(member)}>
+                      Detalhes
+                    </button>
+                    <button className="button-pill danger" onClick={() => handleRemoveMember(member)}>
+                      Remover
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="tile-card">
+              <p className="tile-title">Nenhum membro encontrado</p>
+            </div>
+          )}
+        </section>
+
+        <section className="section-panel">
+          <div className="section-header">
+            <div>
+              <p className="section-title">Torneios</p>
+              <p className="section-subtitle">Eventos programados e próximos passos.</p>
+            </div>
+          </div>
+
+          {upcomingTournaments.length > 0 ? (
+            <div className="visual-list">
+              {upcomingTournaments.map((tournament, index) => (
+                <div key={index} className="visual-item">
+                  <div>
+                    <strong>{tournament.name}</strong>
+                    <p>{new Date(tournament.date).toLocaleDateString()} • {tournament.location}</p>
+                  </div>
+                  <span className="badge-pill badge-primary">Próximo</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="tile-card">
+              <p className="tile-title">Nenhum torneio agendado</p>
+              <p className="tile-meta">Planeje o próximo evento e envolva seus atletas.</p>
+            </div>
+          )}
+
+          <div className="section-actions" style={{ marginTop: 20 }}>
+            <button className="button-pill primary" onClick={() => {
+              setEditingTournaments(tournaments.map((t: any) => ({ ...t, participants: (t.participants || []).map((p: any) => p._id?.toString() || p.userId?.toString() || p) })));
               setShowTournamentModal(true);
             }}>
               Gerir Torneios
-            </IonButton>
-          </IonCardContent>
-        </IonCard>
-
-
+            </button>
+          </div>
+        </section>
 
         {/* Modal Convidar/Pedidos */}
         <IonModal isOpen={showInviteModal} onDidDismiss={() => setShowInviteModal(false)}>

@@ -39,18 +39,21 @@ const ProfileSettings: React.FC = () => {
   const [passwordLoading, setPasswordLoading] = useState(false);
 
   type ResponsavelChild = {
-    _id: string;
-    username: string;
+    _id?: string;
+    username?: string;
     name?: string;
     profilePic?: string;
     belt?: string;
     points?: number;
     ranking?: number;
-  };
+  } | string;
 
-  const isAthlete = (type: string) => type === 'athlete' || type === 'atleta';
-  const isResponsavel = (type: string) => type === 'responsavel';
-  const isSensei = (type: string) => type === 'sensei';
+  const getChildId = (child: ResponsavelChild) => typeof child === 'string' ? child : String(child._id || child.username || '');
+  const getChildLabel = (child: ResponsavelChild) => typeof child === 'string' ? child : child.name || child.username || String(child._id || 'Filho');
+
+  const isAthlete = (type: string) => type?.toLowerCase() === 'athlete' || type?.toLowerCase() === 'atleta';
+  const isResponsavel = (type: string) => type?.toLowerCase() === 'responsavel';
+  const isSensei = (type: string) => type?.toLowerCase() === 'sensei';
 
   useEffect(() => {
     if (!user) return;
@@ -80,7 +83,7 @@ const ProfileSettings: React.FC = () => {
 
   useEffect(() => {
     if (!selectedChildId && responsavelChildren?.length > 0) {
-      setSelectedChildId(String(responsavelChildren[0]._id));
+      setSelectedChildId(getChildId(responsavelChildren[0]));
     }
   }, [selectedChildId, responsavelChildren]);
 
@@ -326,121 +329,122 @@ const ProfileSettings: React.FC = () => {
           </IonContent>
         </IonModal>
 
-        <IonText color="medium">
-          <p style={{ paddingLeft: 16, marginBottom: 4, marginTop: 16, fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 }}>Estatísticas</p>
-        </IonText>
+      <IonText color="medium">
+        <p style={{ paddingLeft: 16, marginBottom: 4, marginTop: 16, fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 }}>Estatísticas</p>
+      </IonText>
 
-        {isSensei(user.type) ? (
+      {isSensei(user.type) ? (
+        <IonList inset lines="inset">
+          <IonItem>
+            <IonIcon icon={trophyOutline} slot="start" color="medium" />
+            <IonLabel>
+              <h3>Sem ranking reservado</h3>
+              <p>Senseis não têm estatísticas de ranking exibidas aqui.</p>
+            </IonLabel>
+          </IonItem>
+        </IonList>
+      ) : isResponsavel(user.type) ? (
+        <>
           <IonList inset lines="inset">
             <IonItem>
-              <IonIcon icon={trophyOutline} slot="start" color="medium" />
+              <IonIcon icon={personOutline} slot="start" color="primary" />
               <IonLabel>
-                <h3>Sem ranking reservado</h3>
-                <p>Senseis não têm estatísticas de ranking exibidas aqui.</p>
+                <h3>Responsável</h3>
+                <p>{responsavelChildren?.length ?? 0} filho(s) associado(s).</p>
               </IonLabel>
             </IonItem>
           </IonList>
-        ) : isResponsavel(user.type) ? (
-          <>
-            <IonList inset lines="inset">
-              <IonItem>
-                <IonIcon icon={personOutline} slot="start" color="primary" />
-                <IonLabel>
-                  <h3>Responsável</h3>
-                  <p>{responsavelChildren?.length ?? 0} filho(s) associado(s).</p>
-                </IonLabel>
-              </IonItem>
-            </IonList>
 
-            <div style={{ padding: '0 16px 16px' }}>
+          <div style={{ padding: '0 16px 16px' }}>
+            <IonText color="medium">
+              <p style={{ margin: '0 0 10px', fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 }}>
+                Filhos
+              </p>
+            </IonText>
+
+            {responsavelChildren?.length ? (
+              <>
+                {responsavelChildren.length > 1 && (
+                  <IonItem>
+                    <IonLabel>
+                      <IonSelect
+                        value={selectedChildId}
+                        placeholder="Selecione um filho"
+                        onIonChange={e => setSelectedChildId(String(e.detail.value || ''))}
+                      >
+                        {responsavelChildren.map(child => (
+                          <IonSelectOption key={getChildId(child)} value={getChildId(child)}>
+                            {getChildLabel(child)}
+                          </IonSelectOption>
+                        ))}
+                      </IonSelect>
+                    </IonLabel>
+                  </IonItem>
+                )}
+
+                {(() => {
+                  const selectedChild = responsavelChildren.find(child => getChildId(child) === selectedChildId) || responsavelChildren[0];
+                  const displayName = typeof selectedChild === 'string'
+                    ? selectedChild
+                    : selectedChild.name || selectedChild.username || 'Filho';
+                  return (
+                    <IonList inset lines="inset">
+                      <IonItem style={{ marginBottom: 4 }}>
+                        <IonLabel>
+                          <h3>{displayName}</h3>
+                          <p>Pontos: {(typeof selectedChild === 'string' ? 0 : selectedChild.points) ?? 0} • Ranking: #{(typeof selectedChild === 'string' ? 'N/A' : selectedChild.ranking) ?? 'N/A'}</p>
+                        </IonLabel>
+                      </IonItem>
+                    </IonList>
+                  );
+                })()}
+              </>
+            ) : (
               <IonText color="medium">
-                <p style={{ margin: '0 0 10px', fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 }}>
-                  Filhos
-                </p>
+                <p>Nenhum filho com dados de ranking encontrado.</p>
               </IonText>
+            )}
+          </div>
+        </>
+      ) : (
+        <IonList inset lines="inset">
+          <IonItem>
+            <IonIcon icon={trophyOutline} slot="start" color="warning" />
+            <IonLabel>
+              <h3>Pontos Totais</h3>
+              <p>Estatísticas de gamificação</p>
+            </IonLabel>
+            <IonText color="primary" slot="end" style={{ fontWeight: 'bold' }}>{user.points || 0}</IonText>
+          </IonItem>
 
-              {responsavelChildren?.length ? (
-                <>
-                  {responsavelChildren.length > 1 && (
-                    <IonItem>
-                      <IonLabel>
-                        <IonSelect
-                          value={selectedChildId}
-                          placeholder="Selecione um filho"
-                          onIonChange={e => setSelectedChildId(String(e.detail.value || ''))}
-                        >
-                          {responsavelChildren.map(child => (
-                            <IonSelectOption key={String(child._id)} value={String(child._id)}>
-                              {child.name || child.username}
-                            </IonSelectOption>
-                          ))}
-                        </IonSelect>
-                      </IonLabel>
-                    </IonItem>
-                  )}
+          <IonItem>
+            <IonIcon icon={ribbonOutline} slot="start" color="secondary" />
+            <IonLabel>
+              <h3>Ranking Atual</h3>
+              <p>Posição no ranking geral</p>
+            </IonLabel>
+            <IonText color="success" slot="end" style={{ fontWeight: 'bold' }}>#{user.ranking || 'N/A'}</IonText>
+          </IonItem>
 
-                  {(() => {
-                    const selectedChild = responsavelChildren.find(child => String(child._id) === selectedChildId) || responsavelChildren[0];
-                    return (
-                      <IonList inset lines="inset">
-                        <IonItem style={{ marginBottom: 4 }}>
-                          <IonLabel>
-                            <h3>{selectedChild.name || selectedChild.username}</h3>
-                            <p>Pontos: {selectedChild.points ?? 0} • Ranking: #{selectedChild.ranking ?? 'N/A'}</p>
-                          </IonLabel>
-                        </IonItem>
-                      </IonList>
-                    );
-                  })()}
-                </>
-              ) : (
-                <IonText color="medium">
-                  <p>Nenhum filho com dados de ranking encontrado.</p>
-                </IonText>
-              )}
-            </div>
-          </>
-        ) : (
-          <>
-            <IonList inset lines="inset">
-              <IonItem>
-                <IonIcon icon={trophyOutline} slot="start" color="warning" />
-                <IonLabel>
-                  <h3>Pontos Totais</h3>
-                  <p>Estatísticas de gamificação</p>
-                </IonLabel>
-                <IonText color="primary" slot="end" style={{ fontWeight: 'bold' }}>{user.points || 0}</IonText>
-              </IonItem>
+          <IonItem>
+            <IonIcon icon={trophyOutline} slot="start" color="tertiary" />
+            <IonLabel>
+              <h3>Torneios Participados</h3>
+              <p>Total de competições</p>
+            </IonLabel>
+            <IonText color="medium" slot="end" style={{ fontWeight: 'bold' }}>{user.tournamentParticipations ?? 0}</IonText>
+          </IonItem>
 
-              <IonItem>
-                <IonIcon icon={ribbonOutline} slot="start" color="secondary" />
-                <IonLabel>
-                  <h3>Ranking Atual</h3>
-                  <p>Posição no ranking geral</p>
-                </IonLabel>
-                <IonText color="success" slot="end" style={{ fontWeight: 'bold' }}>#{user.ranking || 'N/A'}</IonText>
-              </IonItem>
-
-              <IonItem>
-                <IonIcon icon={trophyOutline} slot="start" color="tertiary" />
-                <IonLabel>
-                  <h3>Torneios Participados</h3>
-                  <p>Total de competições</p>
-                </IonLabel>
-                <IonText color="medium" slot="end" style={{ fontWeight: 'bold' }}>{user.tournamentParticipations ?? 0}</IonText>
-              </IonItem>
-
-              <IonItem>
-                <IonIcon icon={trophyOutline} slot="start" color="danger" />
-                <IonLabel>
-                  <h3>Vitórias</h3>
-                  <p>Torneios vencidos</p>
-                </IonLabel>
-                <IonText color="danger" slot="end" style={{ fontWeight: 'bold' }}>{user.tournamentVictories ?? 0}</IonText>
-              </IonItem>
-            </IonList>
-          </>
-        )}
+          <IonItem>
+            <IonIcon icon={trophyOutline} slot="start" color="danger" />
+            <IonLabel>
+              <h3>Vitórias</h3>
+              <p>Torneios vencidos</p>
+            </IonLabel>
+            <IonText color="danger" slot="end" style={{ fontWeight: 'bold' }}>{user.tournamentVictories ?? 0}</IonText>
+          </IonItem>
+        </IonList>
+      )}
 
         {/* Preferences Section
         <IonText color="medium">

@@ -89,13 +89,10 @@ const Educacional: React.FC = () => {
       return;
     }
 
-    // Verificar se já existe um desafio para essa data (se é novo)
-    if (!editingChallenge?._id) {
-      const challengeForToday = dailyChallenges.find(c => c.date === newChallenge.date);
-      if (challengeForToday) {
-        alert('Já existe um desafio para esta data. Só é permitido um desafio por dia.');
-        return;
-      }
+    // Só é permitido um desafio por dojo ao mesmo tempo
+    if (!editingChallenge?._id && dailyChallenges.length > 0) {
+      alert('Já existe um desafio ativo para o dojo. Só é permitido um único desafio.');
+      return;
     }
 
     // Validar opções para múltipla escolha
@@ -290,21 +287,23 @@ const Educacional: React.FC = () => {
             <IonCardHeader>
               <IonCardTitle style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span>🎯 Desafios do Dia</span>
-                <IonButton size="small" onClick={() => {
-                  setEditingChallenge(null);
-                  setNewChallenge({ 
-                    title: '', 
-                    description: '', 
-                    date: new Date().toISOString().split('T')[0], 
-                    dojoOnly: true,
-                    type: 'text-short',
-                    options: []
-                  });
-                  setShowChallengeModal(true);
-                }}>
-                  <IonIcon slot="start" icon={add} />
-                  Novo
-                </IonButton>
+                {dailyChallenges.length === 0 && (
+                  <IonButton size="small" onClick={() => {
+                    setEditingChallenge(null);
+                    setNewChallenge({ 
+                      title: '', 
+                      description: '', 
+                      date: new Date().toISOString().split('T')[0], 
+                      dojoOnly: true,
+                      type: 'text-short',
+                      options: []
+                    });
+                    setShowChallengeModal(true);
+                  }}>
+                    <IonIcon slot="start" icon={add} />
+                    Novo
+                  </IonButton>
+                )}
               </IonCardTitle>
             </IonCardHeader>
             <IonCardContent>
@@ -330,7 +329,7 @@ const Educacional: React.FC = () => {
                             </p>
                             {(challenge.options || []).length > 0 && (
                               <div style={{fontSize: '0.85em', marginTop: '4px', color: '#666'}}>
-                                <strong>Opções:</strong> {challenge.options.join(', ')}
+                                <strong>Opções:</strong> {(challenge.options || []).join(', ')}
                               </div>
                             )}
                           </div>
@@ -465,15 +464,6 @@ const Educacional: React.FC = () => {
                   </div>
                 )}
 
-                <IonItem style={{marginTop: '16px'}}>
-                  <IonLabel>Apenas para o Dojo</IonLabel>
-                  <IonChip
-                    onClick={() => setNewChallenge({...newChallenge, dojoOnly: !newChallenge.dojoOnly})}
-                    color={newChallenge.dojoOnly ? 'primary' : 'medium'}
-                  >
-                    {newChallenge.dojoOnly ? '🔒 Sim' : '🌐 Não'}
-                  </IonChip>
-                </IonItem>
 
                 <IonButton expand="block" color="success" onClick={handleAddChallenge} style={{ marginTop: '1rem' }}>
                   {editingChallenge ? 'Guardar Alterações' : 'Criar Desafio'}

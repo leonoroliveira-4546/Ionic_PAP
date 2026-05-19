@@ -10,7 +10,7 @@ const Navbar: React.FC = () => {
 
   return (
     <IonFooter>
-      <IonToolbar style={{ display: 'flex', justifyContent: 'space-around' }}>
+      <IonToolbar className="navbar-toolbar">
         
         {!isAdmin && (
           <IonButton 

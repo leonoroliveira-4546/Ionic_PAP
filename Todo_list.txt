@@ -1,26 +1,16 @@
 Sensei:
 
  Home:
-    Quando guardo os participantes, quando busco novamente mostra que nao ta
-   guardar os participantes escolhidos e tem atenção as chhildrens pois tem
-   que ser diferente para guardar;
-   
- Profile:
-   A SEÇÇÂO de estatisticas NAO deve aparecer ao sensei;
-   
- AreaEducativa:
-    Esses desafios sao apenas para o dojo;
-    So deve ser ter um UNICO DESAFIO, por o botao novo desaparece;
+    Depois de editar e guarda, quando fazer fetch so devolve aqueles que nao tem
+   participantes (os antigos e os proximos);
 
 Atleta:
  
  Home:
    se não tiver num dojo, não aparece nada sem ser algo para
   pedir para entrar num dojo;
-   receber notificações de convide e aceitação ou rejeição;
    se não tiver próximos torneios não mostra;
    mostrar se tiver um novo desafio do dia do dojo, tanto na home
-  como nas notificações;
    perde points se faltar aos treinos, so se não for por doença;
    
  Comunidade:

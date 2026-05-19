@@ -45,7 +45,7 @@ export const dojosApi = () => {
     return data;
   };
 
-  const createTournament = async ( dojoId: string, FormData: { name: string; date: string; location: string; userId: string } ) => {
+  const createTournament = async ( dojoId: string, FormData: { name: string; date: string; location: string; userId: string; participants?: string[] } ) => {
     const { data } = await api.post(`/dojos/${dojoId}/tournaments`, FormData);
     return data;
   };
