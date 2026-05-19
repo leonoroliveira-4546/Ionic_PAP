@@ -11,6 +11,7 @@ const Chat: React.FC = () => {
   const { user } = useAuth();
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
+  const [conversationSearch, setConversationSearch] = useState('');
   const [conversations, setConversations] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -90,7 +91,12 @@ const Chat: React.FC = () => {
   const fetchConversations = async () => {
     try {
       const response = await api.get('/conversations');
-      setConversations(response.data);
+      const sortedConversations = (response.data || []).slice().sort((a: any, b: any) => {
+        const aTime = new Date(a.timestamp || a.lastMessage?.timestamp || 0).getTime();
+        const bTime = new Date(b.timestamp || b.lastMessage?.timestamp || 0).getTime();
+        return bTime - aTime;
+      });
+      setConversations(sortedConversations);
     } catch (error) {
       console.error('Error fetching conversations:', error);
     }
@@ -142,10 +148,24 @@ const Chat: React.FC = () => {
     }
   };
 
+  const filteredConversations = conversations.filter(conv => {
+    const title = conv.title || '';
+    const otherUsername = conv.otherUser?.username || '';
+    const text = `${title} ${otherUsername}`.toLowerCase();
+    return text.includes(conversationSearch.toLowerCase());
+  });
+
   const renderConversationList = () => (
     <div className="page chat-page background">
-        <IonList className="chat-list">
-            {conversations.map(conv => (
+      <div style={{ padding: '0.75rem' }}>
+        <IonInput
+          placeholder="Pesquisar conversa"
+          value={conversationSearch}
+          onIonChange={e => setConversationSearch(e.detail.value || '')}
+        />
+      </div>
+      <IonList className="chat-list">
+            {filteredConversations.map(conv => (
                 <IonItem
                     key={conv._id}
                     className="chat-item"
@@ -214,22 +234,16 @@ const Chat: React.FC = () => {
     <IonPage>
       <IonHeader>
         <IonToolbar>
-            {selectedConversation ? 
-                <div className="chat-top">
-                    <IonIcon
-                        icon={arrowBackCircleOutline}
-                        className="back-icon"
-                        onClick={() => setSelectedConversation(null)}
-                    />
-                    <h3>{conversations.find(c => c._id === selectedConversation)?.title}</h3>
-                </div>
-            : <IonTitle className=''>Chat</IonTitle>}
+          <IonTitle className=''>Chat</IonTitle>
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
-        {selectedConversation ? renderChatView() : renderConversationList()}
+        <div className="page chat-page background">
+          {renderConversationList()}
+          {selectedConversation && renderChatView()}
+        </div>
       </IonContent>
-        {selectedConversation ? null : <Navbar />}
+      <Navbar />
     </IonPage>
   );
 };

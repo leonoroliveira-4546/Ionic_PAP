@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonList, IonModal, IonButton, IonInput, IonTextarea, IonIcon, IonLabel, IonAvatar } from '@ionic/react';
 import '../../../pages/StylesPages.css';
-import { heart, heartOutline, chatbubbleOutline, trash } from 'ionicons/icons';
+import { heart, heartOutline, chatbubbleOutline, trash, pencil, close } from 'ionicons/icons';
 import Navbar from '../../../components/MainLayout';
 import YouTubeFeed from '../../../components/YouTubeFeed';
 import comunidadeApi from '../../../hooks/comunidadeApi';
@@ -62,15 +62,26 @@ const Comunidade: React.FC = () => {
 
   const [showNewsModal, setShowNewsModal] = useState(false);
   const [showDojoModal, setShowDojoModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [newNewsTitle, setNewNewsTitle] = useState('');
   const [newNewsContent, setNewNewsContent] = useState('');
   const [newNewsLink, setNewNewsLink] = useState('');
   const [newDojoTitle, setNewDojoTitle] = useState('');
   const [newDojoContent, setNewDojoContent] = useState('');
   const [newDojoLink, setNewDojoLink] = useState('');
+  const [newDojoVideo, setNewDojoVideo] = useState('');
+  const [newPollQuestion, setNewPollQuestion] = useState('');
+  const [newPollOptions, setNewPollOptions] = useState<string[]>([]);
   const [newComment, setNewComment] = useState('');
   const [newNewsImage, setNewNewsImage] = useState<File | null>(null);
   const [newDojoImage, setNewDojoImage] = useState<File | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editContent, setEditContent] = useState('');
+  const [editLink, setEditLink] = useState('');
+  const [editVideo, setEditVideo] = useState('');
+  const [editPollQuestion, setEditPollQuestion] = useState('');
+  const [editPollOptions, setEditPollOptions] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [, setLivesCount] = useState<number>(0);
@@ -78,11 +89,15 @@ const Comunidade: React.FC = () => {
 
   const { user } = useAuth();
   const isAdmin = user?.type === 'admin';
+  const isSensei = user?.type === 'sensei';
 
   const {
     getContents,
     createContent,
+    updateContent,
+    deleteContent,
     likeContent,
+    votePoll,
     addComment,
     deleteComment
   } = comunidadeApi();
@@ -125,6 +140,9 @@ const Comunidade: React.FC = () => {
     setNewDojoTitle('');
     setNewDojoContent('');
     setNewDojoLink('');
+    setNewDojoVideo('');
+    setNewPollQuestion('');
+    setNewPollOptions([]);
     setNewDojoImage(null);
   };
 
@@ -163,6 +181,17 @@ const Comunidade: React.FC = () => {
       form.append('message', newDojoContent.trim());
       form.append('content', newDojoContent.trim());
       if (newDojoLink.trim()) form.append('link', newDojoLink.trim());
+      if (newDojoVideo.trim()) {
+        // Adicionar vídeo como attachment
+        form.append('attachments', JSON.stringify([{ type: 'video', url: newDojoVideo.trim() }]));
+      }
+      if (newPollQuestion.trim() && newPollOptions.filter(o => o.trim()).length > 0) {
+        const pollData = {
+          question: newPollQuestion.trim(),
+          options: newPollOptions.filter(option => option.trim()).map(option => ({ text: option.trim(), votes: [] }))
+        };
+        form.append('poll', JSON.stringify(pollData));
+      }
       if (newDojoImage) form.append('file', newDojoImage, newDojoImage.name);
 
       await createContent(form, 'post', 'dojo');
@@ -207,20 +236,92 @@ const Comunidade: React.FC = () => {
     loadContents();
   };
 
-  const handleVotePoll = async (pollId: string, index: number) => {
-    console.log('vote poll:', pollId, index);
-    // backend hook se tiveres endpoint
+  const handleVotePoll = async (contentId: string, index: number) => {
+    try {
+      await votePoll(contentId, index);
+      await loadContents();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // ---------- EDIT POST ----------
+  const handleOpenEdit = (post: CommunityContent) => {
+    setEditingPostId(post._id);
+    setEditTitle(post.title);
+    setEditContent(post.content || post.message || '');
+    setEditLink(post.link || '');
+    setEditVideo(post.attachments?.find(a => a.type === 'video')?.url || '');
+    setEditPollQuestion(post.poll?.question || '');
+    setEditPollOptions(post.poll?.options.map(o => o.text) || []);
+    setShowEditModal(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingPostId || !editTitle.trim() || !editContent.trim()) return;
+    try {
+      setIsSubmitting(true);
+      const form = new FormData();
+      form.append('title', editTitle.trim());
+      form.append('message', editContent.trim());
+      form.append('content', editContent.trim());
+      if (editLink.trim()) form.append('link', editLink.trim());
+      if (editVideo.trim()) {
+        form.append('attachments', JSON.stringify([{ type: 'video', url: editVideo.trim() }]));
+      }
+      if (editPollQuestion.trim() && editPollOptions.filter(o => o.trim()).length > 0) {
+        const pollData = {
+          question: editPollQuestion.trim(),
+          options: editPollOptions.filter(o => o.trim()).map(o => ({ text: o.trim(), votes: [] }))
+        };
+        form.append('poll', JSON.stringify(pollData));
+      }
+      
+      await updateContent(editingPostId, form);
+      alert('Post editado com sucesso!');
+      setShowEditModal(false);
+      setEditingPostId(null);
+      setEditTitle('');
+      setEditContent('');
+      setEditLink('');
+      setEditVideo('');
+      setEditPollQuestion('');
+      setEditPollOptions([]);
+      await loadContents();
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao editar post');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    if (!confirm('Tem certeza que quer remover este post?')) return;
+    try {
+      setIsSubmitting(true);
+      await deleteContent(postId);
+      alert('Post removido com sucesso!');
+      await loadContents();
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao remover post');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const renderGeralTab = () => (
   <div className="page background">
     <h2>🌍 Comunidade Geral</h2>
 
-    <div style={{ marginBottom: 16 }}>
-      <IonButton expand="block" onClick={() => setShowNewsModal(true)}>
-        ✍️ Adicionar notícia
-      </IonButton>
-    </div>
+    {isAdmin && (
+      <div style={{ marginBottom: 16 }}>
+        <IonButton expand="block" onClick={() => setShowNewsModal(true)}>
+          ✍️ Adicionar notícia
+        </IonButton>
+      </div>
+    )}
 
     <div className="news-section">
       <div className="news-label">📰 Notícias</div>
@@ -279,6 +380,19 @@ const Comunidade: React.FC = () => {
                 display: 'flex',
                 justifyContent: 'space-between'
               }}>
+                <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                  {user?._id === item.author?._id && (
+                    <>
+                      <IonButton fill="clear" size="small" onClick={() => handleOpenEdit(item)}>
+                        <IonIcon slot="icon-only" icon={pencil}></IonIcon>
+                      </IonButton>
+                      <IonButton fill="clear" size="small" color="danger" onClick={() => handleDeletePost(item._id)}>
+                        <IonIcon slot="icon-only" icon={trash}></IonIcon>
+                      </IonButton>
+                    </>
+                  )}
+                </div>
+
                 <button
                   onClick={() => handleLike(item._id)}
                   style={{
@@ -405,7 +519,7 @@ const Comunidade: React.FC = () => {
     <div className="page background">
       <h2>🥋 Dojo</h2>
 
-      {!isAdmin && (
+      {isSensei && (
         <div style={{ marginBottom: 16 }}>
           <IonButton expand="block" onClick={() => setShowDojoModal(true)}>
             📝 Adicionar post do dojo
@@ -442,6 +556,17 @@ const Comunidade: React.FC = () => {
                   {new Date(post.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                 </div>
               </div>
+
+              {user?._id === post.author?._id && (
+                <div style={{ display: 'flex', gap: 4 }}>
+                  <IonButton fill="clear" size="small" onClick={() => handleOpenEdit(post)}>
+                    <IonIcon slot="icon-only" icon={pencil}></IonIcon>
+                  </IonButton>
+                  <IonButton fill="clear" size="small" color="danger" onClick={() => handleDeletePost(post._id)}>
+                    <IonIcon slot="icon-only" icon={trash}></IonIcon>
+                  </IonButton>
+                </div>
+              )}
             </div>
 
             <IonCardTitle>{post.title}</IonCardTitle>
@@ -471,26 +596,50 @@ const Comunidade: React.FC = () => {
 
             {/* ATTACHMENTS */}
             {post.attachments?.map((att: CommunityAttachment, i: number) => (
-              <div key={i}>
-                {att.type === 'image' && <img src={att.url} className="community-attachment" />}
-                {att.type === 'video' && <video src={att.url} controls />}
-                {att.type === 'link' && <a href={att.url}>{att.title}</a>}
+              <div key={i} style={{ marginBottom: 12 }}>
+                {att.type === 'image' && <img src={att.url} className="community-attachment" style={{ width: '100%', maxHeight: 300, objectFit: 'cover', borderRadius: 8 }} />}
+                {att.type === 'video' && (
+                  <video 
+                    src={att.url} 
+                    controls 
+                    style={{ width: '100%', maxHeight: 300, borderRadius: 8, backgroundColor: '#000' }}
+                  />
+                )}
+                {att.type === 'link' && (
+                  <a href={att.url} target="_blank" rel="noopener noreferrer" style={{ color: '#007bff', textDecoration: 'none', fontSize: 12 }}>
+                    🔗 {att.title || att.url}
+                  </a>
+                )}
               </div>
             ))}
 
             {/* POLL */}
             {post.poll && (
-              <div>
-                <strong>{post.poll?.question}</strong>
-                {post.poll?.options.map((o: CommunityPollOption, i: number) => (
-                  <div key={i}>
-                    <input
-                      type="radio"
-                      onChange={() => post.poll?._id && handleVotePoll(post.poll._id, i)}
-                    />
-                    {o.text} ({o.votes.length})
-                  </div>
-                ))}
+              <div style={{ marginTop: 12, padding: '12px 8px', backgroundColor: '#f5f5f5', borderRadius: 8 }}>
+                <strong style={{ display: 'block', marginBottom: 8 }}>📊 {post.poll?.question}</strong>
+                {post.poll?.options.map((o: CommunityPollOption, i: number) => {
+                  const totalVotes = post.poll?.options.reduce((acc, opt) => acc + opt.votes.length, 0) || 0;
+                  const percentage = totalVotes > 0 ? Math.round((o.votes.length / totalVotes) * 100) : 0;
+                  
+                  return (
+                    <div key={i} style={{ marginBottom: 8 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <input
+                          type="radio"
+                          name={`poll-${post._id}`}
+                          onChange={() => handleVotePoll(post._id, i)}
+                          style={{ cursor: 'pointer' }}
+                        />
+                        <span style={{ flex: 1 }}>{o.text}</span>
+                        <span style={{ fontSize: 12, color: '#666', minWidth: 40 }}>{percentage}%</span>
+                      </div>
+                      <div style={{ height: 6, backgroundColor: '#e0e0e0', borderRadius: 3, marginLeft: 28, overflow: 'hidden' }}>
+                        <div style={{ height: '100%', backgroundColor: '#007bff', width: `${percentage}%`, transition: 'width 0.3s' }} />
+                      </div>
+                      <div style={{ fontSize: 11, color: '#999', marginLeft: 28, marginTop: 2 }}>{o.votes.length} voto{o.votes.length !== 1 ? 's' : ''}</div>
+                    </div>
+                  );
+                })}
               </div>
             )}
 
@@ -741,6 +890,56 @@ const Comunidade: React.FC = () => {
             </div>
 
             <div>
+              <IonLabel>Vídeo - URL (opcional)</IonLabel>
+              <IonInput
+                placeholder="https://exemplo.com/video.mp4"
+                value={newDojoVideo}
+                onIonChange={e => setNewDojoVideo(e.detail.value || '')}
+              />
+            </div>
+
+            <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #ddd' }}>
+              <IonLabel style={{ display: 'block', marginBottom: 8 }}>Criar Votação (opcional)</IonLabel>
+              <IonInput
+                placeholder="Pergunta da votação"
+                value={newPollQuestion}
+                onIonChange={e => setNewPollQuestion(e.detail.value || '')}
+                style={{ marginBottom: 8 }}
+              />
+
+              {newPollOptions.map((option, i) => (
+                <div key={i} style={{ display: 'flex', gap: 4, marginBottom: 8, alignItems: 'center' }}>
+                  <IonInput
+                    placeholder={`Opção ${i + 1}`}
+                    value={option}
+                    onIonChange={e => {
+                      const newOptions = [...newPollOptions];
+                      newOptions[i] = e.detail.value || '';
+                      setNewPollOptions(newOptions);
+                    }}
+                    style={{ flex: 1 }}
+                  />
+                  <IonButton
+                    size="small"
+                    fill="clear"
+                    onClick={() => setNewPollOptions(newPollOptions.filter((_, idx) => idx !== i))}
+                  >
+                    <IonIcon icon={close} />
+                  </IonButton>
+                </div>
+              ))}
+
+              <IonButton
+                size="small"
+                fill="outline"
+                onClick={() => setNewPollOptions([...newPollOptions, ''])}
+                style={{ marginBottom: 8 }}
+              >
+                + Adicionar Opção
+              </IonButton>
+            </div>
+
+            <div>
               <IonLabel>Imagem (opcional)</IonLabel>
               <input
                 type="file"
@@ -765,6 +964,109 @@ const Comunidade: React.FC = () => {
           </div>
         </IonContent>
       </IonModal>
+
+      {/* Modal Editar Post */}
+      <IonModal isOpen={showEditModal} onDidDismiss={() => setShowEditModal(false)}>
+        <IonHeader>
+          <IonToolbar>
+            <IonTitle>Editar Post</IonTitle>
+            <IonButton slot="end" fill="clear" onClick={() => setShowEditModal(false)}>
+              <IonIcon slot="icon-only" icon={close}></IonIcon>
+            </IonButton>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent>
+          <div className="community-modal-content">
+            <div>
+              <IonLabel>Título *</IonLabel>
+              <IonInput
+                placeholder="Digite o título do post"
+                value={editTitle}
+                onIonChange={e => setEditTitle(e.detail.value || '')}
+              />
+            </div>
+
+            <div>
+              <IonLabel>Conteúdo *</IonLabel>
+              <IonTextarea
+                placeholder="Partilha uma atualização com o dojo"
+                value={editContent}
+                onIonChange={e => setEditContent(e.detail.value || '')}
+                style={{ minHeight: 120 }}
+              />
+            </div>
+
+            <div>
+              <IonLabel>Link Externo (opcional)</IonLabel>
+              <IonInput
+                placeholder="https://exemplo.com"
+                value={editLink}
+                onIonChange={e => setEditLink(e.detail.value || '')}
+              />
+            </div>
+
+            <div>
+              <IonLabel>Vídeo - URL (opcional)</IonLabel>
+              <IonInput
+                placeholder="https://exemplo.com/video.mp4"
+                value={editVideo}
+                onIonChange={e => setEditVideo(e.detail.value || '')}
+              />
+            </div>
+
+            <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #ddd' }}>
+              <IonLabel style={{ display: 'block', marginBottom: 8 }}>Criar Votação (opcional)</IonLabel>
+              <IonInput
+                placeholder="Pergunta da votação"
+                value={editPollQuestion}
+                onIonChange={e => setEditPollQuestion(e.detail.value || '')}
+                style={{ marginBottom: 8 }}
+              />
+              
+              {editPollOptions.map((option, i) => (
+                <div key={i} style={{ display: 'flex', gap: 4, marginBottom: 8, alignItems: 'center' }}>
+                  <IonInput
+                    placeholder={`Opção ${i + 1}`}
+                    value={option}
+                    onIonChange={e => {
+                      const newOptions = [...editPollOptions];
+                      newOptions[i] = e.detail.value || '';
+                      setEditPollOptions(newOptions);
+                    }}
+                    style={{ flex: 1 }}
+                  />
+                  <IonButton 
+                    size="small" 
+                    fill="clear"
+                    onClick={() => setEditPollOptions(editPollOptions.filter((_, idx) => idx !== i))}
+                  >
+                    <IonIcon icon={close} />
+                  </IonButton>
+                </div>
+              ))}
+              
+              <IonButton
+                size="small"
+                fill="outline"
+                onClick={() => setEditPollOptions([...editPollOptions, ''])}
+                style={{ marginBottom: 8 }}
+              >
+                + Adicionar Opção
+              </IonButton>
+            </div>
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <IonButton expand="block" fill="solid" onClick={handleSaveEdit} disabled={isSubmitting}>
+                Guardar Alterações
+              </IonButton>
+              <IonButton expand="block" fill="clear" onClick={() => setShowEditModal(false)}>
+                Cancelar
+              </IonButton>
+            </div>
+          </div>
+        </IonContent>
+      </IonModal>
+      
       <Navbar />
     </IonPage>
   );

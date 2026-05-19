@@ -55,7 +55,7 @@ export const dojosApi = () => {
     return data;
   };
 
-  const updateTournament = async ( tournamentId: string, FormData: { name: string; date: string; location: string } ) => {
+  const updateTournament = async ( tournamentId: string, FormData: { name: string; date: string; location: string; participants?: string[] } ) => {
     const { data } = await api.put(`/dojos/tournaments/${tournamentId}`, FormData);
     return data;
   };
@@ -70,7 +70,32 @@ export const dojosApi = () => {
     return data;
   };
 
-  return { getDojos, createDojo, joinDojo, getDojoMembers, removeMember, removeChildFromResponsible, addTrainingSchedule, updateTrainingSchedules, createTournament, getDojoTournaments, updateTournament, deleteTournament };
+  const inviteMemberByEmail = async ( dojoId: string, email: string ) => {
+    const { data } = await api.post(`/dojos/${dojoId}/invite`, { email });
+    return data;
+  };
+
+  const submitJoinRequest = async ( dojoId: string ) => {
+    const { data } = await api.post(`/dojos/${dojoId}/request`);
+    return data;
+  };
+
+  const acceptJoinRequest = async ( dojoId: string, userId: string ) => {
+    const { data } = await api.post(`/dojos/${dojoId}/requests/${userId}/accept`);
+    return data;
+  };
+
+  const rejectJoinRequest = async ( dojoId: string, userId: string ) => {
+    const { data } = await api.post(`/dojos/${dojoId}/requests/${userId}/reject`);
+    return data;
+  };
+
+  const getAthletesWithoutDojo = async () => {
+    const { data } = await api.get(`/dojo/athletes-without-dojo`);
+    return data;
+  };
+
+  return { getDojos, createDojo, joinDojo, getDojoMembers, removeMember, removeChildFromResponsible, addTrainingSchedule, updateTrainingSchedules, createTournament, getDojoTournaments, updateTournament, deleteTournament, inviteMemberByEmail, submitJoinRequest, acceptJoinRequest, rejectJoinRequest, getAthletesWithoutDojo };
 };
 
 export default dojosApi;

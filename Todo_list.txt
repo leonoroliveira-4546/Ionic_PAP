@@ -1,20 +1,8 @@
 Sensei:
 
  Home:
-   não pode por torneios antes do dia atual de hoje;
-   pesquisar o atleta por nome;
-   convidar um atleta para o seu dojo, pode pesquisar por email;
-   aceitar ou recusar os pedidos para entrar no dojo;
-   nao anda guardando o needsImprovement; (erro)
-   quando um torneio já passou, ele pode editar e colocar 
-  quem participou no torneio;
-
- Comunidade:
-   poder remover e editar posts;
-   poder fazer votações e por vídeos;
-   
- Chat:
-   poder pesquisar a conversa pelo nome do user;
+   Nao ta a mostrar os troneiros antigos (aqueles que precisam ser editados);
+   nao consigo ver qualquer torneiro que adicione
    
  Profile:
    as estatísticas não pode aparecer para o sensei;

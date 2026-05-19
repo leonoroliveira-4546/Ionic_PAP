@@ -48,6 +48,11 @@ const { data } = await api.post("/contents", formData);
         return data;
     }, []);
 
+    const votePoll = useCallback(async (contentId: string, optionIndex: number) => {
+        const { data } = await api.post(`/contents/${contentId}/poll/${optionIndex}/vote`);
+        return data;
+    }, []);
+
     const addComment = useCallback(async (contentId: string, message: string) => {
         const { data } = await api.post(`/contents/${contentId}/comments`, { message });
         return data;
@@ -73,7 +78,7 @@ const { data } = await api.post("/contents", formData);
         return data;
     }, []);
 
-    return { getContents, getContentDetails, createContent, updateContent, deleteContent, likeContent, addComment, editComment, deleteComment, getYoutubeVideos, getLives };
+    return { getContents, getContentDetails, createContent, updateContent, deleteContent, likeContent, votePoll, addComment, editComment, deleteComment, getYoutubeVideos, getLives };
 }
 
 export default comunidadeApi;
