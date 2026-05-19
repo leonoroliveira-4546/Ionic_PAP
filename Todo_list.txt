@@ -1,16 +1,16 @@
 Sensei:
 
  Home:
-   Nao ta a mostrar os troneiros antigos (aqueles que precisam ser editados);
-   nao consigo ver qualquer torneiro que adicione
+    Quando guardo os participantes, quando busco novamente mostra que nao ta
+   guardar os participantes escolhidos e tem atenção as chhildrens pois tem
+   que ser diferente para guardar;
    
  Profile:
-   as estatísticas não pode aparecer para o sensei;
+   A SEÇÇÂO de estatisticas NAO deve aparecer ao sensei;
    
  AreaEducativa:
-    poder por os desafios do dia para apenas o dojo;
-    ver o relatório do desafio;
-    poder editar e remover o desafio;
+    Esses desafios sao apenas para o dojo;
+    So deve ser ter um UNICO DESAFIO, por o botao novo desaparece;
 
 Atleta:
  

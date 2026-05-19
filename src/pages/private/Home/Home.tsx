@@ -496,7 +496,12 @@ const Home: React.FC = () => {
       // Update or create tournaments
       for (const tournament of editingTournaments) {
         if (tournament._id) {
-          await updateTournament(tournament._id, { name: tournament.name, date: tournament.date, location: tournament.location, participants: tournament.participants || [] });
+          // Atualizar apenas nome, data e localização (não enviar participants)
+          await updateTournament(tournament._id, { 
+            name: tournament.name, 
+            date: tournament.date, 
+            location: tournament.location
+          });
         } else {
           const newTournamentData = {
             name: tournament.name,
@@ -628,21 +633,23 @@ const Home: React.FC = () => {
   };
 
   const renderSenseiDashboard = () => {
-    // Filtrar torneios passados que não foram editados (sem participantes)
-    const pastTournamentsToEdit = tournaments.filter((t: any) => {
-      const tourDate = new Date(t.date);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      tourDate.setHours(0, 0, 0, 0);
-      return tourDate < today && (!t.participants || t.participants.length === 0);
-    });
-
-    const upcomingTournaments = tournaments.filter((t: any) => {
+    // Separar torneios por data para melhor visualização
+    const sortedTournaments = [...tournaments].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    
+    const upcomingTournaments = sortedTournaments.filter((t: any) => {
       const tourDate = new Date(t.date);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       tourDate.setHours(0, 0, 0, 0);
       return tourDate >= today;
+    });
+
+    const pastTournaments = sortedTournaments.filter((t: any) => {
+      const tourDate = new Date(t.date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      tourDate.setHours(0, 0, 0, 0);
+      return tourDate < today;
     });
 
     return (
@@ -736,35 +743,7 @@ const Home: React.FC = () => {
           </IonCardContent>
         </IonCard>
 
-        {/* (Removed: Todos os Torneios) - tournaments now appear in Próximos Torneios and Torneios Passados sections */}
 
-        {/* Torneios Passados (edição de participantes) */}
-        {pastTournamentsToEdit.length > 0 && (
-          <IonCard>
-            <IonCardHeader>
-              <IonCardTitle>Torneios Passados - Adicionar Participantes</IonCardTitle>
-            </IonCardHeader>
-            <IonCardContent>
-              <IonList>
-                {pastTournamentsToEdit.map(t => (
-                  <IonItem key={t._id} onClick={() => {
-                    setEditingTournaments([t]);
-                    setParticipantsOpenIndex(0);
-                    setShowTournamentModal(true);
-                  }}>
-                    <IonLabel>
-                      <h3>{t.name}</h3>
-                      <p>{new Date(t.date).toLocaleDateString()} - {t.location}</p>
-                    </IonLabel>
-                    <IonButton fill="clear">
-                      <IonIcon slot="icon-only" icon={create}></IonIcon>
-                    </IonButton>
-                  </IonItem>
-                ))}
-              </IonList>
-            </IonCardContent>
-          </IonCard>
-        )}
 
         {/* Modal Convidar/Pedidos */}
         <IonModal isOpen={showInviteModal} onDidDismiss={() => setShowInviteModal(false)}>
@@ -1131,54 +1110,112 @@ const Home: React.FC = () => {
               </IonCardContent>
             </IonCard>
 
+            {/* Próximos Torneios */}
             <IonCard>
               <IonCardHeader>
-                <IonCardTitle>Torneios Atuais</IonCardTitle>
+                <IonCardTitle>Próximos Torneios</IonCardTitle>
               </IonCardHeader>
               <IonCardContent>
-                <IonList>
-                  {editingTournaments.map((tournament, index) => (
-                    <IonItem key={index}>
-                      <IonLabel>
-                        <h3>{tournament.name}</h3>
-                        <p>{tournament.date} - {tournament.location}</p>
-                      </IonLabel>
-                        <IonButton fill="clear" color="danger" onClick={() => handleRemoveTournament(index)}>
-                        <IonIcon slot="icon-only" icon={trash}></IonIcon>
-                      </IonButton>
-                      {/* Gerir participantes caso o torneio já tenha passado */}
-                      {tournament.date && new Date(tournament.date) < new Date() && (
-                        <IonButton onClick={() => setParticipantsOpenIndex(participantsOpenIndex === index ? null : index)}>
-                          Gerir Participantes
-                        </IonButton>
-                      )}
-                    </IonItem>
-                  ))}
-                </IonList>
-                  {participantsOpenIndex !== null && editingTournaments[participantsOpenIndex] && (
-                    <div style={{ padding: '1rem' }}>
-                      <h4>Escolher participantes para: {editingTournaments[participantsOpenIndex].name}</h4>
-                      <IonList>
-                        {dojoMembers.map(m => (
-                          <IonItem key={m._id}>
-                            <IonLabel>{m.username}</IonLabel>
-                            <input type="checkbox" checked={(editingTournaments[participantsOpenIndex].participants || []).includes(m._id)} onChange={(e) => {
-                              const updated = [...(editingTournaments[participantsOpenIndex].participants || [])];
-                              if (e.target.checked) {
-                                if (!updated.includes(m._id)) updated.push(m._id);
-                              } else {
-                                const i = updated.indexOf(m._id);
-                                if (i > -1) updated.splice(i, 1);
-                              }
-                              const copy = [...editingTournaments];
-                              copy[participantsOpenIndex].participants = updated;
-                              setEditingTournaments(copy);
-                            }} />
+                {editingTournaments.filter(t => {
+                  const tourDate = new Date(t.date);
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  tourDate.setHours(0, 0, 0, 0);
+                  return tourDate >= today;
+                }).length > 0 ? (
+                  <IonList>
+                    {editingTournaments.map((tournament, index) => {
+                      const tourDate = new Date(tournament.date);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      tourDate.setHours(0, 0, 0, 0);
+                      if (tourDate < today) return null;
+                      
+                      return (
+                        <IonItem key={index}>
+                          <IonLabel>
+                            <h3>{tournament.name}</h3>
+                            <p>{tournament.date} - {tournament.location}</p>
+                          </IonLabel>
+                          <IonButton fill="clear" color="danger" onClick={() => handleRemoveTournament(index)}>
+                            <IonIcon slot="icon-only" icon={trash}></IonIcon>
+                          </IonButton>
+                        </IonItem>
+                      );
+                    })}
+                  </IonList>
+                ) : (
+                  <p>Nenhum torneio próximo.</p>
+                )}
+              </IonCardContent>
+            </IonCard>
+
+            {/* Torneios Antigos (para editar) */}
+            <IonCard>
+              <IonCardHeader>
+                <IonCardTitle>Torneios Antigos (para editar)</IonCardTitle>
+              </IonCardHeader>
+              <IonCardContent>
+                {editingTournaments.filter(t => {
+                  const tourDate = new Date(t.date);
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  tourDate.setHours(0, 0, 0, 0);
+                  return tourDate < today;
+                }).length > 0 ? (
+                  <IonList>
+                    {editingTournaments.map((tournament, index) => {
+                      const tourDate = new Date(tournament.date);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      tourDate.setHours(0, 0, 0, 0);
+                      if (tourDate >= today) return null;
+                      
+                      return (
+                        <div key={index} style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #ddd' }}>
+                          <IonItem>
+                            <IonLabel>
+                              <h3>{tournament.name}</h3>
+                              <p>{tournament.date} - {tournament.location}</p>
+                            </IonLabel>
+                            <IonButton fill="clear" color="danger" onClick={() => handleRemoveTournament(index)}>
+                              <IonIcon slot="icon-only" icon={trash}></IonIcon>
+                            </IonButton>
                           </IonItem>
-                        ))}
-                      </IonList>
-                    </div>
-                  )}
+                          <IonButton expand="block" size="small" onClick={() => setParticipantsOpenIndex(participantsOpenIndex === index ? null : index)}>
+                            {participantsOpenIndex === index ? 'Fechar Participantes' : 'Gerir Participantes'}
+                          </IonButton>
+                          {participantsOpenIndex === index && (
+                            <div style={{ padding: '1rem', backgroundColor: '#f5f5f5', marginTop: '0.5rem', borderRadius: '4px' }}>
+                              <h4>Escolher participantes</h4>
+                              <IonList>
+                                {dojoMembers.map(m => (
+                                  <IonItem key={m._id}>
+                                    <IonLabel>{m.username}</IonLabel>
+                                    <input type="checkbox" checked={(editingTournaments[index].participants || []).includes(m._id)} onChange={(e) => {
+                                      const updated = [...(editingTournaments[index].participants || [])];
+                                      if (e.target.checked) {
+                                        if (!updated.includes(m._id)) updated.push(m._id);
+                                      } else {
+                                        const i = updated.indexOf(m._id);
+                                        if (i > -1) updated.splice(i, 1);
+                                      }
+                                      const copy = [...editingTournaments];
+                                      copy[index].participants = updated;
+                                      setEditingTournaments(copy);
+                                    }} />
+                                  </IonItem>
+                                ))}
+                              </IonList>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </IonList>
+                ) : (
+                  <p>Nenhum torneio antigo.</p>
+                )}
               </IonCardContent>
             </IonCard>
 
