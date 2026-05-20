@@ -1,7 +1,8 @@
 Atleta:
+
+  Mudar style dos modals
  
  Home:
-   perde points se faltar aos treinos, so se não for por doença;
    no atlteta tem que ter a opção de pedir para entrar num dojo, e ai o sensei do dojo tem que aceitar ou rejeitar (apenas se nao tiver num dojo);
    
  Comunidade:

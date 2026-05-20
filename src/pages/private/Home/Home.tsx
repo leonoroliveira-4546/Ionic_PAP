@@ -639,12 +639,12 @@ const Home: React.FC = () => {
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
-              <IonButton fill="solid" routerLink="/">
+              <button type="button" className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800" >
                 Buscar Dojos
-              </IonButton>
-              <IonButton fill="outline" onClick={() => alert('Peça ao seu sensei ou responsável para adicioná-lo ao dojo.') }>
+              </button>
+              <button type="button" className="rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50" onClick={() => alert('Peça ao seu sensei ou responsável para adicioná-lo ao dojo.') }>
                 Como entrar
-              </IonButton>
+              </button>
             </div>
           </section>
         </div>
@@ -662,7 +662,7 @@ const Home: React.FC = () => {
         <section className="rounded-3xl bg-slate-950/5 p-6 shadow-lg shadow-slate-900/10 ring-1 ring-slate-200/70">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-xl font-bold text-slate-900">Seu Dojo</p>
+              <p className="text-xl font-bold text-slate-900">Seu Dojo em destaque</p>
               <p className="mt-1 text-sm text-slate-600">Visão moderna do seu progresso, treinos e próximos desafios.</p>
             </div>
             <span className="rounded-full bg-violet-500/15 px-4 py-2 text-sm font-semibold text-violet-700 ring-1 ring-violet-500/20">
@@ -704,9 +704,9 @@ const Home: React.FC = () => {
                 <p className="mt-3 text-xs font-medium text-slate-500">Data do desafio: {new Date(dailyChallenge.date).toLocaleDateString()}</p>
               )}
               <div className="mt-4">
-                <IonButton routerLink="/educacional" expand="block" className="rounded-full bg-primary text-white">
+                <button type="button" className="w-full rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800" onClick={() => { window.location.href = '/educacional'; }}>
                   Fazer desafio
-                </IonButton>
+                </button>
               </div>
             </div>
           </section>
