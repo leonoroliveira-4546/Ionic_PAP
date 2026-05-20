@@ -1,10 +1,6 @@
 Atleta:
  
  Home:
-   O atleta nao ta conseguir receber seus pontos, quando completar o desafio e acertar a resposta, tem que receber os points;
-   Quando o atleta completa um desafio na home o desafio tem que desaparecer da home, e so volta a aparecer quando tiver um novo desafio;
-   Quando clica no desafio do dia na home, ele leva a area edutativa;
-   o desafio do dia tera um botao para fazer desafio, e ai o atleta tem que responder a pergunta, se acertar recebe os points, se errar nao recebe nada. E nao ter ja a mostrar o desafio do dia;
    perde points se faltar aos treinos, so se não for por doença;
    no atlteta tem que ter a opção de pedir para entrar num dojo, e ai o sensei do dojo tem que aceitar ou rejeitar (apenas se nao tiver num dojo);
    

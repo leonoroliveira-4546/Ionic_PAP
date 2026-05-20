@@ -41,7 +41,10 @@ interface ChallengeReport {
     athleteId: string;
     athleteName: string;
     response: string;
+    correct?: boolean;
+    pointsEarned?: number;
     timestamp?: string;
+    createdAt?: string;
   }[];
 }
 
@@ -49,7 +52,17 @@ type Category = 'all' | 'historia' | 'filosofia' | 'tecnicas';
 
 const Educacional: React.FC = () => {
   const { user, Login } = useAuth();
-  const { getEducationalContent } = educationalApi();
+  const {
+    getEducationalContent,
+    createChallenge,
+    getCurrentChallenge,
+    getChallengesByDojo,
+    getChallengeResponses,
+    getUserChallengeResponse,
+    submitChallengeResponse,
+    updateChallenge,
+    deleteChallenge
+  } = educationalApi();
   const [videos, setVideos] = useState<Video[]>([]);
   const [filteredVideos, setFilteredVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,7 +73,7 @@ const Educacional: React.FC = () => {
   const [dailyChallenges, setDailyChallenges] = useState<Challenge[]>([]);
   const [dailyChallenge, setDailyChallenge] = useState<Challenge | null>(null);
   const [challengeAnswer, setChallengeAnswer] = useState<string>('');
-  const [challengeResponses, setChallengeResponses] = useState<any[]>([]);
+  const [userChallengeResponse, setUserChallengeResponse] = useState<any | null>(null);
   const [showChallengeModal, setShowChallengeModal] = useState(false);
   const [newChallenge, setNewChallenge] = useState<Challenge>({
     title: '',
@@ -77,54 +90,99 @@ const Educacional: React.FC = () => {
   const [selectedChallengeReport, setSelectedChallengeReport] = useState<ChallengeReport | null>(null);
   const isSensei = user?.type === 'sensei';
 
-  // Carregar desafios do localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem(`challenges_${user?.dojoId || 'default'}`);
-    if (saved) {
-      setDailyChallenges(JSON.parse(saved));
-    } else {
-      setDailyChallenges([]);
-    }
-  }, [user?.dojoId]);
-
-  useEffect(() => {
+  const loadChallenges = async () => {
     if (!user?.dojoId) {
+      setDailyChallenges([]);
       setDailyChallenge(null);
-      setChallengeResponses([]);
+      setUserChallengeResponse(null);
       return;
     }
 
-    const today = new Date().toISOString().slice(0, 10);
-    const currentChallenge = dailyChallenges.find(challenge => !challenge.date || challenge.date === today) || null;
-    setDailyChallenge(currentChallenge);
-    setChallengeAnswer('');
-
-    const savedResponses = localStorage.getItem(`challengeResponses_${user.dojoId}`);
-    setChallengeResponses(savedResponses ? JSON.parse(savedResponses) : []);
-  }, [dailyChallenges, user?.dojoId]);
-
-  const saveChallenges = (challenges: Challenge[]) => {
-    localStorage.setItem(`challenges_${user?.dojoId || 'default'}`, JSON.stringify(challenges));
-    setDailyChallenges(challenges);
-  };
-
-  const saveChallengeResponse = (response: any) => {
-    if (!user?.dojoId) return;
-    const storageKey = `challengeResponses_${user.dojoId}`;
-    const existing = localStorage.getItem(storageKey);
-    const responses = existing ? JSON.parse(existing) : [];
-    const updated = [...responses, response];
-    localStorage.setItem(storageKey, JSON.stringify(updated));
-    setChallengeResponses(updated);
-    // Notify other parts of the app (e.g. Home) that a response was saved
     try {
-      window.dispatchEvent(new CustomEvent('challengeResponseSaved', { detail: { dojoId: user.dojoId, challengeId: response.challengeId, athleteId: response.athleteId } }));
-    } catch (e) {
-      // ignore in environments without window
+      if (isSensei) {
+        const data = await getChallengesByDojo(user.dojoId);
+        setDailyChallenges(data.challenges || []);
+        setDailyChallenge(null);
+        setUserChallengeResponse(null);
+      } else {
+        const data = await getCurrentChallenge(user.dojoId);
+        const challenge = data.challenge || null;
+        if (!challenge) {
+          setDailyChallenge(null);
+          setUserChallengeResponse(null);
+          return;
+        }
+
+        const responseData = await getUserChallengeResponse(challenge._id);
+        if (responseData.answered) {
+          setDailyChallenge(null);
+          setUserChallengeResponse(responseData.response || null);
+        } else {
+          setDailyChallenge(challenge);
+          setUserChallengeResponse(null);
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao carregar desafios', error);
+      setDailyChallenges([]);
+      setDailyChallenge(null);
+      setUserChallengeResponse(null);
     }
   };
 
-  const handleAddChallenge = () => {
+  useEffect(() => {
+    loadChallenges();
+  }, [user?.dojoId, isSensei]);
+
+  const loadChallengeResponses = async (challengeId: string | undefined, title: string, date: string) => {
+    if (!challengeId) return;
+    try {
+      const data = await getChallengeResponses(challengeId);
+      setSelectedChallengeReport({
+        challengeId,
+        title,
+        date,
+        responses: data.responses || []
+      });
+      setShowReportModal(true);
+    } catch (error) {
+      console.error('Erro ao carregar respostas do desafio', error);
+      alert('Erro ao carregar respostas do desafio.');
+    }
+  };
+
+  const saveChallengeResponse = async () => {
+    if (!user?.dojoId || !dailyChallenge?._id) return;
+    if (!challengeAnswer.trim()) {
+      alert('Digite sua resposta antes de enviar.');
+      return;
+    }
+
+    try {
+      const data = await submitChallengeResponse(dailyChallenge._id, challengeAnswer);
+      if (!data.success) {
+        alert(data.message || 'Erro ao enviar resposta.');
+        return;
+      }
+
+      setUserChallengeResponse(data.resp);
+      setDailyChallenge(null);
+      window.dispatchEvent(new CustomEvent('challengeResponseSaved', { detail: { dojoId: user.dojoId, challengeId: dailyChallenge._id, athleteId: user._id } }));
+
+      if (data.correct && user) {
+        const updatedUser = { ...user, points: (user.points || 0) + (data.pointsEarned || 0) };
+        Login(updatedUser);
+      }
+
+      alert(data.correct ? `Parabéns! Você ganhou ${data.pointsEarned} pontos.` : 'Resposta incorreta. Tente o próximo desafio.');
+      setChallengeAnswer('');
+    } catch (error) {
+      console.error('Erro ao enviar resposta', error);
+      alert('Erro ao enviar resposta.');
+    }
+  };
+
+  const handleAddChallenge = async () => {
     if (!newChallenge.title.trim() || !newChallenge.description.trim()) {
       alert('Preencha o título e descrição do desafio');
       return;
@@ -135,13 +193,11 @@ const Educacional: React.FC = () => {
       return;
     }
 
-    // Só é permitido um desafio por dojo ao mesmo tempo
     if (!editingChallenge?._id && dailyChallenges.length > 0) {
       alert('Já existe um desafio ativo para o dojo. Só é permitido um único desafio.');
       return;
     }
 
-    // Validar opções para múltipla escolha
     if ((newChallenge.type === 'multiple-choice' || newChallenge.type === 'single-choice') && 
         (!newChallenge.options || newChallenge.options.length < 2)) {
       alert('Adicione pelo menos 2 opções para este tipo de desafio');
@@ -159,39 +215,62 @@ const Educacional: React.FC = () => {
       return;
     }
 
-    if (editingChallenge && editingChallenge._id) {
-      // Editar desafio existente
-      const updated = dailyChallenges.map(c => 
-        c._id === editingChallenge._id ? { ...newChallenge, _id: c._id } : c
-      );
-      saveChallenges(updated);
-      alert('Desafio atualizado com sucesso!');
-    } else {
-      // Adicionar novo desafio
-      const challenge = { ...newChallenge, _id: Date.now().toString() };
-      saveChallenges([...dailyChallenges, challenge]);
-      alert('Desafio adicionado com sucesso!');
+    try {
+      if (editingChallenge && editingChallenge._id) {
+        const data = await updateChallenge(editingChallenge._id, {
+          ...newChallenge,
+          dojoId: user?.dojoId
+        });
+        if (!data.success) {
+          alert(data.message || 'Erro ao atualizar desafio.');
+          return;
+        }
+        alert('Desafio atualizado com sucesso!');
+      } else {
+        const data = await createChallenge({
+          ...newChallenge,
+          dojoId: user?.dojoId
+        });
+        if (!data.success) {
+          alert(data.message || 'Erro ao criar desafio.');
+          return;
+        }
+        alert('Desafio adicionado com sucesso!');
+      }
+
+      setNewChallenge({
+        title: '',
+        description: '',
+        date: new Date().toISOString().split('T')[0],
+        dojoOnly: true,
+        type: 'text-short',
+        options: [],
+        correctAnswer: '',
+        points: 20
+      });
+      setEditingChallenge(null);
+      setShowChallengeModal(false);
+      loadChallenges();
+    } catch (error) {
+      console.error('Erro ao salvar desafio', error);
+      alert('Erro ao salvar desafio.');
     }
-    
-    setNewChallenge({ 
-      title: '', 
-      description: '', 
-      date: new Date().toISOString().split('T')[0], 
-      dojoOnly: true,
-      type: 'text-short',
-      options: [],
-      correctAnswer: '',
-      points: 20
-    });
-    setEditingChallenge(null);
-    setShowChallengeModal(false);
   };
 
-  const handleDeleteChallenge = (id: string | undefined) => {
+  const handleDeleteChallenge = async (id: string | undefined) => {
     if (!id) return;
-    const updated = dailyChallenges.filter(c => c._id !== id);
-    saveChallenges(updated);
-    alert('Desafio removido!');
+    try {
+      const data = await deleteChallenge(id);
+      if (!data.success) {
+        alert(data.message || 'Erro ao remover desafio.');
+        return;
+      }
+      alert('Desafio removido!');
+      loadChallenges();
+    } catch (error) {
+      console.error('Erro ao remover desafio', error);
+      alert('Erro ao remover desafio.');
+    }
   };
 
   const handleEditChallenge = (challenge: Challenge) => {
@@ -332,23 +411,27 @@ const Educacional: React.FC = () => {
                 <IonText className="text-base font-semibold">🎯 Desafios do Dia</IonText>
                 <p className="mt-1 text-sm text-slate-600">Crie desafios rápidos para seu dojo.</p>
               </div>
-              {dailyChallenges.length === 0 && (
-                <IonButton size="small" className="rounded-full bg-primary text-white" onClick={() => {
-                  setEditingChallenge(null);
-                  setNewChallenge({
-                    title: '',
-                    description: '',
-                    date: new Date().toISOString().split('T')[0],
-                    dojoOnly: true,
-                    type: 'text-short',
-                    options: []
-                  });
-                  setShowChallengeModal(true);
-                }}>
-                  <IonIcon slot="start" icon={add} />
-                  Novo
-                </IonButton>
-              )}
+              <div className="flex flex-wrap gap-2">
+                {dailyChallenges.length === 0 && (
+                  <IonButton size="small" className="rounded-full bg-primary text-white" onClick={() => {
+                    setEditingChallenge(null);
+                    setNewChallenge({
+                      title: '',
+                      description: '',
+                      date: new Date().toISOString().split('T')[0],
+                      dojoOnly: true,
+                      type: 'text-short',
+                      options: [],
+                      correctAnswer: '',
+                      points: 20
+                    });
+                    setShowChallengeModal(true);
+                  }}>
+                    <IonIcon slot="start" icon={add} />
+                    Novo
+                  </IonButton>
+                )}
+              </div>
             </IonCardHeader>
             <IonCardContent className="space-y-4 p-5">
               {dailyChallenges.length > 0 ? (
@@ -375,17 +458,7 @@ const Educacional: React.FC = () => {
                             )}
                           </div>
                           <div className="flex gap-2">
-                            <IonButton fill="clear" size="small" onClick={() => {
-                              const savedResponses = localStorage.getItem(`challengeResponses_${user?.dojoId || 'default'}`);
-                              const responses = savedResponses ? JSON.parse(savedResponses).filter((item: any) => item.challengeId === challenge._id) : [];
-                              setSelectedChallengeReport({
-                                challengeId: challenge._id || '',
-                                title: challenge.title,
-                                date: challenge.date,
-                                responses
-                              });
-                              setShowReportModal(true);
-                            }}>
+                            <IonButton fill="clear" size="small" onClick={() => loadChallengeResponses(challenge._id, challenge.title, challenge.date)}>
                               📊
                             </IonButton>
                             <IonButton fill="clear" size="small" onClick={() => handleEditChallenge(challenge)}>
@@ -576,8 +649,8 @@ const Educacional: React.FC = () => {
                             <IonLabel>
                               <h3 className="text-sm font-semibold">{response.athleteName}</h3>
                               <p className="text-sm text-slate-600">{response.response}</p>
-                              {response.timestamp && (
-                                <p className="mt-1 text-xs text-slate-500">🕐 {new Date(response.timestamp).toLocaleString('pt-PT')}</p>
+                              {(response.timestamp || response.createdAt) && (
+                                <p className="mt-1 text-xs text-slate-500">🕐 {new Date(response.timestamp || response.createdAt || '').toLocaleString('pt-PT')}</p>
                               )}
                             </IonLabel>
                           </IonItem>
@@ -609,7 +682,7 @@ const Educacional: React.FC = () => {
                 <p className="text-xs font-medium text-slate-500">Data do desafio: {new Date(dailyChallenge.date).toLocaleDateString('pt-PT')}</p>
               )}
 
-              {challengeResponses.find(response => response.challengeId === dailyChallenge._id && response.athleteId === user?._id) ? (
+              {userChallengeResponse ? (
                 <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-4">
                   <p className="font-semibold text-emerald-900">Desafio respondido</p>
                   <p className="mt-2 text-sm text-slate-600">Você já enviou sua resposta para este desafio.</p>
@@ -642,37 +715,7 @@ const Educacional: React.FC = () => {
                   <IonButton
                     expand="block"
                     color="primary"
-                    onClick={() => {
-                      if (!challengeAnswer.trim()) {
-                        alert('Digite sua resposta antes de enviar.');
-                        return;
-                      }
-
-                      if (!dailyChallenge.correctAnswer) {
-                        alert('A resposta correta não foi definida ainda.');
-                        return;
-                      }
-
-                      const correct = dailyChallenge.correctAnswer.trim().toLowerCase() === challengeAnswer.trim().toLowerCase();
-                      const pointsEarned = correct ? (dailyChallenge.points || 20) : 0;
-                      saveChallengeResponse({
-                        challengeId: dailyChallenge._id,
-                        athleteId: user?._id,
-                        athleteName: user?.username,
-                        response: challengeAnswer,
-                        timestamp: new Date().toISOString(),
-                        correct,
-                        pointsEarned
-                      });
-
-                      if (correct && user) {
-                        const updatedUser = { ...user, points: (user.points || 0) + pointsEarned };
-                        Login(updatedUser);
-                      }
-
-                      alert(correct ? `Parabéns! Você ganhou ${pointsEarned} pontos.` : 'Resposta incorreta. Tente o próximo desafio.');
-                      setChallengeAnswer('');
-                    }}
+                    onClick={saveChallengeResponse}
                   >
                     Enviar Resposta
                   </IonButton>

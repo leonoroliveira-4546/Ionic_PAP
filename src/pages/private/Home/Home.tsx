@@ -5,6 +5,7 @@ import { useAuth } from '../../../AuthContext';
 import Navbar from '../../../components/MainLayout';
 import authApi from '../../../hooks/authApi';
 import dojosApi from '../../../hooks/dojosApi';
+import educationalApi from '../../../hooks/educationalApi';
 
 const Home: React.FC = () => {
   const { user } = useAuth();
@@ -62,6 +63,7 @@ const Home: React.FC = () => {
 
   const { addPerformance, getPerformance, getAbsencesByMonth, addAbsence } = authApi(() => {});
   const { getDojoMembers, removeMember, removeChildFromResponsible, addTrainingSchedule, updateTrainingSchedules, createTournament, getDojoTournaments, updateTournament, deleteTournament, inviteMemberByEmail, submitJoinRequest, acceptJoinRequest, rejectJoinRequest, getAthletesWithoutDojo } = dojosApi();
+  const { getCurrentChallenge, getUserChallengeResponse } = educationalApi();
 
   const isAthlete = (type: string) => type === 'athlete' || type === 'atleta';
   const isResponsavel = (type: string) => type === 'responsavel';
@@ -147,77 +149,48 @@ const Home: React.FC = () => {
     }
   };
 
-  useEffect(() => {
+  const loadDailyChallenge = async () => {
     if (!user?.dojoId) {
       setDailyChallenge(null);
       return;
     }
 
     try {
-      const saved = localStorage.getItem(`challenges_${user.dojoId}`);
-      if (saved) {
-        const challenges = JSON.parse(saved);
-        const today = new Date().toISOString().slice(0, 10);
-        const currentChallenge = Array.isArray(challenges)
-          ? challenges.find((challenge: any) => !challenge.date || challenge.date === today)
-          : null;
-        // If the athlete already answered this challenge, hide it from Home
-        if (currentChallenge) {
-          try {
-            const savedResponses = localStorage.getItem(`challengeResponses_${user.dojoId}`);
-            const responses = savedResponses ? JSON.parse(savedResponses) : [];
-            const answered = responses.find((r: any) => r.challengeId === currentChallenge._id && r.athleteId === user._id);
-            if (answered) {
-              setDailyChallenge(null);
-            } else {
-              setDailyChallenge(currentChallenge);
-            }
-          } catch (e) {
-            setDailyChallenge(currentChallenge);
-          }
-        } else {
-          setDailyChallenge(null);
-        }
-      } else {
+      const { challenge } = await getCurrentChallenge(user.dojoId);
+      if (!challenge) {
         setDailyChallenge(null);
+        return;
+      }
+
+      const responseData = await getUserChallengeResponse(challenge._id);
+      if (responseData.answered) {
+        setDailyChallenge(null);
+      } else {
+        setDailyChallenge(challenge);
       }
     } catch (err) {
+      console.error('Erro ao carregar desafio diário', err);
       setDailyChallenge(null);
     }
+  };
+
+  useEffect(() => {
+    loadDailyChallenge();
   }, [user?.dojoId]);
 
   // Listen for challenge responses saved elsewhere (Educacional) and update Home
   useEffect(() => {
-    const handler = (e: any) => {
+    const handler = async (e: any) => {
       if (!user?.dojoId) return;
       const detail = e?.detail || {};
       if (detail.dojoId && detail.dojoId === user.dojoId) {
-        // Re-evaluate the current challenge visibility
-        try {
-          const saved = localStorage.getItem(`challenges_${user.dojoId}`);
-          if (!saved) return;
-          const challenges = JSON.parse(saved);
-          const today = new Date().toISOString().slice(0, 10);
-          const currentChallenge = Array.isArray(challenges)
-            ? challenges.find((challenge: any) => !challenge.date || challenge.date === today)
-            : null;
-          if (!currentChallenge) {
-            setDailyChallenge(null);
-            return;
-          }
-          const savedResponses = localStorage.getItem(`challengeResponses_${user.dojoId}`);
-          const responses = savedResponses ? JSON.parse(savedResponses) : [];
-          const answered = responses.find((r: any) => r.challengeId === currentChallenge._id && r.athleteId === user._id);
-          if (answered) setDailyChallenge(null);
-        } catch (e) {
-          // ignore
-        }
+        await loadDailyChallenge();
       }
     };
 
     window.addEventListener('challengeResponseSaved', handler as EventListener);
     return () => window.removeEventListener('challengeResponseSaved', handler as EventListener);
-  }, [user?.dojoId, user?._id]);
+  }, [user?.dojoId]);
 
   const handleRemoveMember = async (member: any) => {
     if (!user.dojoId) return;
