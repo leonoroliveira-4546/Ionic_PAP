@@ -98,60 +98,54 @@ const Ranking: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="ion-padding background">
-        {/* Header */}
-        <div style={{ textAlign: 'center', padding: '20px 0' }}>
-          <IonText style={{ fontSize: 24, fontWeight: 'bold', color: 'var(--ion-color-primary)' }}>
-            Ranking de Karatecas
-          </IonText>
-          <p style={{ margin: '8px 0', color: 'var(--ion-color-medium)' }}>
-            Compita e ganhe pontos através de torneios e atividades
-          </p>
+      <IonContent className="ion-padding background bg-slate-950/5 text-slate-950">
+        <div className="mx-4 mb-6 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200/70 text-center">
+          <IonText className="text-2xl font-bold text-slate-900">Ranking de Karatecas</IonText>
+          <IonText className="mt-2 text-sm text-slate-600">Compita e ganhe pontos através de torneios e atividades</IonText>
         </div>
 
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginBottom: 16 }}>
+        <div className="flex flex-wrap justify-center gap-3 px-4 mb-4">
           <IonButton
             fill={activeTab === 'general' ? 'solid' : 'outline'}
+            className="rounded-full"
             onClick={() => setActiveTab('general')}
           >
             Geral
           </IonButton>
           <IonButton
             fill={activeTab === 'dojo' ? 'solid' : 'outline'}
+            className="rounded-full"
             onClick={() => setActiveTab('dojo')}
           >
             Dojô
           </IonButton>
         </div>
 
-        {/* Search */}
         <IonSearchbar
           value={search}
           onIonInput={e => setSearch(e.detail.value ?? '')}
           placeholder="Buscar karateca..."
-          style={{ marginBottom: 16 }}
+          className="mx-4 mb-4 rounded-3xl bg-slate-100 border border-slate-200"
         />
 
-        {/* Results count */}
-        <IonText color="medium">
-          <p style={{ margin: '0 0 12px', fontSize: 14 }}>
-            {filteredUsers.length} karateca{filteredUsers.length !== 1 ? 's' : ''} encontrado{filteredUsers.length !== 1 ? 's' : ''}
-          </p>
+        <IonText color="medium" className="mx-4 mb-4 text-sm">
+          {filteredUsers.length} karateca{filteredUsers.length !== 1 ? 's' : ''} encontrado{filteredUsers.length !== 1 ? 's' : ''}
         </IonText>
 
         {/* Ranking List */}
         {filteredUsers.length > 0 ? (
-          <div style={{ paddingBottom: 20 }}>
+          <div className="mx-4 space-y-3 pb-20">
             {filteredUsers.map((user, index) => (
-              <RankingItem
-                key={user._id}
-                user={user}
-                position={user.ranking}
-              />
+              <div key={user._id} className="rounded-3xl bg-white p-3 shadow-sm ring-1 ring-slate-200/70">
+                <RankingItem
+                  user={user}
+                  position={user.ranking}
+                />
+              </div>
             ))}
           </div>
         ) : (
-          <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+          <div className="mx-4 rounded-3xl bg-white p-8 text-center shadow-sm ring-1 ring-slate-200/70">
             <IonText color="medium">
               <p>Nenhum karateca encontrado.</p>
             </IonText>
@@ -159,16 +153,14 @@ const Ranking: React.FC = () => {
         )}
 
         {/* Footer info */}
-        <div style={{ textAlign: 'center', padding: '20px', backgroundColor: 'var(--ion-color-light)', borderRadius: 12, marginTop: 20 }}>
-          <IonText style={{ fontSize: 14, color: 'var(--ion-color-medium)' }}>
-            <p style={{ margin: 0 }}>
-              <strong>Como ganhar pontos?</strong><br />
-              • Participar em torneios (+50-200 pontos)<br />
-              • Treinos regulares (+10 pontos/dia)<br />
-              • Compartilhar conteúdo (+5-20 pontos)<br />
-              • Acertar predições (+25 pontos)
-            </p>
-          </IonText>
+        <div className="mx-4 rounded-3xl bg-slate-100 p-5 shadow-sm ring-1 ring-slate-200/70 mt-6 text-left">
+          <IonText className="text-sm font-semibold text-slate-900">Como ganhar pontos?</IonText>
+          <div className="mt-3 text-sm leading-7 text-slate-600">
+            <p className="mb-2">• Participar em torneios (+50-200 pontos)</p>
+            <p className="mb-2">• Treinos regulares (+10 pontos/dia)</p>
+            <p className="mb-2">• Compartilhar conteúdo (+5-20 pontos)</p>
+            <p className="mb-0">• Acertar predições (+25 pontos)</p>
+          </div>
         </div>
       </IonContent>
 

@@ -155,45 +155,38 @@ const Loja: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent>
+      <IonContent className="ion-padding background bg-slate-950/5 text-slate-950">
+        <div className="mx-4 mb-4 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
+          <IonText className="text-lg font-semibold">🛍️ Loja</IonText>
+          <p className="mt-2 text-sm text-slate-600">Encontre equipamentos, kimonos e acessórios para treinar.</p>
+        </div>
+
         <IonSearchbar
           value={search}
           onIonInput={e => setSearch(e.detail.value ?? '')}
           placeholder="Buscar produtos..."
-          style={{ padding: '8px 8px 0' }}
+          className="mx-4 mb-4 rounded-3xl bg-slate-100 border border-slate-200"
         />
 
-        {/* Category chips */}
-        <div style={{ display: 'flex', gap: 8, padding: '8px 16px 12px', overflowX: 'auto' }}>
+        <div className="mx-4 mb-4 flex flex-wrap gap-2 overflow-x-auto">
           {CATEGORIES.map(cat => (
             <IonChip
               key={cat}
               color={activeCategory === cat ? 'primary' : undefined}
               outline={activeCategory !== cat}
               onClick={() => setActiveCategory(cat)}
-              style={{ flexShrink: 0, cursor: 'pointer' }}
+              className="cursor-pointer"
             >
               <IonLabel>{cat}</IonLabel>
             </IonChip>
           ))}
         </div>
 
-        {/* Results count */}
-        <IonText color="medium">
-          <p style={{ paddingLeft: 16, margin: '0 0 8px', fontSize: 13 }}>
-            {filtered.length} produto{filtered.length !== 1 ? 's' : ''} encontrado{filtered.length !== 1 ? 's' : ''}
-          </p>
+        <IonText color="medium" className="mx-4 text-sm">
+          {filtered.length} produto{filtered.length !== 1 ? 's' : ''} encontrado{filtered.length !== 1 ? 's' : ''}
         </IonText>
 
-        {/* Product grid */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: 12,
-            padding: '0 12px 24px',
-          }}
-        >
+        <div className="grid gap-4 px-4 pb-24 sm:grid-cols-2">
           {filtered.map(product => (
             <ProductCard
               key={product.id}
@@ -204,8 +197,8 @@ const Loja: React.FC = () => {
         </div>
 
         {filtered.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '48px 24px' }}>
-            <span style={{ fontSize: 56 }}>🔍</span>
+          <div className="mx-4 rounded-3xl bg-white p-8 text-center shadow-sm ring-1 ring-slate-200/70">
+            <span className="text-[56px] block">🔍</span>
             <IonText color="medium">
               <p>Nenhum produto encontrado.</p>
             </IonText>

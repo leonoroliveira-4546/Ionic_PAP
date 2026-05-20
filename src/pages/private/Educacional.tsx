@@ -29,6 +29,8 @@ interface Challenge {
   dojoOnly: boolean;
   type: 'text-short' | 'text-long' | 'multiple-choice' | 'single-choice';
   options?: string[]; // Para múltipla escolha e escolha simples
+  correctAnswer?: string;
+  points?: number;
 }
 
 interface ChallengeReport {
@@ -46,7 +48,7 @@ interface ChallengeReport {
 type Category = 'all' | 'historia' | 'filosofia' | 'tecnicas';
 
 const Educacional: React.FC = () => {
-  const { user } = useAuth();
+  const { user, Login } = useAuth();
   const { getEducationalContent } = educationalApi();
   const [videos, setVideos] = useState<Video[]>([]);
   const [filteredVideos, setFilteredVideos] = useState<Video[]>([]);
@@ -56,6 +58,9 @@ const Educacional: React.FC = () => {
   
   // Desafios do dia
   const [dailyChallenges, setDailyChallenges] = useState<Challenge[]>([]);
+  const [dailyChallenge, setDailyChallenge] = useState<Challenge | null>(null);
+  const [challengeAnswer, setChallengeAnswer] = useState<string>('');
+  const [challengeResponses, setChallengeResponses] = useState<any[]>([]);
   const [showChallengeModal, setShowChallengeModal] = useState(false);
   const [newChallenge, setNewChallenge] = useState<Challenge>({
     title: '',
@@ -63,7 +68,9 @@ const Educacional: React.FC = () => {
     date: new Date().toISOString().split('T')[0],
     dojoOnly: true,
     type: 'text-short',
-    options: []
+    options: [],
+    correctAnswer: '',
+    points: 20
   });
   const [editingChallenge, setEditingChallenge] = useState<Challenge | null>(null);
   const [showReportModal, setShowReportModal] = useState(false);
@@ -75,17 +82,56 @@ const Educacional: React.FC = () => {
     const saved = localStorage.getItem(`challenges_${user?.dojoId || 'default'}`);
     if (saved) {
       setDailyChallenges(JSON.parse(saved));
+    } else {
+      setDailyChallenges([]);
     }
   }, [user?.dojoId]);
+
+  useEffect(() => {
+    if (!user?.dojoId) {
+      setDailyChallenge(null);
+      setChallengeResponses([]);
+      return;
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+    const currentChallenge = dailyChallenges.find(challenge => !challenge.date || challenge.date === today) || null;
+    setDailyChallenge(currentChallenge);
+    setChallengeAnswer('');
+
+    const savedResponses = localStorage.getItem(`challengeResponses_${user.dojoId}`);
+    setChallengeResponses(savedResponses ? JSON.parse(savedResponses) : []);
+  }, [dailyChallenges, user?.dojoId]);
 
   const saveChallenges = (challenges: Challenge[]) => {
     localStorage.setItem(`challenges_${user?.dojoId || 'default'}`, JSON.stringify(challenges));
     setDailyChallenges(challenges);
   };
 
+  const saveChallengeResponse = (response: any) => {
+    if (!user?.dojoId) return;
+    const storageKey = `challengeResponses_${user.dojoId}`;
+    const existing = localStorage.getItem(storageKey);
+    const responses = existing ? JSON.parse(existing) : [];
+    const updated = [...responses, response];
+    localStorage.setItem(storageKey, JSON.stringify(updated));
+    setChallengeResponses(updated);
+    // Notify other parts of the app (e.g. Home) that a response was saved
+    try {
+      window.dispatchEvent(new CustomEvent('challengeResponseSaved', { detail: { dojoId: user.dojoId, challengeId: response.challengeId, athleteId: response.athleteId } }));
+    } catch (e) {
+      // ignore in environments without window
+    }
+  };
+
   const handleAddChallenge = () => {
     if (!newChallenge.title.trim() || !newChallenge.description.trim()) {
       alert('Preencha o título e descrição do desafio');
+      return;
+    }
+
+    if (!newChallenge.correctAnswer?.trim()) {
+      alert('Defina a resposta correta do desafio.');
       return;
     }
 
@@ -99,6 +145,17 @@ const Educacional: React.FC = () => {
     if ((newChallenge.type === 'multiple-choice' || newChallenge.type === 'single-choice') && 
         (!newChallenge.options || newChallenge.options.length < 2)) {
       alert('Adicione pelo menos 2 opções para este tipo de desafio');
+      return;
+    }
+
+    if ((newChallenge.type === 'multiple-choice' || newChallenge.type === 'single-choice') &&
+        newChallenge.options && !newChallenge.options.includes(newChallenge.correctAnswer || '')) {
+      alert('A resposta correta deve ser uma das opções existentes.');
+      return;
+    }
+
+    if (newChallenge.points === undefined || newChallenge.points < 0) {
+      alert('Defina um valor de pontos válido para o desafio.');
       return;
     }
 
@@ -122,7 +179,9 @@ const Educacional: React.FC = () => {
       date: new Date().toISOString().split('T')[0], 
       dojoOnly: true,
       type: 'text-short',
-      options: []
+      options: [],
+      correctAnswer: '',
+      points: 20
     });
     setEditingChallenge(null);
     setShowChallengeModal(false);
@@ -217,98 +276,83 @@ const Educacional: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="ion-padding background">
-        {/* Header */}
-        <div style={{ textAlign: 'center', padding: '20px 0' }}>
-          <IonText style={{ fontSize: 24, fontWeight: 'bold', color: 'var(--ion-color-primary)' }}>
-            Aprenda Karatê
-          </IonText>
-          <p style={{ margin: '8px 0', color: 'var(--ion-color-medium)' }}>
-            Conteúdo educativo sobre a arte marcial do karatê
-          </p>
+      <IonContent className="ion-padding background bg-slate-950/5 text-slate-950">
+        <div className="mx-4 mb-6 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200/70 text-center">
+          <IonText className="text-2xl font-bold text-slate-900">Aprenda Karatê</IonText>
+          <p className="mt-2 text-sm text-slate-600">Conteúdo educativo sobre a arte marcial do karatê</p>
         </div>
 
-        {/* Search */}
-        <IonSearchbar
-          value={search}
-          onIonInput={e => setSearch(e.detail.value ?? '')}
-          placeholder="Buscar conteúdo..."
-          style={{ marginBottom: 16 }}
-        />
+        <div className="mx-4 grid gap-4">
+          <IonSearchbar
+            value={search}
+            onIonInput={e => setSearch(e.detail.value ?? '')}
+            placeholder="Buscar conteúdo..."
+            className="rounded-3xl bg-slate-100 border border-slate-200"
+          />
 
-        {/* Category Filter */}
-        <div style={{ marginBottom: 16 }}>
           <IonSegment
             value={activeCategory}
             onIonChange={e => setActiveCategory(e.detail.value as Category)}
-            style={{ '--background': 'var(--ion-color-light)' }}
+            className="rounded-3xl bg-slate-100 p-1"
           >
             {categories.map(cat => (
-              <IonSegmentButton key={cat.value} value={cat.value}>
-                <IonText style={{ fontSize: 14 }}>{cat.label}</IonText>
+              <IonSegmentButton key={cat.value} value={cat.value} className="text-sm">
+                <IonText>{cat.label}</IonText>
               </IonSegmentButton>
             ))}
           </IonSegment>
+
+          <IonText color="medium" className="text-sm">
+            {filteredVideos.length} conteúdo{filteredVideos.length !== 1 ? 's' : ''} encontrado{filteredVideos.length !== 1 ? 's' : ''}
+          </IonText>
         </div>
 
-        {/* Results count */}
-        <IonText color="medium">
-          <p style={{ margin: '0 0 12px', fontSize: 14 }}>
-            {filteredVideos.length} conteúdo{filteredVideos.length !== 1 ? 's' : ''} encontrado{filteredVideos.length !== 1 ? 's' : ''}
-          </p>
-        </IonText>
-
-        {/* Content Grid */}
         {filteredVideos.length > 0 ? (
-          <div>
+          <div className="mx-4 grid gap-4">
             {filteredVideos.map(video => (
               <VideoCard
                 key={video.id}
                 video={video}
                 onClick={() => {
-                  // Simulate opening video
                   console.log('Opening educational video:', video.url);
-                  // In a real app, this would open the video
                 }}
               />
             ))}
           </div>
         ) : (
-          <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-            <IonText color="medium">
-              <p>Nenhum conteúdo encontrado para esta categoria.</p>
-            </IonText>
+          <div className="mx-4 rounded-3xl bg-white p-6 text-center shadow-sm ring-1 ring-slate-200/70">
+            <IonText color="medium">Nenhum conteúdo encontrado para esta categoria.</IonText>
           </div>
         )}
 
-        {/* Desafios do Dia - Sensei Only */}
         {isSensei && (
-          <IonCard style={{ marginTop: '20px' }}>
-            <IonCardHeader>
-              <IonCardTitle style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>🎯 Desafios do Dia</span>
-                {dailyChallenges.length === 0 && (
-                  <IonButton size="small" onClick={() => {
-                    setEditingChallenge(null);
-                    setNewChallenge({ 
-                      title: '', 
-                      description: '', 
-                      date: new Date().toISOString().split('T')[0], 
-                      dojoOnly: true,
-                      type: 'text-short',
-                      options: []
-                    });
-                    setShowChallengeModal(true);
-                  }}>
-                    <IonIcon slot="start" icon={add} />
-                    Novo
-                  </IonButton>
-                )}
-              </IonCardTitle>
+          <IonCard className="mx-4 mt-5 rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/70">
+            <IonCardHeader className="flex flex-wrap items-center justify-between gap-3 p-5 pt-6">
+              <div>
+                <IonText className="text-base font-semibold">🎯 Desafios do Dia</IonText>
+                <p className="mt-1 text-sm text-slate-600">Crie desafios rápidos para seu dojo.</p>
+              </div>
+              {dailyChallenges.length === 0 && (
+                <IonButton size="small" className="rounded-full bg-primary text-white" onClick={() => {
+                  setEditingChallenge(null);
+                  setNewChallenge({
+                    title: '',
+                    description: '',
+                    date: new Date().toISOString().split('T')[0],
+                    dojoOnly: true,
+                    type: 'text-short',
+                    options: []
+                  });
+                  setShowChallengeModal(true);
+                }}>
+                  <IonIcon slot="start" icon={add} />
+                  Novo
+                </IonButton>
+              )}
             </IonCardHeader>
-            <IonCardContent>
+            <IonCardContent className="space-y-4 p-5">
               {dailyChallenges.length > 0 ? (
-                <IonList>
+                <div className="space-y-3">
                   {dailyChallenges.map(challenge => {
                     const typeLabel = {
                       'text-short': '📝 Resposta Curta',
@@ -316,30 +360,29 @@ const Educacional: React.FC = () => {
                       'single-choice': '☑️ Escolha Simples',
                       'multiple-choice': '☑️ Múltipla Escolha'
                     }[challenge.type];
-                    
+
                     return (
-                      <div key={challenge._id} style={{marginBottom: '12px', padding: '12px', backgroundColor: '#f9f9f9', borderRadius: '4px', borderLeft: '4px solid #007AFF'}}>
-                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
-                          <div style={{flex: 1}}>
-                            <h3 style={{margin: '0 0 4px 0'}}>{challenge.title}</h3>
-                            <p style={{margin: '0 0 8px 0', fontSize: '0.9em', color: '#666'}}>{challenge.description}</p>
-                            <p style={{fontSize: '0.85em', color: '#999', margin: '4px 0'}}>
-                              📅 {new Date(challenge.date).toLocaleDateString('pt-PT')} | {typeLabel} | 
-                              {challenge.dojoOnly ? ' 🔒 Dojo' : ' 🌐 Público'}
+                      <div key={challenge._id} className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                          <div>
+                            <h3 className="text-base font-semibold">{challenge.title}</h3>
+                            <p className="mt-2 text-sm text-slate-600">{challenge.description}</p>
+                            <p className="mt-3 text-xs text-slate-500">
+                              📅 {new Date(challenge.date).toLocaleDateString('pt-PT')} · {typeLabel} · {challenge.dojoOnly ? '🔒 Dojo' : '🌐 Público'}
                             </p>
                             {(challenge.options || []).length > 0 && (
-                              <div style={{fontSize: '0.85em', marginTop: '4px', color: '#666'}}>
-                                <strong>Opções:</strong> {(challenge.options || []).join(', ')}
-                              </div>
+                              <p className="mt-2 text-xs text-slate-500">Opções: {(challenge.options || []).join(', ')}</p>
                             )}
                           </div>
-                          <div style={{display: 'flex', gap: '4px'}}>
+                          <div className="flex gap-2">
                             <IonButton fill="clear" size="small" onClick={() => {
+                              const savedResponses = localStorage.getItem(`challengeResponses_${user?.dojoId || 'default'}`);
+                              const responses = savedResponses ? JSON.parse(savedResponses).filter((item: any) => item.challengeId === challenge._id) : [];
                               setSelectedChallengeReport({
                                 challengeId: challenge._id || '',
                                 title: challenge.title,
                                 date: challenge.date,
-                                responses: [] // Em produção, viria do backend
+                                responses
                               });
                               setShowReportModal(true);
                             }}>
@@ -356,25 +399,26 @@ const Educacional: React.FC = () => {
                       </div>
                     );
                   })}
-                </IonList>
+                </div>
               ) : (
-                <p>Nenhum desafio criado ainda.</p>
+                <p className="text-slate-600">Nenhum desafio criado ainda.</p>
               )}
             </IonCardContent>
           </IonCard>
         )}
 
-        {/* Modal de Desafios */}
         <IonModal isOpen={showChallengeModal} onDidDismiss={() => {
           setShowChallengeModal(false);
           setEditingChallenge(null);
-          setNewChallenge({ 
-            title: '', 
-            description: '', 
-            date: new Date().toISOString().split('T')[0], 
+          setNewChallenge({
+            title: '',
+            description: '',
+            date: new Date().toISOString().split('T')[0],
             dojoOnly: true,
             type: 'text-short',
-            options: []
+            options: [],
+            correctAnswer: '',
+            points: 20
           });
         }}>
           <IonHeader>
@@ -385,95 +429,117 @@ const Educacional: React.FC = () => {
               </IonButton>
             </IonToolbar>
           </IonHeader>
-          <IonContent className="ion-padding">
-            <IonCard>
-              <IonCardContent>
-                <IonItem>
-                  <IonLabel position="stacked">Título</IonLabel>
-                  <IonInput
-                    value={newChallenge.title}
-                    onIonChange={e => setNewChallenge({...newChallenge, title: e.detail.value || ''})}
-                    placeholder="Ex: Kata do dia"
-                  />
-                </IonItem>
-
-                <IonItem>
-                  <IonLabel position="stacked">Descrição</IonLabel>
-                  <IonInput
-                    value={newChallenge.description}
-                    onIonChange={e => setNewChallenge({...newChallenge, description: e.detail.value || ''})}
-                    placeholder="Ex: Executar Kata Heian Shodan corretamente"
-                  />
-                </IonItem>
-
-                <IonItem>
-                  <IonLabel position="stacked">Data</IonLabel>
-                  <IonInput
-                    type="date"
-                    value={newChallenge.date}
-                    onIonChange={e => setNewChallenge({...newChallenge, date: e.detail.value || ''})}
-                  />
-                </IonItem>
-
-                <IonItem>
-                  <IonLabel position="stacked">Tipo de Desafio</IonLabel>
-                  <select 
-                    style={{width: '100%', padding: '8px', borderRadius: '4px'}}
-                    value={newChallenge.type}
-                    onChange={(e) => setNewChallenge({...newChallenge, type: e.target.value as any})}
-                  >
-                    <option value="text-short">Resposta Curta</option>
-                    <option value="text-long">Resposta Longa</option>
-                    <option value="single-choice">Escolha Simples</option>
-                    <option value="multiple-choice">Múltipla Escolha</option>
-                  </select>
-                </IonItem>
-
-                {/* Opções para múltipla escolha */}
-                {(newChallenge.type === 'multiple-choice' || newChallenge.type === 'single-choice') && (
-                  <div>
-                    <IonLabel style={{display: 'block', marginTop: '16px', marginBottom: '8px'}}>
-                      Opções:
-                    </IonLabel>
-                    {(newChallenge.options || []).map((option, index) => (
-                      <IonItem key={index} style={{marginBottom: '8px'}}>
-                        <IonInput
-                          value={option}
-                          placeholder={`Opção ${index + 1}`}
-                          onIonChange={(e) => {
-                            const updated = [...(newChallenge.options || [])];
-                            updated[index] = e.detail.value || '';
-                            setNewChallenge({...newChallenge, options: updated});
-                          }}
-                        />
-                        <IonButton fill="clear" color="danger" onClick={() => {
-                          const updated = newChallenge.options?.filter((_, i) => i !== index) || [];
+          <IonContent className="ion-padding bg-slate-950/5">
+            <div className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
+              <IonItem className="rounded-3xl">
+                <IonLabel position="stacked">Título</IonLabel>
+                <IonInput
+                  value={newChallenge.title}
+                  onIonChange={e => setNewChallenge({...newChallenge, title: e.detail.value || ''})}
+                  placeholder="Ex: Kata do dia"
+                />
+              </IonItem>
+              <IonItem className="rounded-3xl mt-3">
+                <IonLabel position="stacked">Descrição</IonLabel>
+                <IonInput
+                  value={newChallenge.description}
+                  onIonChange={e => setNewChallenge({...newChallenge, description: e.detail.value || ''})}
+                  placeholder="Ex: Executar Kata Heian Shodan corretamente"
+                />
+              </IonItem>
+              <IonItem className="rounded-3xl mt-3">
+                <IonLabel position="stacked">Data</IonLabel>
+                <IonInput
+                  type="date"
+                  value={newChallenge.date}
+                  onIonChange={e => setNewChallenge({...newChallenge, date: e.detail.value || ''})}
+                />
+              </IonItem>
+              <IonItem className="rounded-3xl mt-3">
+                <IonLabel position="stacked">Tipo de Desafio</IonLabel>
+                <select
+                  className="w-full rounded-2xl border border-slate-200 p-3"
+                  value={newChallenge.type}
+                  onChange={(e) => setNewChallenge({...newChallenge, type: e.target.value as any})}
+                >
+                  <option value="text-short">Resposta Curta</option>
+                  <option value="text-long">Resposta Longa</option>
+                  <option value="single-choice">Escolha Simples</option>
+                  <option value="multiple-choice">Múltipla Escolha</option>
+                </select>
+              </IonItem>
+              <IonItem className="rounded-3xl mt-3">
+                <IonLabel position="stacked">Resposta Correta</IonLabel>
+                <IonInput
+                  value={newChallenge.correctAnswer}
+                  onIonChange={e => setNewChallenge({...newChallenge, correctAnswer: e.detail.value || ''})}
+                  placeholder="Digite a resposta correta"
+                />
+              </IonItem>
+              <IonItem className="rounded-3xl mt-3">
+                <IonLabel position="stacked">Pontos ao acertar</IonLabel>
+                <IonInput
+                  type="number"
+                  value={newChallenge.points?.toString() || '20'}
+                  onIonChange={e => setNewChallenge({...newChallenge, points: Number(e.detail.value)})}
+                  placeholder="20"
+                />
+              </IonItem>
+              {(newChallenge.type === 'multiple-choice' || newChallenge.type === 'single-choice') && (
+                <div className="space-y-3 mt-4">
+                  <IonText className="text-sm font-semibold">Opções:</IonText>
+                  {(newChallenge.options || []).map((option, index) => (
+                    <IonItem key={index} className="rounded-3xl">
+                      <IonInput
+                        value={option}
+                        placeholder={`Opção ${index + 1}`}
+                        onIonChange={(e) => {
+                          const updated = [...(newChallenge.options || [])];
+                          updated[index] = e.detail.value || '';
                           setNewChallenge({...newChallenge, options: updated});
-                        }}>
-                          <IonIcon slot="icon-only" icon={trash} />
-                        </IonButton>
-                      </IonItem>
-                    ))}
-                    <IonButton expand="block" fill="outline" onClick={() => {
-                      const updated = [...(newChallenge.options || []), ''];
-                      setNewChallenge({...newChallenge, options: updated});
-                    }}>
-                      <IonIcon slot="start" icon={add} />
-                      Adicionar Opção
-                    </IonButton>
-                  </div>
-                )}
-
-
-                <IonButton expand="block" color="success" onClick={handleAddChallenge} style={{ marginTop: '1rem' }}>
-                  {editingChallenge ? 'Guardar Alterações' : 'Criar Desafio'}
-                </IonButton>
-              </IonCardContent>
-            </IonCard>
+                        }}
+                      />
+                      <IonButton fill="clear" color="danger" onClick={() => {
+                        const updated = newChallenge.options?.filter((_, i) => i !== index) || [];
+                        setNewChallenge({...newChallenge, options: updated});
+                      }}>
+                        <IonIcon slot="icon-only" icon={trash} />
+                      </IonButton>
+                    </IonItem>
+                  ))}
+                  <IonItem className="rounded-3xl mt-3">
+                    <IonLabel position="stacked">Resposta Correta</IonLabel>
+                    <IonInput
+                      value={newChallenge.correctAnswer}
+                      onIonChange={e => setNewChallenge({...newChallenge, correctAnswer: e.detail.value || ''})}
+                      placeholder="Digite a resposta correta"
+                    />
+                  </IonItem>
+                  <IonItem className="rounded-3xl mt-3">
+                    <IonLabel position="stacked">Pontos ao acertar</IonLabel>
+                    <IonInput
+                      type="number"
+                      value={newChallenge.points?.toString() || '20'}
+                      onIonChange={e => setNewChallenge({...newChallenge, points: Number(e.detail.value)})}
+                      placeholder="20"
+                    />
+                  </IonItem>
+                  <IonButton expand="block" fill="outline" onClick={() => {
+                    const updated = [...(newChallenge.options || []), ''];
+                    setNewChallenge({...newChallenge, options: updated});
+                  }}>
+                    <IonIcon slot="start" icon={add} />
+                    Adicionar Opção
+                  </IonButton>
+                </div>
+              )}
+              <IonButton expand="block" color="success" className="mt-5" onClick={handleAddChallenge}>
+                {editingChallenge ? 'Guardar Alterações' : 'Criar Desafio'}
+              </IonButton>
+            </div>
           </IonContent>
         </IonModal>
 
-        {/* Modal de Relatório */}
         <IonModal isOpen={showReportModal} onDidDismiss={() => setShowReportModal(false)}>
           <IonHeader>
             <IonToolbar>
@@ -483,37 +549,35 @@ const Educacional: React.FC = () => {
               </IonButton>
             </IonToolbar>
           </IonHeader>
-          <IonContent className="ion-padding">
+          <IonContent className="ion-padding bg-slate-950/5">
             {selectedChallengeReport && (
-              <div>
-                <IonCard>
+              <div className="space-y-4">
+                <IonCard className="rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/70">
                   <IonCardContent>
-                    <h3>{selectedChallengeReport.title}</h3>
-                    <p>📅 {new Date(selectedChallengeReport.date).toLocaleDateString('pt-PT')}</p>
-                    <hr />
+                    <h3 className="text-lg font-semibold">{selectedChallengeReport.title}</h3>
+                    <p className="mt-2 text-sm text-slate-600">📅 {new Date(selectedChallengeReport.date).toLocaleDateString('pt-PT')}</p>
+                    <hr className="my-4" />
                     <p><strong>Total de respostas:</strong> {selectedChallengeReport.responses.length}</p>
                     {selectedChallengeReport.responses.length === 0 && (
-                      <p style={{color: '#999', fontStyle: 'italic'}}>Nenhuma resposta recebida ainda.</p>
+                      <p className="mt-2 text-sm text-slate-500">Nenhuma resposta recebida ainda.</p>
                     )}
                   </IonCardContent>
                 </IonCard>
 
                 {selectedChallengeReport.responses.length > 0 && (
-                  <IonCard>
+                  <IonCard className="rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/70">
                     <IonCardHeader>
                       <IonCardTitle>Respostas dos Atletas</IonCardTitle>
                     </IonCardHeader>
                     <IonCardContent>
                       <IonList>
                         {selectedChallengeReport.responses.map((response, index) => (
-                          <IonItem key={index} style={{marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #ddd'}}>
+                          <IonItem key={index} className="rounded-3xl mb-3">
                             <IonLabel>
-                              <h3>{response.athleteName}</h3>
-                              <p>{response.response}</p>
+                              <h3 className="text-sm font-semibold">{response.athleteName}</h3>
+                              <p className="text-sm text-slate-600">{response.response}</p>
                               {response.timestamp && (
-                                <p style={{fontSize: '0.85em', color: '#999'}}>
-                                  🕐 {new Date(response.timestamp).toLocaleString('pt-PT')}
-                                </p>
+                                <p className="mt-1 text-xs text-slate-500">🕐 {new Date(response.timestamp).toLocaleString('pt-PT')}</p>
                               )}
                             </IonLabel>
                           </IonItem>
@@ -527,20 +591,104 @@ const Educacional: React.FC = () => {
           </IonContent>
         </IonModal>
 
-        {/* Educational Tips */}
-        <div style={{ textAlign: 'center', padding: '20px', backgroundColor: 'var(--ion-color-light)', borderRadius: 12, marginTop: 20 }}>
-          <IonText style={{ fontSize: 16, fontWeight: 'bold', color: 'var(--ion-color-primary)' }}>
-            💡 Dicas de Estudo
-          </IonText>
-          <div style={{ marginTop: 12, textAlign: 'left' }}>
-            <IonText style={{ fontSize: 14, color: 'var(--ion-color-medium)' }}>
-              <p style={{ margin: '8px 0' }}>
-                • <strong>História:</strong> Conheça as raízes do karatê em Okinawa<br />
-                • <strong>Filosofia:</strong> Entenda o "Dô" - o caminho do karateca<br />
-                • <strong>Técnicas:</strong> Domine katas e movimentos fundamentais<br />
-                • <strong>Prática:</strong> Treine regularmente para progredir
-              </p>
-            </IonText>
+        {!isSensei && dailyChallenge && (
+          <IonCard className="mx-4 mt-6 rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/70">
+            <IonCardHeader className="flex flex-wrap items-start justify-between gap-3 p-5 pt-6">
+              <div>
+                <IonText className="text-base font-semibold">🎯 Desafio do Dia</IonText>
+                <p className="mt-1 text-sm text-slate-600">Complete o desafio e ganhe pontos para o seu progresso.</p>
+              </div>
+              <span className="rounded-full bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700">
+                +{dailyChallenge.points || 20} pontos
+              </span>
+            </IonCardHeader>
+            <IonCardContent className="space-y-4 p-5">
+              <h3 className="text-lg font-semibold text-slate-900">{dailyChallenge.title}</h3>
+              <p className="text-sm text-slate-600">{dailyChallenge.description}</p>
+              {dailyChallenge.date && (
+                <p className="text-xs font-medium text-slate-500">Data do desafio: {new Date(dailyChallenge.date).toLocaleDateString('pt-PT')}</p>
+              )}
+
+              {challengeResponses.find(response => response.challengeId === dailyChallenge._id && response.athleteId === user?._id) ? (
+                <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-4">
+                  <p className="font-semibold text-emerald-900">Desafio respondido</p>
+                  <p className="mt-2 text-sm text-slate-600">Você já enviou sua resposta para este desafio.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {(dailyChallenge.type === 'multiple-choice' || dailyChallenge.type === 'single-choice') ? (
+                    <div className="grid gap-3">
+                      {(dailyChallenge.options || []).map(option => (
+                        <IonButton
+                          key={option}
+                          fill={challengeAnswer === option ? 'solid' : 'outline'}
+                          className="text-left"
+                          onClick={() => setChallengeAnswer(option)}
+                        >
+                          {option}
+                        </IonButton>
+                      ))}
+                    </div>
+                  ) : (
+                    <IonItem className="rounded-3xl">
+                      <IonLabel position="stacked">Sua resposta</IonLabel>
+                      <IonInput
+                        value={challengeAnswer}
+                        onIonChange={e => setChallengeAnswer(e.detail.value || '')}
+                        placeholder="Digite sua resposta"
+                      />
+                    </IonItem>
+                  )}
+                  <IonButton
+                    expand="block"
+                    color="primary"
+                    onClick={() => {
+                      if (!challengeAnswer.trim()) {
+                        alert('Digite sua resposta antes de enviar.');
+                        return;
+                      }
+
+                      if (!dailyChallenge.correctAnswer) {
+                        alert('A resposta correta não foi definida ainda.');
+                        return;
+                      }
+
+                      const correct = dailyChallenge.correctAnswer.trim().toLowerCase() === challengeAnswer.trim().toLowerCase();
+                      const pointsEarned = correct ? (dailyChallenge.points || 20) : 0;
+                      saveChallengeResponse({
+                        challengeId: dailyChallenge._id,
+                        athleteId: user?._id,
+                        athleteName: user?.username,
+                        response: challengeAnswer,
+                        timestamp: new Date().toISOString(),
+                        correct,
+                        pointsEarned
+                      });
+
+                      if (correct && user) {
+                        const updatedUser = { ...user, points: (user.points || 0) + pointsEarned };
+                        Login(updatedUser);
+                      }
+
+                      alert(correct ? `Parabéns! Você ganhou ${pointsEarned} pontos.` : 'Resposta incorreta. Tente o próximo desafio.');
+                      setChallengeAnswer('');
+                    }}
+                  >
+                    Enviar Resposta
+                  </IonButton>
+                </div>
+              )}
+            </IonCardContent>
+          </IonCard>
+        )}
+
+        <div className="rounded-3xl bg-slate-100 p-5 mt-6 text-slate-700 shadow-sm ring-1 ring-slate-200/70">
+          <IonText className="text-base font-semibold text-slate-900">💡 Dicas de Estudo</IonText>
+          <div className="mt-3 text-sm leading-6 text-slate-600">
+            <p className="mb-2"><strong>História:</strong> Conheça as raízes do karatê em Okinawa</p>
+            <p className="mb-2"><strong>Filosofia:</strong> Entenda o "Dô" - o caminho do karateca</p>
+            <p className="mb-2"><strong>Técnicas:</strong> Domine katas e movimentos fundamentais</p>
+            <p className="mb-0"><strong>Prática:</strong> Treine regularmente para progredir</p>
           </div>
         </div>
       </IonContent>

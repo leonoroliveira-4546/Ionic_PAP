@@ -143,106 +143,90 @@ const ProfileSettings: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="ion-padding background">
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px 0 16px' }}>
-          <IonAvatar style={{ width: 90, height: 90 }}>
-            {user.profilePic
-              ? <img src={user.profilePic} alt="avatar" />
-              : <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=random&size=90`} alt="avatar" />
-            }
-          </IonAvatar>
-
-          <div style={{ marginTop: 12, width: '100%', textAlign: 'center' }}>
-            <label style={{ display: 'block', marginBottom: 8, fontSize: 14, color: '#666' }}>
-              {isEditing ? 'Escolher nova foto de perfil' : 'Foto de perfil'}
-            </label>
-            <input
-              type="file"
-              accept="image/*"
-              disabled={!isEditing}
-              onChange={e => setProfileFile(e.target.files?.[0] || null)}
-              style={{ display: isEditing ? 'inline-block' : 'none' }}
-            />
-            {profileFile && <p style={{ marginTop: 8, fontSize: 12, color: '#666' }}>✓ {profileFile.name}</p>}
+      <IonContent className="ion-padding background bg-slate-950/5 text-slate-950">
+        <div className="mx-4 mt-4 rounded-[32px] bg-white p-6 shadow-sm ring-1 ring-slate-200/70 text-center">
+          <div className="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full bg-slate-100">
+            {user.profilePic ? (
+              <img src={user.profilePic} alt="avatar" className="h-full w-full object-cover" />
+            ) : (
+              <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=random&size=90`} alt="avatar" className="h-full w-full object-cover" />
+            )}
           </div>
 
-          <IonText style={{ marginTop: 12 }}>
-            <h2 style={{ margin: 0, fontWeight: 700 }}>{user.name || user.username}</h2>
-          </IonText>
-          <IonText color="medium">
-            <p style={{ margin: '4px 0 8px' }}>{user.email}</p>
-          </IonText>
-          <IonChip color="primary" outline>
-            <IonLabel>{typeLabel[user.type] ?? user.type}</IonLabel>
-          </IonChip>
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-          <IonButton
-            onClick={isEditing ? handleSave : () => setIsEditing(true)}
-            color={isEditing ? 'success' : 'primary'}
-            disabled={saving}
-          >
-            <IonIcon icon={isEditing ? checkmarkOutline : createOutline} slot="start" />
-            {saving ? 'Guardando...' : isEditing ? 'Guardar' : 'Editar Perfil'}
-          </IonButton>
-        </div>
-
-        {saveMessage && (
-          <div style={{ padding: '0 16px 16px' }}>
-            <IonText color={saveMessage.includes('sucesso') ? 'success' : 'danger'}>
-              {saveMessage}
-            </IonText>
+          <h2 className="text-xl font-semibold text-slate-900">{user.name || user.username}</h2>
+          <p className="mt-2 text-sm text-slate-600">{user.email}</p>
+          <div className="mt-3 inline-flex rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700">
+            {typeLabel[user.type] ?? user.type}
           </div>
-        )}
 
-        <IonText color="medium">
-          <p style={{ paddingLeft: 16, marginBottom: 4, fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 }}>Dados Pessoais</p>
-        </IonText>
-        <IonList inset lines="inset">
-          <IonItem>
-            <IonIcon icon={personOutline} slot="start" color="primary" />
-            <IonLabel>
-              <IonInput
-                label="Nome de usuário"
-                labelPlacement="stacked"
-                value={isEditing ? editUsername : user.username}
-                onIonChange={e => setEditUsername(e.detail.value!)}
-                readonly={!isEditing}
-              />
-            </IonLabel>
-          </IonItem>
+          <div className="mt-5 flex justify-center">
+            <IonButton
+              onClick={isEditing ? handleSave : () => setIsEditing(true)}
+              color={isEditing ? 'success' : 'primary'}
+              disabled={saving}
+              className="rounded-full px-8"
+            >
+              <IonIcon icon={isEditing ? checkmarkOutline : createOutline} slot="start" />
+              {saving ? 'Guardando...' : isEditing ? 'Guardar' : 'Editar Perfil'}
+            </IonButton>
+          </div>
 
-          <IonItem>
-            <IonIcon icon={ribbonOutline} slot="start" color="primary" />
-            <IonLabel>
-              <IonInput
-                label="Faixa"
-                labelPlacement="stacked"
-                value={isEditing ? editBelt : (user.belt || 'Branca')}
-                onIonChange={e => setEditBelt(e.detail.value!)}
-                readonly={!isEditing}
-              />
-            </IonLabel>
-          </IonItem>
+          {saveMessage && (
+            <div className="mt-4 text-sm text-slate-700">
+              <IonText color={saveMessage.includes('sucesso') ? 'success' : 'danger'}>
+                {saveMessage}
+              </IonText>
+            </div>
+          )}
+        </div>
 
-          <IonItem>
-            <IonIcon icon={mailOutline} slot="start" color="primary" />
-            <IonLabel>
-              <IonInput
-                label="Email"
-                labelPlacement="stacked"
-                value={user.email}
-                readonly
-              />
-            </IonLabel>
-          </IonItem>
+        <div className="mx-4 mt-5 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
+          <IonText color="medium" className="text-xs uppercase tracking-[0.18em]">Dados Pessoais</IonText>
+          <IonList lines="none" className="mt-3 space-y-3">
+            <IonItem className="rounded-3xl">
+              <IonIcon icon={personOutline} slot="start" color="primary" />
+              <IonLabel>
+                <IonInput
+                  label="Nome de usuário"
+                  labelPlacement="stacked"
+                  value={isEditing ? editUsername : user.username}
+                  onIonChange={e => setEditUsername(e.detail.value!)}
+                  readonly={!isEditing}
+                />
+              </IonLabel>
+            </IonItem>
 
-          <IonItem button detail detailIcon={chevronForwardOutline} onClick={() => setShowPasswordModal(true)}>
-            <IonIcon icon={lockClosedOutline} slot="start" color="primary" />
-            <IonLabel>Alterar Senha</IonLabel>
-          </IonItem>
-        </IonList>
+            <IonItem className="rounded-3xl">
+              <IonIcon icon={ribbonOutline} slot="start" color="primary" />
+              <IonLabel>
+                <IonInput
+                  label="Faixa"
+                  labelPlacement="stacked"
+                  value={isEditing ? editBelt : (user.belt || 'Branca')}
+                  onIonChange={e => setEditBelt(e.detail.value!)}
+                  readonly={!isEditing}
+                />
+              </IonLabel>
+            </IonItem>
+
+            <IonItem className="rounded-3xl">
+              <IonIcon icon={mailOutline} slot="start" color="primary" />
+              <IonLabel>
+                <IonInput
+                  label="Email"
+                  labelPlacement="stacked"
+                  value={user.email}
+                  readonly
+                />
+              </IonLabel>
+            </IonItem>
+
+            <IonItem button detail detailIcon={chevronForwardOutline} onClick={() => setShowPasswordModal(true)} className="rounded-3xl">
+              <IonIcon icon={lockClosedOutline} slot="start" color="primary" />
+              <IonLabel>Alterar Senha</IonLabel>
+            </IonItem>
+          </IonList>
+        </div>
 
         <IonModal isOpen={showPasswordModal} onDidDismiss={() => {
           setShowPasswordModal(false);
@@ -258,9 +242,9 @@ const ProfileSettings: React.FC = () => {
               </IonButton>
             </IonToolbar>
           </IonHeader>
-          <IonContent className="ion-padding background">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <IonItem>
+          <IonContent className="ion-padding background bg-slate-950/5 text-slate-950">
+            <div className="mx-4 space-y-4">
+              <IonItem className="rounded-3xl">
                 <IonLabel position="stacked">Nova senha</IonLabel>
                 <IonInput
                   type="password"
@@ -273,7 +257,7 @@ const ProfileSettings: React.FC = () => {
                 />
               </IonItem>
 
-              <IonItem>
+              <IonItem className="rounded-3xl">
                 <IonLabel position="stacked">Confirmar nova senha</IonLabel>
                 <IonInput
                   type="password"
@@ -293,6 +277,7 @@ const ProfileSettings: React.FC = () => {
               <IonButton
                 expand="block"
                 disabled={passwordLoading}
+                className="rounded-full"
                 onClick={async () => {
                   setPasswordMessage(null);
 
@@ -492,11 +477,12 @@ const ProfileSettings: React.FC = () => {
         </IonList> */}
 
         {/* Logout */}
-        <div style={{ padding: '24px 16px' }}>
+        <div className="mx-4 mt-6 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
           <IonButton
             expand="block"
             color="danger"
             fill="outline"
+            className="rounded-full"
             onClick={() => setShowLogoutAlert(true)}
           >
             <IonIcon icon={logOutOutline} slot="start" />

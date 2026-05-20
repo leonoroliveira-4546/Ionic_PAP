@@ -78,41 +78,53 @@ const Planos: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="ion-padding background">
-        <div style={{ textAlign: 'center', padding: '20px 0' }}>
-          <IonText style={{ fontSize: 24, fontWeight: 'bold', color: 'var(--ion-color-primary)' }}>
-            Escolha seu Plano
-          </IonText>
-          <p style={{ margin: '8px 0', color: 'var(--ion-color-medium)' }}>Desbloqueie todo o potencial do seu karatê</p>
+      <IonContent className="ion-padding background bg-slate-950/5 text-slate-950">
+        <div className="mx-4 mb-6 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200/70 text-center">
+          <IonText className="text-2xl font-bold text-slate-900">Escolha seu Plano</IonText>
+          <p className="mt-2 text-sm text-slate-600">Desbloqueie todo o potencial do seu karatê</p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16, padding: '0 0 24px' }}>
+        <div className="grid gap-4 px-4 pb-24 sm:grid-cols-2">
           {plans.map(plan => (
-            <IonCard key={plan.id} style={{ position: 'relative', border: selectedPlan === plan.id ? '2px solid var(--ion-color-primary)' : '1px solid var(--ion-color-light-shade)', borderRadius: 16, overflow: 'visible' }} button onClick={() => handleSelectPlan(plan.id)}>
+            <IonCard
+              key={plan.id}
+              className={`relative overflow-visible rounded-3xl ${selectedPlan === plan.id ? 'border-2 border-primary' : 'border border-slate-200'} bg-white shadow-sm`}
+              button
+              onClick={() => handleSelectPlan(plan.id)}
+            >
               {plan.popular && (
-                <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', backgroundColor: 'var(--ion-color-warning)', color: 'white', padding: '4px 12px', borderRadius: 12, fontSize: 12, fontWeight: 'bold', zIndex: 1 }}>MAIS POPULAR</div>
+                <div className="absolute left-1/2 top-[-12px] z-10 -translate-x-1/2 rounded-full bg-warning px-4 py-1 text-xs font-bold text-white">
+                  MAIS POPULAR
+                </div>
               )}
 
-              <IonCardHeader style={{ textAlign: 'center', paddingTop: plan.popular ? 20 : 16 }}>
-                <IonCardTitle style={{ fontSize: 24, color: `var(--ion-color-${plan.color})` }}>{plan.name}</IonCardTitle>
-                <div style={{ margin: '8px 0' }}>
-                  <IonText style={{ fontSize: 32, fontWeight: 'bold' }}>€{plan.price}</IonText>
-                  <IonText color="medium" style={{ fontSize: 16 }}>/ {plan.period}</IonText>
+              <IonCardHeader className="text-center pt-6">
+                <IonCardTitle className="text-2xl font-bold" style={{ color: `var(--ion-color-${plan.color})` }}>{plan.name}</IonCardTitle>
+                <div className="my-3">
+                  <IonText className="text-3xl font-extrabold">€{plan.price}</IonText>
+                  <IonText color="medium" className="text-base">/ {plan.period}</IonText>
                 </div>
-                <IonText color="medium" style={{ fontSize: 14 }}>{plan.description}</IonText>
+                <IonText color="medium" className="text-sm">{plan.description}</IonText>
               </IonCardHeader>
 
-              <IonCardContent>
-                <IonList style={{ background: 'transparent' }}>
+              <IonCardContent className="space-y-3">
+                <IonList className="bg-transparent">
                   {plan.features.map((feature, index) => (
-                    <IonItem key={index} lines="none" style={{ '--padding-start': 0, '--inner-padding-end': 0 }}>
-                      <IonIcon icon={checkmarkCircle} color="success" style={{ marginRight: 12, fontSize: 18 }} />
-                      <IonLabel><IonText style={{ fontSize: 14 }}>{feature}</IonText></IonLabel>
+                    <IonItem key={index} lines="none" className="!px-0">
+                      <IonIcon icon={checkmarkCircle} color="success" className="mr-3 text-base" />
+                      <IonLabel>
+                        <IonText className="text-sm">{feature}</IonText>
+                      </IonLabel>
                     </IonItem>
                   ))}
                 </IonList>
 
-                <IonButton expand="block" color={plan.color} style={{ marginTop: 20 }} onClick={(e) => { e.stopPropagation(); handleSubscribe(plan); }}>
+                <IonButton
+                  expand="block"
+                  color={plan.color}
+                  className="mt-4 rounded-full"
+                  onClick={(e) => { e.stopPropagation(); handleSubscribe(plan); }}
+                >
                   {plan.price === 0 ? 'Plano Atual' : 'Escolher Plano'}
                 </IonButton>
               </IonCardContent>
@@ -120,34 +132,34 @@ const Planos: React.FC = () => {
           ))}
         </div>
 
-        <div style={{ marginTop: 32 }}>
-          <IonText style={{ fontSize: 20, fontWeight: 'bold', display: 'block', marginBottom: 16 }}>❓ Perguntas Frequentes</IonText>
+        <div className="mx-4 mt-8 space-y-4">
+          <IonText className="text-xl font-bold text-slate-900 block">❓ Perguntas Frequentes</IonText>
 
-          <IonCard style={{ margin: '8px 0' }}>
+          <IonCard className="rounded-3xl border border-slate-200/80 shadow-sm">
             <IonCardContent>
-              <IonText style={{ fontWeight: 600 }}>Posso cancelar a qualquer momento?</IonText>
-              <p style={{ margin: '8px 0', color: 'var(--ion-color-medium)' }}>Sim, você pode cancelar sua assinatura a qualquer momento sem taxas adicionais.</p>
+              <IonText className="font-semibold">Posso cancelar a qualquer momento?</IonText>
+              <p className="mt-2 text-sm text-slate-600">Sim, você pode cancelar sua assinatura a qualquer momento sem taxas adicionais.</p>
             </IonCardContent>
           </IonCard>
 
-          <IonCard style={{ margin: '8px 0' }}>
+          <IonCard className="rounded-3xl border border-slate-200/80 shadow-sm">
             <IonCardContent>
-              <IonText style={{ fontWeight: 600 }}>Como funciona o período de teste?</IonText>
-              <p style={{ margin: '8px 0', color: 'var(--ion-color-medium)' }}>Oferecemos 7 dias de teste gratuito para os planos pagos. Você pode cancelar antes do fim do período sem custos.</p>
+              <IonText className="font-semibold">Como funciona o período de teste?</IonText>
+              <p className="mt-2 text-sm text-slate-600">Oferecemos 7 dias de teste gratuito para os planos pagos. Você pode cancelar antes do fim do período sem custos.</p>
             </IonCardContent>
           </IonCard>
 
-          <IonCard style={{ margin: '8px 0' }}>
+          <IonCard className="rounded-3xl border border-slate-200/80 shadow-sm">
             <IonCardContent>
-              <IonText style={{ fontWeight: 600 }}>Os descontos na loja são cumulativos?</IonText>
-              <p style={{ margin: '8px 0', color: 'var(--ion-color-medium)' }}>Não, os descontos são aplicados ao preço final e não são cumulativos com outras promoções.</p>
+              <IonText className="font-semibold">Os descontos na loja são cumulativos?</IonText>
+              <p className="mt-2 text-sm text-slate-600">Não, os descontos são aplicados ao preço final e não são cumulativos com outras promoções.</p>
             </IonCardContent>
           </IonCard>
         </div>
 
-        <div style={{ textAlign: 'center', padding: '32px 20px', backgroundColor: 'var(--ion-color-light)', borderRadius: 12, marginTop: 24 }}>
-          <IonText style={{ fontSize: 16, color: 'var(--ion-color-medium)' }}>
-            <p style={{ margin: 0 }}>Precisa de ajuda para escolher o plano ideal?<br />Entre em contato conosco: <strong>suporte@wareradōjō.com</strong></p>
+        <div className="mx-4 mt-6 rounded-3xl bg-slate-100 p-6 text-center shadow-sm ring-1 ring-slate-200/70">
+          <IonText className="text-sm text-slate-600">
+            Precisa de ajuda para escolher o plano ideal?<br />Entre em contato conosco: <strong>suporte@wareradōjō.com</strong>
           </IonText>
         </div>
       </IonContent>

@@ -130,129 +130,88 @@ const Predicoes: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="ion-padding background">
-        {/* Header */}
-        <div style={{ textAlign: 'center', padding: '20px 0' }}>
-          <IonText style={{ fontSize: 24, fontWeight: 'bold', color: 'var(--ion-color-primary)' }}>
-            Predições de Torneios
-          </IonText>
-          <p style={{ margin: '8px 0', color: 'var(--ion-color-medium)' }}>
-            Acerte o vencedor e ganhe pontos!
-          </p>
+      <IonContent className="ion-padding background bg-slate-950/5 text-slate-950">
+        <div className="mx-4 mb-6 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200/70 text-center">
+          <IonText className="text-2xl font-bold text-slate-900">Predições de Torneios</IonText>
+          <p className="mt-2 text-sm text-slate-600">Acerte o vencedor e ganhe pontos!</p>
         </div>
 
-        {/* Tournaments List */}
-        {tournaments.map(tournament => {
+        <div className="mx-4 space-y-4 pb-24">
+          {tournaments.map(tournament => {
           const userPrediction = predictions.find(p => p.tournamentId === tournament.id);
           const selectedWinner = selectedPredictions[tournament.id] || userPrediction?.predictedWinner;
 
           return (
-            <IonCard key={tournament.id} style={{ margin: '16px 0', borderRadius: 12 }}>
-              <IonCardHeader>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                  <IonCardTitle style={{ fontSize: 18 }}>{tournament.name}</IonCardTitle>
-                  <IonBadge color={getStatusColor(tournament.status)}>
+            <IonCard key={tournament.id} className="rounded-3xl border border-slate-200 bg-white shadow-sm">
+              <IonCardHeader className="space-y-3 p-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <IonCardTitle className="text-lg font-semibold text-slate-900">{tournament.name}</IonCardTitle>
+                  <IonBadge color={getStatusColor(tournament.status)} className="text-sm">
                     {getStatusText(tournament.status)}
                   </IonBadge>
                 </div>
-                <IonText color="medium" style={{ fontSize: 14 }}>
-                  📅 {formatDate(tournament.date)}
-                </IonText>
-                <br />
-                <IonText color="medium" style={{ fontSize: 14 }}>
-                  📍 {tournament.location}
-                </IonText>
+                <div className="grid gap-1 text-sm text-slate-600">
+                  <span>📅 {formatDate(tournament.date)}</span>
+                  <span>📍 {tournament.location}</span>
+                </div>
               </IonCardHeader>
 
-              <IonCardContent>
-                {/* Participants */}
-                <IonText style={{ fontWeight: 600, marginBottom: 12, display: 'block' }}>
-                  Participantes:
-                </IonText>
-                <IonList style={{ background: 'transparent' }}>
-                  {tournament.participants.map(participant => {
-                    const isSelected = selectedWinner === participant.id;
-                    const isWinner = tournament.winner === participant.id;
+              <IonCardContent className="space-y-4 p-5">
+                <div>
+                  <IonText className="font-semibold text-slate-900">Participantes:</IonText>
+                  <div className="mt-3 space-y-3">
+                    {tournament.participants.map(participant => {
+                      const isSelected = selectedWinner === participant.id;
+                      const isWinner = tournament.winner === participant.id;
 
-                    return (
-                      <IonItem
-                        key={participant.id}
-                        style={{
-                          '--border-radius': '8px',
-                          marginBottom: 8,
-                          backgroundColor: isSelected ? 'rgba(56, 128, 255, 0.1)' : 'transparent'
-                        }}
-                        button={tournament.status === 'open' && !userPrediction && !isAdmin}
-                        onClick={() => tournament.status === 'open' && !userPrediction && !isAdmin && handlePrediction(tournament.id, participant.id)}
-                      >
+                      return (
                         <div
-                          style={{
-                            width: 12,
-                            height: 12,
-                            borderRadius: '50%',
-                            backgroundColor: isSelected ? 'var(--ion-color-primary)' : '#ccc',
-                            marginRight: 12,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}
+                          key={participant.id}
+                          className={`flex cursor-pointer items-center gap-3 rounded-3xl border p-3 transition ${isSelected ? 'border-primary/30 bg-primary/10' : 'border-slate-200 bg-slate-50'} ${tournament.status === 'open' && !userPrediction && !isAdmin ? 'hover:border-slate-300 hover:bg-slate-100' : ''}`}
+                          onClick={() => tournament.status === 'open' && !userPrediction && !isAdmin && handlePrediction(tournament.id, participant.id)}
                         >
-                          {isSelected && <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'white' }} />}
+                          <div className={`flex h-10 w-10 items-center justify-center rounded-full ${isSelected ? 'bg-primary text-white' : 'bg-slate-200 text-slate-500'}`}>
+                            {isSelected ? '✓' : ''}
+                          </div>
+                          <div className="flex-1">
+                            <IonText className="font-semibold text-slate-900">{participant.name}</IonText>
+                            <p className="mt-1 text-sm text-slate-600">Faixa {participant.belt}</p>
+                          </div>
+                          {isWinner && (
+                            <IonIcon icon={trophyOutline} color="warning" className="text-xl" />
+                          )}
                         </div>
+                      );
+                    })}
+                  </div>
+                </div>
 
-                        <IonLabel>
-                          <IonText style={{ fontWeight: 600 }}>{participant.name}</IonText>
-                          <p style={{ margin: '4px 0', color: 'var(--ion-color-medium)' }}>
-                            Faixa {participant.belt}
-                          </p>
-                        </IonLabel>
-
-                        {isWinner && (
-                          <IonIcon icon={trophyOutline} color="warning" style={{ marginLeft: 8 }} />
-                        )}
-                      </IonItem>
-                    );
-                  })}
-                </IonList>
-
-                {/* Prediction Status */}
                 {userPrediction && (
-                  <div style={{ marginTop: 16, padding: 12, backgroundColor: 'var(--ion-color-light)', borderRadius: 8 }}>
-                    <IonText style={{ fontWeight: 600, color: 'var(--ion-color-primary)' }}>
-                      ✓ Sua predição foi enviada
-                    </IonText>
+                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                    <IonText className="font-semibold text-slate-900">✓ Sua predição foi enviada</IonText>
                     {userPrediction.pointsEarned !== undefined && (
-                      <p style={{ margin: '4px 0', color: 'var(--ion-color-success)' }}>
-                        +{userPrediction.pointsEarned} pontos ganhos!
-                      </p>
+                      <p className="mt-2 text-sm text-success">+{userPrediction.pointsEarned} pontos ganhos!</p>
                     )}
                   </div>
                 )}
 
-                {/* Submit Button */}
                 {tournament.status === 'open' && !userPrediction && selectedWinner && !isAdmin && (
-                  <IonButton
-                    expand="block"
-                    style={{ marginTop: 16 }}
-                    onClick={() => submitPredictionForTournament(tournament.id)}
-                  >
+                  <IonButton expand="block" className="rounded-full bg-slate-900 text-white hover:bg-slate-800" onClick={() => submitPredictionForTournament(tournament.id)}>
                     <IonIcon icon={checkmarkCircle} slot="start" />
                     Enviar Predição
                   </IonButton>
                 )}
+
                 {isAdmin && tournament.status === 'open' && !userPrediction && (
-                  <div style={{ marginTop: 16, padding: 12, backgroundColor: 'var(--ion-color-light)', borderRadius: 8 }}>
-                    <IonText color="medium">Administradores não podem enviar predições.</IonText>
+                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 text-center text-sm text-slate-600">
+                    Administradores não podem enviar predições.
                   </div>
                 )}
 
-                {/* Closed Status */}
                 {tournament.status === 'closed' && !tournament.winner && (
-                  <div style={{ marginTop: 16, textAlign: 'center' }}>
-                    <IonIcon icon={timeOutline} size="large" color="medium" />
-                    <IonText color="medium" style={{ display: 'block', marginTop: 8 }}>
-                      Torneio em andamento
-                    </IonText>
+                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 text-center text-sm text-slate-600">
+                    <IonIcon icon={timeOutline} size="large" />
+                    <p className="mt-2">Torneio em andamento</p>
                   </div>
                 )}
               </IonCardContent>
@@ -261,27 +220,19 @@ const Predicoes: React.FC = () => {
         })}
 
         {tournaments.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-            <IonText color="medium">
-              <p>Sem torneios disponíveis no momento.</p>
-            </IonText>
+          <div className="mx-4 rounded-3xl bg-white p-6 text-center shadow-sm ring-1 ring-slate-200/70">
+            <IonText color="medium">Nenhum torneio disponível no momento.</IonText>
           </div>
         )}
+      </div>
 
-        {/* How it works */}
-        <div style={{ textAlign: 'center', padding: '20px', backgroundColor: 'var(--ion-color-light)', borderRadius: 12, marginTop: 20 }}>
-          <IonText style={{ fontSize: 16, fontWeight: 'bold', color: 'var(--ion-color-primary)' }}>
-            ❓ Como Funciona
-          </IonText>
-          <div style={{ marginTop: 12, textAlign: 'left' }}>
-            <IonText style={{ fontSize: 14, color: 'var(--ion-color-medium)' }}>
-              <p style={{ margin: '8px 0' }}>
-                • <strong>Prediga:</strong> Escolha o vencedor antes do torneio<br />
-                • <strong>Ganhe pontos:</strong> Acertos valem 25-50 pontos<br />
-                • <strong>Suba no ranking:</strong> Mais pontos = melhor posição<br />
-                • <strong>Prêmios:</strong> Top jogadores ganham recompensas
-              </p>
-            </IonText>
+        <div className="mx-4 rounded-3xl bg-slate-100 p-6 shadow-sm ring-1 ring-slate-200/70 mt-6">
+          <IonText className="text-base font-semibold text-slate-900">❓ Como Funciona</IonText>
+          <div className="mt-3 text-sm leading-7 text-slate-600">
+            <p className="mb-2"><strong>Prediga:</strong> Escolha o vencedor antes do torneio</p>
+            <p className="mb-2"><strong>Ganhe pontos:</strong> Acertos valem 25-50 pontos</p>
+            <p className="mb-2"><strong>Suba no ranking:</strong> Mais pontos = melhor posição</p>
+            <p className="mb-0"><strong>Prêmios:</strong> Top jogadores ganham recompensas</p>
           </div>
         </div>
       </IonContent>

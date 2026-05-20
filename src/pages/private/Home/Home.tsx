@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonList, IonItem, IonLabel, IonButton, IonSelect, IonSelectOption, IonModal, IonInput, IonDatetime, IonIcon } from '@ionic/react';
-import { close, add, chevronBack, create, trash, eye } from 'ionicons/icons';
+import { close, add, chevronBack, create, trash, eye, arrowUp } from 'ionicons/icons';
 import { useAuth } from '../../../AuthContext';
 import Navbar from '../../../components/MainLayout';
 import authApi from '../../../hooks/authApi';
@@ -13,6 +13,7 @@ const Home: React.FC = () => {
   const [absences, setAbsences] = useState<number>(0);
   const [trainingSchedule, setTrainingSchedule] = useState<any[]>([]);
   const [upcomingTournaments, setUpcomingTournaments] = useState<any[]>([]);
+  const [dailyChallenge, setDailyChallenge] = useState<any | null>(null);
 
   const [dojoMembers, setDojoMembers] = useState<any[]>([]);
   const [athletesWithoutDojo, setAthletesWithoutDojo] = useState<any[]>([]);
@@ -145,6 +146,78 @@ const Home: React.FC = () => {
       alert("Erro ao buscar dados do dojo: " + err);
     }
   };
+
+  useEffect(() => {
+    if (!user?.dojoId) {
+      setDailyChallenge(null);
+      return;
+    }
+
+    try {
+      const saved = localStorage.getItem(`challenges_${user.dojoId}`);
+      if (saved) {
+        const challenges = JSON.parse(saved);
+        const today = new Date().toISOString().slice(0, 10);
+        const currentChallenge = Array.isArray(challenges)
+          ? challenges.find((challenge: any) => !challenge.date || challenge.date === today)
+          : null;
+        // If the athlete already answered this challenge, hide it from Home
+        if (currentChallenge) {
+          try {
+            const savedResponses = localStorage.getItem(`challengeResponses_${user.dojoId}`);
+            const responses = savedResponses ? JSON.parse(savedResponses) : [];
+            const answered = responses.find((r: any) => r.challengeId === currentChallenge._id && r.athleteId === user._id);
+            if (answered) {
+              setDailyChallenge(null);
+            } else {
+              setDailyChallenge(currentChallenge);
+            }
+          } catch (e) {
+            setDailyChallenge(currentChallenge);
+          }
+        } else {
+          setDailyChallenge(null);
+        }
+      } else {
+        setDailyChallenge(null);
+      }
+    } catch (err) {
+      setDailyChallenge(null);
+    }
+  }, [user?.dojoId]);
+
+  // Listen for challenge responses saved elsewhere (Educacional) and update Home
+  useEffect(() => {
+    const handler = (e: any) => {
+      if (!user?.dojoId) return;
+      const detail = e?.detail || {};
+      if (detail.dojoId && detail.dojoId === user.dojoId) {
+        // Re-evaluate the current challenge visibility
+        try {
+          const saved = localStorage.getItem(`challenges_${user.dojoId}`);
+          if (!saved) return;
+          const challenges = JSON.parse(saved);
+          const today = new Date().toISOString().slice(0, 10);
+          const currentChallenge = Array.isArray(challenges)
+            ? challenges.find((challenge: any) => !challenge.date || challenge.date === today)
+            : null;
+          if (!currentChallenge) {
+            setDailyChallenge(null);
+            return;
+          }
+          const savedResponses = localStorage.getItem(`challengeResponses_${user.dojoId}`);
+          const responses = savedResponses ? JSON.parse(savedResponses) : [];
+          const answered = responses.find((r: any) => r.challengeId === currentChallenge._id && r.athleteId === user._id);
+          if (answered) setDailyChallenge(null);
+        } catch (e) {
+          // ignore
+        }
+      }
+    };
+
+    window.addEventListener('challengeResponseSaved', handler as EventListener);
+    return () => window.removeEventListener('challengeResponseSaved', handler as EventListener);
+  }, [user?.dojoId, user?._id]);
 
   const handleRemoveMember = async (member: any) => {
     if (!user.dojoId) return;
@@ -570,7 +643,8 @@ const Home: React.FC = () => {
   }, []);
 
   const handleContentScroll = (e: any) => {
-    setShowScrollTopButton(e.detail?.scrollTop > 250);
+    const scrollTop = e.detail?.scrollTop ?? 0;
+    setShowScrollTopButton(scrollTop > 150);
   };
 
   const handleScrollToTop = async () => {
@@ -581,6 +655,29 @@ const Home: React.FC = () => {
   };
 
   const renderAthleteDashboard = (athleteId: string) => {
+    if (!user?.dojoId) {
+      return (
+        <div className="space-y-8 text-slate-900">
+          <section className="rounded-3xl bg-white p-6 shadow-lg ring-1 ring-slate-200/70">
+            <div className="mb-4">
+              <p className="text-2xl font-bold text-slate-900">Você ainda não está em um dojo</p>
+              <p className="mt-3 text-sm text-slate-600">
+                Para ver treinos, torneios e desafios, peça para entrar em um dojo ou fale com seu sensei/responsável.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <IonButton fill="solid" routerLink="/">
+                Buscar Dojos
+              </IonButton>
+              <IonButton fill="outline" onClick={() => alert('Peça ao seu sensei ou responsável para adicioná-lo ao dojo.') }>
+                Como entrar
+              </IonButton>
+            </div>
+          </section>
+        </div>
+      );
+    }
+
     const athleteTraining = trainingSchedule.length ? trainingSchedule : [];
     const athletePerformance = performance || {
       rating: 0,
@@ -592,7 +689,7 @@ const Home: React.FC = () => {
         <section className="rounded-3xl bg-slate-950/5 p-6 shadow-lg shadow-slate-900/10 ring-1 ring-slate-200/70">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-xl font-bold text-slate-900">Dashboard do Atleta</p>
+              <p className="text-xl font-bold text-slate-900">Seu Dojo</p>
               <p className="mt-1 text-sm text-slate-600">Visão moderna do seu progresso, treinos e próximos desafios.</p>
             </div>
             <span className="rounded-full bg-violet-500/15 px-4 py-2 text-sm font-semibold text-violet-700 ring-1 ring-violet-500/20">
@@ -616,14 +713,36 @@ const Home: React.FC = () => {
             <div className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
               <p className="text-sm font-medium text-slate-500">Faltas no mês</p>
               <p className="mt-3 text-3xl font-semibold text-slate-900">{absences}</p>
+              <p className="mt-2 text-xs text-slate-500">Faltas não justificadas por doença podem reduzir seus pontos.</p>
             </div>
           </div>
         </section>
 
+        {dailyChallenge && (
+          <section className="rounded-3xl bg-white p-6 shadow-lg ring-1 ring-slate-200/70">
+            <div className="mb-6">
+              <p className="text-lg font-semibold text-slate-900">Desafio do Dia</p>
+              <p className="mt-2 text-sm text-slate-600">Veja o desafio diário do seu dojo e prepare-se para completá-lo.</p>
+            </div>
+            <div className="rounded-3xl border border-slate-200/80 bg-slate-50 p-5">
+              <p className="text-xl font-semibold text-slate-900">{dailyChallenge.title}</p>
+              <p className="mt-3 text-sm text-slate-600">{dailyChallenge.description}</p>
+              {dailyChallenge.date && (
+                <p className="mt-3 text-xs font-medium text-slate-500">Data do desafio: {new Date(dailyChallenge.date).toLocaleDateString()}</p>
+              )}
+              <div className="mt-4">
+                <IonButton routerLink="/educacional" expand="block" className="rounded-full bg-primary text-white">
+                  Fazer desafio
+                </IonButton>
+              </div>
+            </div>
+          </section>
+        )}
+
         <section className="rounded-3xl bg-white p-6 shadow-lg ring-1 ring-slate-200/70">
           <div className="mb-6">
             <p className="text-lg font-semibold text-slate-900">Horário de Treino</p>
-            <p className="mt-2 text-sm text-slate-600">Organize seu calendário de treino de forma clara.</p>
+            <p className="mt-2 text-sm text-slate-600">Seu calendário de treino de forma clara.</p>
           </div>
           {athleteTraining.length > 0 ? (
             <div className="space-y-4">
@@ -640,7 +759,6 @@ const Home: React.FC = () => {
           ) : (
             <div className="rounded-3xl border border-slate-200/80 bg-slate-50 p-6">
               <p className="text-lg font-semibold text-slate-900">Nenhum treino agendado</p>
-              <p className="mt-2 text-sm text-slate-600">Adicione horários de treino e mantenha seu dojo em ritmo.</p>
             </div>
           )}
         </section>
@@ -665,32 +783,14 @@ const Home: React.FC = () => {
               <p className="mt-3 text-2xl font-semibold text-slate-900">{athletePerformance.feedback.needsImprovement.length || 0} itens</p>
             </div>
           </div>
-
-          <div className="mt-5 flex flex-wrap gap-3">
-            <button className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800" onClick={() => {
-              if (performance) {
-                setNewPerformance({
-                  rating: performance.rating || 0,
-                  improvements: performance.feedback?.improvements?.join(', ') || '',
-                  needsImprovement: performance.feedback?.needsImprovement?.join(', ') || ''
-                });
-              } else {
-                setNewPerformance({ rating: 0, improvements: '', needsImprovement: '' });
-              }
-              setShowPerformanceModal(true);
-            }}>
-              {performance ? 'Editar Performance' : 'Adicionar Performance'}
-            </button>
-          </div>
         </section>
 
-        <section className="rounded-3xl bg-white p-6 shadow-lg ring-1 ring-slate-200/70">
-          <div className="mb-6">
-            <p className="text-lg font-semibold text-slate-900">Desafios e Torneios</p>
-            <p className="mt-2 text-sm text-slate-600">Foque nos eventos que estão por vir.</p>
-          </div>
-
-          {upcomingTournaments.length > 0 ? (
+        {upcomingTournaments.length > 0 && (
+          <section className="rounded-3xl bg-white p-6 shadow-lg ring-1 ring-slate-200/70">
+            <div className="mb-6">
+              <p className="text-lg font-semibold text-slate-900">Desafios e Torneios</p>
+              <p className="mt-2 text-sm text-slate-600">Foque nos eventos que estão por vir.</p>
+            </div>
             <div className="space-y-4">
               {upcomingTournaments.map((tournament, index) => (
                 <div key={index} className="rounded-3xl border border-slate-200/80 bg-slate-50 p-4 flex items-center justify-between">
@@ -702,13 +802,8 @@ const Home: React.FC = () => {
                 </div>
               ))}
             </div>
-          ) : (
-            <div className="rounded-3xl border border-slate-200/80 bg-slate-50 p-6">
-              <p className="text-lg font-semibold text-slate-900">Sem torneios agendados</p>
-              <p className="mt-2 text-sm text-slate-600">Acompanhe os eventos do dojo e prepare-se para o próximo desafio.</p>
-            </div>
-          )}
-        </section>
+          </section>
+        )}
       </div>
     );
   };
@@ -867,102 +962,111 @@ const Home: React.FC = () => {
               </IonButton>
             </IonToolbar>
           </IonHeader>
-          <IonContent className="modal-shell">
-            {/* Abas */}
-            <div className="modal-tab-row">
-              <IonButton 
-                color={inviteTab === 'invite' ? 'primary' : 'medium'} 
-                onClick={() => setInviteTab('invite')}
-              >
-                Convidar Atleta
-              </IonButton>
-              <IonButton 
-                color={inviteTab === 'requests' ? 'primary' : 'medium'} 
-                onClick={() => setInviteTab('requests')}
-              >
-                Pedidos ({pendingRequests.length})
-              </IonButton>
+          <IonContent className="modal-shell bg-slate-950/5 text-slate-900">
+            <div className="space-y-4 p-4">
+              <div className="rounded-full bg-slate-100 p-1 shadow-sm ring-1 ring-slate-200/70">
+                <div className="flex flex-wrap gap-2">
+                  <button className={`rounded-full px-4 py-2 text-sm font-semibold transition ${inviteTab === 'invite' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-200'}`} onClick={() => setInviteTab('invite')}>
+                    Convidar Atleta
+                  </button>
+                  <button className={`rounded-full px-4 py-2 text-sm font-semibold transition ${inviteTab === 'requests' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-200'}`} onClick={() => setInviteTab('requests')}>
+                    Pedidos ({pendingRequests.length})
+                  </button>
+                </div>
+              </div>
+
+              {inviteTab === 'invite' && (
+                <div className="space-y-4 rounded-3xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70">
+                  <div className="flex items-center justify-between gap-4">
+                    <h3 className="text-lg font-semibold text-slate-900">Atletas Disponíveis</h3>
+                    <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">Total {athletesWithoutDojo.length}</span>
+                  </div>
+                  <IonInput 
+                    placeholder="Pesquisar por username" 
+                    value={athleteSearchQuery} 
+                    onIonChange={e => setAthleteSearchQuery(e.detail.value || '')}
+                    className="mb-4 rounded-3xl bg-slate-100 px-4 py-3 text-sm text-slate-900"
+                  />
+
+                  <div className="space-y-3">
+                    {athletesWithoutDojo.filter(a => a.username.toLowerCase().includes(athleteSearchQuery.toLowerCase())).length > 0 ? (
+                      athletesWithoutDojo.filter(a => a.username.toLowerCase().includes(athleteSearchQuery.toLowerCase())).map(athlete => (
+                        <div key={athlete._id} className="rounded-3xl border border-slate-200/80 bg-slate-50 p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div>
+                            <p className="font-semibold text-slate-900">{athlete.username}</p>
+                            <p className="text-sm text-slate-600">{athlete.email}</p>
+                          </div>
+                          <IonButton className="rounded-full bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-800" onClick={async () => {
+                            if (!user.dojoId) { alert('Dojo ID não encontrado'); return; }
+                            const res = await inviteMemberByEmail(user.dojoId, athlete.email);
+                            if (!res.success) alert(res.error || 'Erro ao enviar convite');
+                            else { 
+                              alert('Convite enviado com sucesso!'); 
+                              fetchDojoData(); 
+                            }
+                          }}>
+                            Convidar
+                          </IonButton>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="rounded-3xl border border-slate-200/80 bg-slate-50 p-5 text-sm text-slate-600">
+                        Nenhum atleta disponível.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {inviteTab === 'requests' && (
+                <div className="space-y-4 rounded-3xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70">
+                  <div className="flex items-center justify-between gap-4">
+                    <h3 className="text-lg font-semibold text-slate-900">Pedidos Pendentes</h3>
+                    <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">{pendingRequests.length}</span>
+                  </div>
+                  {pendingRequests.length > 0 ? (
+                    <div className="space-y-3">
+                      {pendingRequests.map((r: any) => (
+                        <div key={r.user._id} className="rounded-3xl border border-slate-200/80 bg-slate-50 p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div>
+                            <p className="font-semibold text-slate-900">{r.user.username}</p>
+                            <p className="text-sm text-slate-600">{r.user.email}</p>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <IonButton className="rounded-full bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-800" onClick={async () => {
+                              if (!user.dojoId) { alert('Dojo ID não encontrado'); return; }
+                              const res = await acceptJoinRequest(user.dojoId, r.user._id);
+                              if (!res.success) alert(res.error || 'Erro');
+                              else { 
+                                alert('Pedido aceite!'); 
+                                fetchDojoData(); 
+                              }
+                            }}>
+                              Aceitar
+                            </IonButton>
+                            <IonButton className="rounded-full bg-rose-500 px-4 py-2 text-sm text-white hover:bg-rose-600" onClick={async () => {
+                              if (!user.dojoId) { alert('Dojo ID não encontrado'); return; }
+                              const res = await rejectJoinRequest(user.dojoId, r.user._id);
+                              if (!res.success) alert(res.error || 'Erro');
+                              else { 
+                                alert('Pedido rejeitado'); 
+                                fetchDojoData(); 
+                              }
+                            }}>
+                              Rejeitar
+                            </IonButton>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-3xl border border-slate-200/80 bg-slate-50 p-5 text-sm text-slate-600">
+                      Nenhum pedido pendente.
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-
-            {/* Aba Convidar */}
-            {inviteTab === 'invite' && (
-              <div style={{ padding: '1rem' }}>
-                <h3>Atletas Disponíveis</h3>
-                <IonInput 
-                  placeholder="Pesquisar por username" 
-                  value={athleteSearchQuery} 
-                  onIonChange={e => setAthleteSearchQuery(e.detail.value || '')}
-                  style={{ marginBottom: '1rem' }}
-                ></IonInput>
-
-                <IonList>
-                  {athletesWithoutDojo.filter(a => a.username.toLowerCase().includes(athleteSearchQuery.toLowerCase()))
-                    .map(athlete => (
-                    <IonItem key={athlete._id}>
-                      <IonLabel>{athlete.username} ({athlete.email})</IonLabel>
-                      <IonButton onClick={async () => {
-                        if (!user.dojoId) { alert('Dojo ID não encontrado'); return; }
-                        const res = await inviteMemberByEmail(user.dojoId, athlete.email);
-                        if (!res.success) alert(res.error || 'Erro ao enviar convite');
-                        else { 
-                          alert('Convite enviado com sucesso!'); 
-                          fetchDojoData(); 
-                        }
-                      }}>
-                        Convidar
-                      </IonButton>
-                    </IonItem>
-                  ))}
-                </IonList>
-
-                {athletesWithoutDojo.filter(a => a.username.toLowerCase().includes(athleteSearchQuery.toLowerCase())).length === 0 && (
-                  <p>Nenhum atleta disponível.</p>
-                )}
-              </div>
-            )}
-
-            {/* Aba Pedidos */}
-            {inviteTab === 'requests' && (
-              <div style={{ padding: '1rem' }}>
-                <h3>Pedidos Pendentes</h3>
-                {pendingRequests.length > 0 ? (
-                  <IonList>
-                    {pendingRequests.map((r: any) => (
-                      <IonItem key={r.user._id}>
-                        <IonLabel>
-                          <h4>{r.user.username}</h4>
-                          <p>{r.user.email}</p>
-                        </IonLabel>
-                        <IonButton onClick={async () => {
-                          if (!user.dojoId) { alert('Dojo ID não encontrado'); return; }
-                          const res = await acceptJoinRequest(user.dojoId, r.user._id);
-                          if (!res.success) alert(res.error || 'Erro');
-                          else { 
-                            alert('Pedido aceite!'); 
-                            fetchDojoData(); 
-                          }
-                        }}>
-                          Aceitar
-                        </IonButton>
-                        <IonButton color="danger" onClick={async () => {
-                          if (!user.dojoId) { alert('Dojo ID não encontrado'); return; }
-                          const res = await rejectJoinRequest(user.dojoId, r.user._id);
-                          if (!res.success) alert(res.error || 'Erro');
-                          else { 
-                            alert('Pedido rejeitado'); 
-                            fetchDojoData(); 
-                          }
-                        }}>
-                          Rejeitar
-                        </IonButton>
-                      </IonItem>
-                    ))}
-                  </IonList>
-                ) : (
-                  <p>Nenhum pedido pendente.</p>
-                )}
-              </div>
-            )}
           </IonContent>
         </IonModal>
 
@@ -975,24 +1079,34 @@ const Home: React.FC = () => {
               </IonButton>
             </IonToolbar>
           </IonHeader>
-          <IonContent className="modal-shell">
-            <div style={{ padding: '1rem' }}>
+          <IonContent className="modal-shell bg-slate-950/5 text-slate-900">
+            <div className="space-y-4 p-4">
+              <div className="rounded-3xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-900">Gerir Membros</h3>
+                    <p className="text-sm text-slate-600">Pesquise e visualize membros do dojo com clareza.</p>
+                  </div>
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">Total {dojoMembers.length}</span>
+                </div>
+              </div>
+
               <IonInput
                 placeholder="Pesquisar atleta"
                 value={memberSearchQuery}
                 onIonChange={e => setMemberSearchQuery(e.detail.value || '')}
-                className="mb-4 rounded-3xl bg-slate-100 px-4 py-3 text-sm text-slate-900"
+                className="mb-4 rounded-3xl bg-slate-100 px-4 py-3 text-sm text-slate-900 shadow-sm ring-1 ring-slate-200/70"
               />
 
               {dojoMembers.filter(m => m.username.toLowerCase().includes(memberSearchQuery.toLowerCase() || '')).length > 0 ? (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {dojoMembers.filter(m => m.username.toLowerCase().includes(memberSearchQuery.toLowerCase() || '')).map(member => (
-                    <div key={member._id} className="rounded-3xl border border-slate-200/80 bg-slate-50 p-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div key={member._id} className="rounded-3xl border border-slate-200/80 bg-slate-50 p-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between shadow-sm">
                       <div>
-                        <strong className="text-slate-900 text-lg">{member.username}</strong>
-                        <p className="mt-2 text-sm text-slate-600">{member.email || 'Email não informado'}</p>
+                        <p className="text-base font-semibold text-slate-900">{member.username}</p>
+                        <p className="mt-1 text-sm text-slate-600">{member.email || 'Email não informado'}</p>
                       </div>
-                      <div className="flex flex-wrap gap-3">
+                      <div className="flex flex-wrap gap-2">
                         <button className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-slate-50" onClick={() => handleViewMemberDetails(member)}>
                           Detalhes
                         </button>
@@ -1006,6 +1120,7 @@ const Home: React.FC = () => {
               ) : (
                 <div className="rounded-3xl border border-slate-200/80 bg-slate-50 p-6">
                   <p className="text-lg font-semibold text-slate-900">Nenhum membro encontrado</p>
+                  <p className="mt-2 text-sm text-slate-600">Ajuste a pesquisa ou adicione um novo membro ao dojo.</p>
                 </div>
               )}
             </div>
@@ -1022,60 +1137,67 @@ const Home: React.FC = () => {
               </IonButton>
             </IonToolbar>
           </IonHeader>
-          <IonContent className="modal-shell">
-            <IonCard>
-              <IonCardHeader>
-                <IonCardTitle>Adicionar Novo Horário</IonCardTitle>
-              </IonCardHeader>
-              <IonCardContent>
-                <IonSelect placeholder="Dia da Semana" value={newSchedule.day} onIonChange={e => setNewSchedule({...newSchedule, day: e.detail.value})}>
-                  <IonSelectOption value="Segunda">Segunda-feira</IonSelectOption>
-                  <IonSelectOption value="Terça">Terça-feira</IonSelectOption>
-                  <IonSelectOption value="Quarta">Quarta-feira</IonSelectOption>
-                  <IonSelectOption value="Quinta">Quinta-feira</IonSelectOption>
-                  <IonSelectOption value="Sexta">Sexta-feira</IonSelectOption>
-                  <IonSelectOption value="Sábado">Sábado</IonSelectOption>
-                  <IonSelectOption value="Domingo">Domingo</IonSelectOption>
-                </IonSelect>
+          <IonContent className="modal-shell bg-slate-950/5 text-slate-900">
+            <div className="space-y-4 p-4">
+              <IonCard className="rounded-3xl border border-slate-200/80 bg-white shadow-sm">
+                <IonCardHeader>
+                  <IonCardTitle>Adicionar Novo Horário</IonCardTitle>
+                  <p className="mt-2 text-sm text-slate-600">Preencha os detalhes e adicione ao cronograma semanal.</p>
+                </IonCardHeader>
+                <IonCardContent className="space-y-4">
+                  <IonSelect className="rounded-3xl bg-slate-100 p-3 text-sm text-slate-900" placeholder="Dia da Semana" value={newSchedule.day} onIonChange={e => setNewSchedule({...newSchedule, day: e.detail.value})}>
+                    <IonSelectOption value="Segunda">Segunda-feira</IonSelectOption>
+                    <IonSelectOption value="Terça">Terça-feira</IonSelectOption>
+                    <IonSelectOption value="Quarta">Quarta-feira</IonSelectOption>
+                    <IonSelectOption value="Quinta">Quinta-feira</IonSelectOption>
+                    <IonSelectOption value="Sexta">Sexta-feira</IonSelectOption>
+                    <IonSelectOption value="Sábado">Sábado</IonSelectOption>
+                    <IonSelectOption value="Domingo">Domingo</IonSelectOption>
+                  </IonSelect>
 
-                <IonInput placeholder="Hora (ex: 18:00)" value={newSchedule.time} onIonChange={e => setNewSchedule({...newSchedule, time: e.detail.value || ''})}></IonInput>
+                  <IonInput className="rounded-3xl bg-slate-100 px-4 py-3 text-sm text-slate-900" placeholder="Hora (ex: 18:00)" value={newSchedule.time} onIonChange={e => setNewSchedule({...newSchedule, time: e.detail.value || ''})} />
 
-                <IonInput placeholder="Local" value={newSchedule.location} onIonChange={e => setNewSchedule({...newSchedule, location: e.detail.value || ''})}></IonInput>
+                  <IonInput className="rounded-3xl bg-slate-100 px-4 py-3 text-sm text-slate-900" placeholder="Local" value={newSchedule.location} onIonChange={e => setNewSchedule({...newSchedule, location: e.detail.value || ''})} />
 
-                <IonButton expand="block" onClick={handleAddScheduleInModal}>
-                  <IonIcon slot="start" icon={add}></IonIcon>
-                  Adicionar
+                  <IonButton expand="block" className="rounded-full bg-slate-900 text-white hover:bg-slate-800" onClick={handleAddScheduleInModal}>
+                    <IonIcon slot="start" icon={add}></IonIcon>
+                    Adicionar
+                  </IonButton>
+                </IonCardContent>
+              </IonCard>
+
+              <IonCard className="rounded-3xl border border-slate-200/80 bg-white shadow-sm">
+                <IonCardHeader>
+                  <IonCardTitle>Horários Atuais</IonCardTitle>
+                </IonCardHeader>
+                <IonCardContent className="space-y-3">
+                  {editingSchedules.length > 0 ? (
+                    editingSchedules.map((schedule, index) => (
+                      <IonItem key={index} className="rounded-3xl border border-slate-200/80 bg-slate-50 mb-3">
+                        <IonLabel>
+                          <h3 className="font-semibold text-slate-900">{schedule.day}</h3>
+                          <p className="text-sm text-slate-600">{schedule.time} • {schedule.location}</p>
+                        </IonLabel>
+                        <IonButton fill="clear" color="danger" onClick={() => handleRemoveSchedule(index)}>
+                          <IonIcon slot="icon-only" icon={trash}></IonIcon>
+                        </IonButton>
+                      </IonItem>
+                    ))
+                  ) : (
+                    <p className="text-sm text-slate-600">Nenhum horário adicionado ainda.</p>
+                  )}
+                </IonCardContent>
+              </IonCard>
+
+              <div className="flex flex-col gap-3">
+                <IonButton expand="block" className="rounded-full bg-emerald-600 text-white hover:bg-emerald-700" onClick={handleSaveScheduleChanges}>
+                  Salvar Alterações
                 </IonButton>
-              </IonCardContent>
-            </IonCard>
-
-            <IonCard>
-              <IonCardHeader>
-                <IonCardTitle>Horários Atuais</IonCardTitle>
-              </IonCardHeader>
-              <IonCardContent>
-                <IonList>
-                  {editingSchedules.map((schedule, index) => (
-                    <IonItem key={index}>
-                      <IonLabel>
-                        <h3>{schedule.day}</h3>
-                        <p>{schedule.time} - {schedule.location}</p>
-                      </IonLabel>
-                      <IonButton fill="clear" color="danger" onClick={() => handleRemoveSchedule(index)}>
-                        <IonIcon slot="icon-only" icon={trash}></IonIcon>
-                      </IonButton>
-                    </IonItem>
-                  ))}
-                </IonList>
-              </IonCardContent>
-            </IonCard>
-
-            <IonButton expand="block" color="success" onClick={handleSaveScheduleChanges}>
-              Salvar Alterações
-            </IonButton>
-            <IonButton expand="block" color="medium" onClick={() => setShowScheduleModal(false)}>
-              Cancelar
-            </IonButton>
+                <IonButton expand="block" className="rounded-full bg-slate-100 text-slate-900 hover:bg-slate-200" onClick={() => setShowScheduleModal(false)}>
+                  Cancelar
+                </IonButton>
+              </div>
+            </div>
           </IonContent>
         </IonModal>
 
@@ -1089,118 +1211,123 @@ const Home: React.FC = () => {
               </IonButton>
             </IonToolbar>
           </IonHeader>
-          <IonContent className="modal-shell">
-            {selectedMemberDetails && (
-              <>
-                <IonCard>
-                  <IonCardHeader>
-                    <IonCardTitle>{selectedMemberDetails.username}</IonCardTitle>
-                  </IonCardHeader>
-                  <IonCardContent>
-                    <p><strong>Email:</strong> {selectedMemberDetails.email}</p>
-                    {selectedMemberDetails.birthDate && <p><strong>Data de Nascimento:</strong> {new Date(selectedMemberDetails.birthDate).toLocaleDateString()}</p>}
-                  </IonCardContent>
-                </IonCard>
+          <IonContent className="modal-shell bg-slate-950/5 text-slate-900">
+            <div className="space-y-4 p-4">
+              {selectedMemberDetails && (
+                <>
+                  <IonCard className="rounded-3xl border border-slate-200/80 bg-white shadow-sm">
+                    <IonCardHeader>
+                      <IonCardTitle>{selectedMemberDetails.username}</IonCardTitle>
+                      <p className="mt-2 text-sm text-slate-600">Detalhes pessoais e registro diário de presença.</p>
+                    </IonCardHeader>
+                    <IonCardContent className="space-y-3">
+                      <p className="text-sm text-slate-700"><strong>Email:</strong> {selectedMemberDetails.email}</p>
+                      {selectedMemberDetails.birthDate && <p className="text-sm text-slate-700"><strong>Data de Nascimento:</strong> {new Date(selectedMemberDetails.birthDate).toLocaleDateString()}</p>}
+                    </IonCardContent>
+                  </IonCard>
 
-                <IonCard>
-                  <IonCardHeader>
-                    <IonCardTitle>Marcação de Presença Hoje</IonCardTitle>
-                  </IonCardHeader>
-                  <IonCardContent>
-                    <IonSelect placeholder="Selecione o status" value={attendanceStatus} onIonChange={e => {
-                      setAttendanceStatus(e.detail.value);
-                      if (e.detail.value === 'present') {
-                        setAbsenceReason(null);
-                      }
-                    }}>
-                      <IonSelectOption value="present">Presente</IonSelectOption>
-                      <IonSelectOption value="absent">Faltou</IonSelectOption>
-                    </IonSelect>
+                  <IonCard className="rounded-3xl border border-slate-200/80 bg-white shadow-sm">
+                    <IonCardHeader>
+                      <IonCardTitle>Marcação de Presença</IonCardTitle>
+                    </IonCardHeader>
+                    <IonCardContent className="space-y-4">
+                      <IonSelect className="rounded-3xl bg-slate-100 p-3 text-sm text-slate-900" placeholder="Selecione o status" value={attendanceStatus} onIonChange={e => {
+                        setAttendanceStatus(e.detail.value);
+                        if (e.detail.value === 'present') {
+                          setAbsenceReason(null);
+                        }
+                      }}>
+                        <IonSelectOption value="present">Presente</IonSelectOption>
+                        <IonSelectOption value="absent">Faltou</IonSelectOption>
+                      </IonSelect>
 
-                    {attendanceStatus === 'absent' && (
-                      <div style={{ marginTop: '1rem' }}>
-                        <IonSelect placeholder="Selecione o motivo" value={absenceReason} onIonChange={e => setAbsenceReason(e.detail.value)}>
+                      {attendanceStatus === 'absent' && (
+                        <IonSelect className="rounded-3xl bg-slate-100 p-3 text-sm text-slate-900" placeholder="Selecione o motivo" value={absenceReason} onIonChange={e => setAbsenceReason(e.detail.value)}>
                           <IonSelectOption value="disease">Doença</IonSelectOption>
                           <IonSelectOption value="other">Sem Motivo</IonSelectOption>
                         </IonSelect>
-                      </div>
-                    )}
+                      )}
 
-                    {attendanceStatus && (
-                      <div style={{ marginTop: '1rem' }}>
-                        <p><strong>Status atual:</strong> {attendanceStatus === 'present' ? 'Presente' : 'Faltou'}</p>
-                        {attendanceStatus === 'absent' && absenceReason && (
-                          <p><strong>Motivo:</strong> {absenceReason === 'disease' ? 'Doença' : 'Sem Motivo'}</p>
-                        )}
-                      </div>
-                    )}
-                  </IonCardContent>
-                </IonCard>
+                      {attendanceStatus && (
+                        <div className="rounded-3xl bg-slate-50 p-4 text-sm text-slate-700">
+                          <p><strong>Status atual:</strong> {attendanceStatus === 'present' ? 'Presente' : 'Faltou'}</p>
+                          {attendanceStatus === 'absent' && absenceReason && (
+                            <p><strong>Motivo:</strong> {absenceReason === 'disease' ? 'Doença' : 'Sem Motivo'}</p>
+                          )}
+                        </div>
+                      )}
+                    </IonCardContent>
+                  </IonCard>
 
-                <IonCard>
-                  <IonCardHeader>
-                    <IonCardTitle>Informações de Desempenho</IonCardTitle>
-                  </IonCardHeader>
-                  <IonCardContent>
-                    <p><strong>Faltas no Mês Atual:</strong> {memberAbsences}</p>
-                    {performance && (
-                      <>
-                        <p><strong>Avaliação:</strong> {performance.rating}/5</p>
-                        <h4>Melhorias:</h4>
-                        <ul>
-                          {(performance.feedback?.improvements || []).length > 0 ? (
-                            performance.feedback.improvements.map((item: string, idx: number) => <li key={idx}>{item}</li>)
-                          ) : (
-                            <li>Nenhuma melhoria cadastrada</li>
-                          )}
-                        </ul>
-                        <h4>Precisa Melhorar:</h4>
-                        <ul>
-                          {(performance.feedback?.needsImprovement || []).length > 0 ? (
-                            performance.feedback.needsImprovement.map((item: string, idx: number) => <li key={idx}>{item}</li>)
-                          ) : (
-                            <li>Nenhum ponto a melhorar cadastrado</li>
-                          )}
-                        </ul>
-                      </>
-                    )}
-                    <IonButton expand="block" color="primary" onClick={() => {
-                      // Preencher o formulário com dados existentes se houver
-                      if (performance) {
-                        setNewPerformance({
-                          rating: performance.rating || 0,
-                          improvements: performance.feedback?.improvements?.join(', ') || '',
-                          needsImprovement: performance.feedback?.needsImprovement?.join(', ') || ''
-                        });
-                      } else {
-                        setNewPerformance({ rating: 0, improvements: '', needsImprovement: '' });
-                      }
-                      setShowPerformanceModal(true);
+                  <IonCard className="rounded-3xl border border-slate-200/80 bg-white shadow-sm">
+                    <IonCardHeader>
+                      <IonCardTitle>Informações de Desempenho</IonCardTitle>
+                    </IonCardHeader>
+                    <IonCardContent className="space-y-3">
+                      <p className="text-sm text-slate-700"><strong>Faltas no mês:</strong> {memberAbsences}</p>
+                      {performance ? (
+                        <div className="space-y-3">
+                          <p className="text-sm text-slate-700"><strong>Avaliação:</strong> {performance.rating}/5</p>
+                          <div>
+                            <p className="text-sm font-semibold text-slate-900">Melhorias</p>
+                            <ul className="list-disc list-inside text-sm text-slate-600">
+                              {(performance.feedback?.improvements || []).length > 0 ? (
+                                performance.feedback.improvements.map((item: string, idx: number) => <li key={idx}>{item}</li>)
+                              ) : (
+                                <li>Nenhuma melhoria cadastrada</li>
+                              )}
+                            </ul>
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-slate-900">Precisa Melhorar</p>
+                            <ul className="list-disc list-inside text-sm text-slate-600">
+                              {(performance.feedback?.needsImprovement || []).length > 0 ? (
+                                performance.feedback.needsImprovement.map((item: string, idx: number) => <li key={idx}>{item}</li>)
+                              ) : (
+                                <li>Nenhum ponto a melhorar cadastrado</li>
+                              )}
+                            </ul>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-slate-600">Nenhuma performance registrada ainda.</p>
+                      )}
+                      <IonButton expand="block" className="rounded-full bg-slate-900 text-white hover:bg-slate-800" onClick={() => {
+                        if (performance) {
+                          setNewPerformance({
+                            rating: performance.rating || 0,
+                            improvements: performance.feedback?.improvements?.join(', ') || '',
+                            needsImprovement: performance.feedback?.needsImprovement?.join(', ') || ''
+                          });
+                        } else {
+                          setNewPerformance({ rating: 0, improvements: '', needsImprovement: '' });
+                        }
+                        setShowPerformanceModal(true);
+                      }}>
+                        {performance ? 'Editar Performance' : 'Adicionar Performance'}
+                      </IonButton>
+                    </IonCardContent>
+                  </IonCard>
+
+                  <div className="flex flex-col gap-3">
+                    <IonButton expand="block" className="rounded-full bg-rose-500 text-white hover:bg-rose-600" onClick={() => {
+                      handleRemoveMember(selectedMemberDetails);
+                      setShowMemberDetailsModal(false);
                     }}>
-                      {performance ? 'Editar Performance' : 'Adicionar Performance'}
+                      Remover Atleta
                     </IonButton>
-                  </IonCardContent>
-                </IonCard>
-
-                <IonButton expand="block" color="danger" onClick={() => {
-                  handleRemoveMember(selectedMemberDetails);
-                  setShowMemberDetailsModal(false);
-                }}>
-                  Remover Atleta
-                </IonButton>
-
-                <IonButton expand="block" color="success" onClick={() => {
-                  // Guardar presença e performance
-                  handleSaveMemberDetailsChanges();
-                }}>
-                  Guardar Alterações
-                </IonButton>
-
-                <IonButton expand="block" onClick={() => setShowMemberDetailsModal(false)}>
-                  Cancelar
-                </IonButton>
-              </>
-            )}
+                    <IonButton expand="block" className="rounded-full bg-emerald-600 text-white hover:bg-emerald-700" onClick={() => {
+                      handleSaveMemberDetailsChanges();
+                    }}>
+                      Guardar Alterações
+                    </IonButton>
+                    <IonButton expand="block" className="rounded-full bg-slate-100 text-slate-900 hover:bg-slate-200" onClick={() => setShowMemberDetailsModal(false)}>
+                      Cancelar
+                    </IonButton>
+                  </div>
+                </>
+              )}
+            </div>
           </IonContent>
         </IonModal>
 
@@ -1214,27 +1341,30 @@ const Home: React.FC = () => {
               </IonButton>
             </IonToolbar>
           </IonHeader>
-          <IonContent className="modal-shell">
-            <IonCard>
-              <IonCardContent>
-                <IonInput placeholder="Avaliação (1-5)" type="number" min={1} max={5} value={newPerformance.rating} onIonChange={e => setNewPerformance({...newPerformance, rating: Number(e.detail.value)})}></IonInput>
+          <IonContent className="modal-shell bg-slate-950/5 text-slate-900">
+            <div className="space-y-4 p-4">
+              <IonCard className="rounded-3xl border border-slate-200/80 bg-white shadow-sm">
+                <IonCardContent className="space-y-4">
+                  <IonInput className="rounded-3xl bg-slate-100 px-4 py-3 text-sm text-slate-900" placeholder="Avaliação (1-5)" type="number" min={1} max={5} value={newPerformance.rating} onIonChange={e => setNewPerformance({...newPerformance, rating: Number(e.detail.value)})} />
 
-                <IonInput placeholder="Melhorias (separadas por vírgula)" value={newPerformance.improvements} onIonChange={e => setNewPerformance({...newPerformance, improvements: e.detail.value || ''})}></IonInput>
+                  <IonInput className="rounded-3xl bg-slate-100 px-4 py-3 text-sm text-slate-900" placeholder="Melhorias (separadas por vírgula)" value={newPerformance.improvements} onIonChange={e => setNewPerformance({...newPerformance, improvements: e.detail.value || ''})} />
 
-                <IonInput placeholder="O que precisa melhorar (separadas por vírgula)" value={newPerformance.needsImprovement} onIonChange={e => setNewPerformance({...newPerformance, needsImprovement: e.detail.value || ''})}></IonInput>
+                  <IonInput className="rounded-3xl bg-slate-100 px-4 py-3 text-sm text-slate-900" placeholder="O que precisa melhorar (separadas por vírgula)" value={newPerformance.needsImprovement} onIonChange={e => setNewPerformance({...newPerformance, needsImprovement: e.detail.value || ''})} />
 
-                <IonButton expand="block" color="success" onClick={() => {
-                  handleAddPerformanceToMember();
-                  setShowPerformanceModal(false);
-                }}>
-                  Guardar Alterações
-                </IonButton>
-
-                <IonButton expand="block" color="medium" onClick={() => setShowPerformanceModal(false)}>
-                  Cancelar
-                </IonButton>
-              </IonCardContent>
-            </IonCard>
+                  <div className="flex flex-col gap-3">
+                    <IonButton expand="block" className="rounded-full bg-emerald-600 text-white hover:bg-emerald-700" onClick={() => {
+                      handleAddPerformanceToMember();
+                      setShowPerformanceModal(false);
+                    }}>
+                      Guardar Alterações
+                    </IonButton>
+                    <IonButton expand="block" className="rounded-full bg-slate-100 text-slate-900 hover:bg-slate-200" onClick={() => setShowPerformanceModal(false)}>
+                      Cancelar
+                    </IonButton>
+                  </div>
+                </IonCardContent>
+              </IonCard>
+            </div>
           </IonContent>
         </IonModal>
 
@@ -1248,108 +1378,107 @@ const Home: React.FC = () => {
               </IonButton>
             </IonToolbar>
           </IonHeader>
-          <IonContent className="modal-shell">
-            <IonCard>
-              <IonCardHeader>
-                <IonCardTitle>Adicionar Novo Torneio</IonCardTitle>
-              </IonCardHeader>
-              <IonCardContent>
-                <IonInput placeholder="Nome do Torneio" value={newTournamentData.name} onIonChange={e => setNewTournamentData({...newTournamentData, name: e.detail.value || ''})}></IonInput>
+          <IonContent className="modal-shell bg-slate-950/5 text-slate-900">
+            <div className="space-y-5 p-4">
+              <IonCard className="rounded-3xl border border-slate-200/80 bg-white shadow-sm">
+                <IonCardHeader>
+                  <IonCardTitle>Adicionar Novo Torneio</IonCardTitle>
+                  <p className="mt-2 text-sm text-slate-600">Cadastre um evento novo com local e data.</p>
+                </IonCardHeader>
+                <IonCardContent className="space-y-4">
+                  <IonInput className="rounded-3xl bg-slate-100 px-4 py-3 text-sm text-slate-900" placeholder="Nome do Torneio" value={newTournamentData.name} onIonChange={e => setNewTournamentData({...newTournamentData, name: e.detail.value || ''})} />
 
-                <IonLabel>Data do Torneio</IonLabel>
-                <IonDatetime value={newTournamentData.date} onIonChange={e => setNewTournamentData({...newTournamentData, date: e.detail.value as string})}></IonDatetime>
+                  <div className="space-y-2">
+                    <IonLabel className="text-sm text-slate-600">Data do Torneio</IonLabel>
+                    <IonDatetime className="rounded-3xl bg-slate-100 p-3 text-sm text-slate-900" value={newTournamentData.date} onIonChange={e => setNewTournamentData({...newTournamentData, date: e.detail.value as string})} />
+                  </div>
 
-                <IonInput placeholder="Local" value={newTournamentData.location} onIonChange={e => setNewTournamentData({...newTournamentData, location: e.detail.value || ''})}></IonInput>
+                  <IonInput className="rounded-3xl bg-slate-100 px-4 py-3 text-sm text-slate-900" placeholder="Local" value={newTournamentData.location} onIonChange={e => setNewTournamentData({...newTournamentData, location: e.detail.value || ''})} />
 
-                <IonButton expand="block" onClick={handleAddTournamentInModal}>
-                  <IonIcon slot="start" icon={add}></IonIcon>
-                  Adicionar
-                </IonButton>
-              </IonCardContent>
-            </IonCard>
+                  <IonButton expand="block" className="rounded-full bg-slate-900 text-white hover:bg-slate-800" onClick={handleAddTournamentInModal}>
+                    <IonIcon slot="start" icon={add}></IonIcon>
+                    Adicionar
+                  </IonButton>
+                </IonCardContent>
+              </IonCard>
 
-            {/* Próximos Torneios */}
-            <IonCard>
-              <IonCardHeader>
-                <IonCardTitle>Próximos Torneios</IonCardTitle>
-              </IonCardHeader>
-              <IonCardContent>
-                {editingTournaments.filter(t => {
-                  const tourDate = new Date(t.date);
-                  const today = new Date();
-                  today.setHours(0, 0, 0, 0);
-                  tourDate.setHours(0, 0, 0, 0);
-                  return tourDate >= today;
-                }).length > 0 ? (
-                  <IonList>
-                    {editingTournaments.map((tournament, index) => {
+              <IonCard className="rounded-3xl border border-slate-200/80 bg-white shadow-sm">
+                <IonCardHeader>
+                  <IonCardTitle>Próximos Torneios</IonCardTitle>
+                </IonCardHeader>
+                <IonCardContent className="space-y-3">
+                  {editingTournaments.filter(t => {
+                    const tourDate = new Date(t.date);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    tourDate.setHours(0, 0, 0, 0);
+                    return tourDate >= today;
+                  }).length > 0 ? (
+                    editingTournaments.map((tournament, index) => {
                       const tourDate = new Date(tournament.date);
                       const today = new Date();
                       today.setHours(0, 0, 0, 0);
                       tourDate.setHours(0, 0, 0, 0);
                       if (tourDate < today) return null;
-                      
                       return (
-                        <IonItem key={index}>
-                          <IonLabel>
-                            <h3>{tournament.name}</h3>
-                            <p>{tournament.date} - {tournament.location}</p>
-                          </IonLabel>
+                        <div key={index} className="rounded-3xl border border-slate-200/80 bg-slate-50 p-4 flex items-center justify-between shadow-sm">
+                          <div>
+                            <p className="font-semibold text-slate-900">{tournament.name}</p>
+                            <p className="text-sm text-slate-600">{tournament.date} • {tournament.location}</p>
+                          </div>
                           <IonButton fill="clear" color="danger" onClick={() => handleRemoveTournament(index)}>
                             <IonIcon slot="icon-only" icon={trash}></IonIcon>
                           </IonButton>
-                        </IonItem>
+                        </div>
                       );
-                    })}
-                  </IonList>
-                ) : (
-                  <p>Nenhum torneio próximo.</p>
-                )}
-              </IonCardContent>
-            </IonCard>
+                    })
+                  ) : (
+                    <div className="rounded-3xl border border-slate-200/80 bg-slate-50 p-5 text-sm text-slate-600">
+                      Nenhum torneio próximo.
+                    </div>
+                  )}
+                </IonCardContent>
+              </IonCard>
 
-            {/* Torneios Antigos (para editar) */}
-            <IonCard>
-              <IonCardHeader>
-                <IonCardTitle>Torneios Antigos (para editar)</IonCardTitle>
-              </IonCardHeader>
-              <IonCardContent>
-                {editingTournaments.filter(t => {
-                  const tourDate = new Date(t.date);
-                  const today = new Date();
-                  today.setHours(0, 0, 0, 0);
-                  tourDate.setHours(0, 0, 0, 0);
-                  return tourDate < today;
-                }).length > 0 ? (
-                  <IonList>
-                    {editingTournaments.map((tournament, index) => {
+              <IonCard className="rounded-3xl border border-slate-200/80 bg-white shadow-sm">
+                <IonCardHeader>
+                  <IonCardTitle>Torneios Antigos (para editar)</IonCardTitle>
+                </IonCardHeader>
+                <IonCardContent className="space-y-4">
+                  {editingTournaments.filter(t => {
+                    const tourDate = new Date(t.date);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    tourDate.setHours(0, 0, 0, 0);
+                    return tourDate < today;
+                  }).length > 0 ? (
+                    editingTournaments.map((tournament, index) => {
                       const tourDate = new Date(tournament.date);
                       const today = new Date();
                       today.setHours(0, 0, 0, 0);
                       tourDate.setHours(0, 0, 0, 0);
                       if (tourDate >= today) return null;
-                      
                       return (
-                        <div key={index} className="history-block">
-                          <IonItem>
+                        <div key={index} className="rounded-3xl border border-slate-200/80 bg-slate-50 p-4 shadow-sm">
+                          <IonItem className="border-b border-slate-200/80 pb-3">
                             <IonLabel>
-                              <h3>{tournament.name}</h3>
-                              <p>{tournament.date} - {tournament.location}</p>
+                              <p className="font-semibold text-slate-900">{tournament.name}</p>
+                              <p className="text-sm text-slate-600">{tournament.date} • {tournament.location}</p>
                             </IonLabel>
                             <IonButton fill="clear" color="danger" onClick={() => handleRemoveTournament(index)}>
                               <IonIcon slot="icon-only" icon={trash}></IonIcon>
                             </IonButton>
                           </IonItem>
-                          <IonButton expand="block" size="small" onClick={() => setParticipantsOpenIndex(participantsOpenIndex === index ? null : index)}>
+                          <IonButton expand="block" size="small" className="mt-3 rounded-full bg-slate-900 text-white hover:bg-slate-800" onClick={() => setParticipantsOpenIndex(participantsOpenIndex === index ? null : index)}>
                             {participantsOpenIndex === index ? 'Fechar Participantes' : 'Gerir Participantes'}
                           </IonButton>
                           {participantsOpenIndex === index && (
-                            <div className="panel-section">
-                              <h4>Escolher participantes</h4>
-                              <IonList>
+                            <div className="mt-4 rounded-3xl bg-slate-100 p-4">
+                              <h4 className="text-sm font-semibold text-slate-900 mb-3">Escolher participantes</h4>
+                              <div className="space-y-2">
                                 {dojoMembers.map(m => (
-                                  <IonItem key={m._id}>
-                                    <IonLabel>{m.username}</IonLabel>
+                                  <div key={m._id} className="flex items-center justify-between rounded-3xl bg-white p-3 border border-slate-200/80">
+                                    <span className="text-sm text-slate-700">{m.username}</span>
                                     <input type="checkbox" checked={(editingTournaments[index].participants || []).includes(m._id)} onChange={(e) => {
                                       const updated = [...(editingTournaments[index].participants || [])];
                                       if (e.target.checked) {
@@ -1362,27 +1491,31 @@ const Home: React.FC = () => {
                                       copy[index].participants = updated;
                                       setEditingTournaments(copy);
                                     }} />
-                                  </IonItem>
+                                  </div>
                                 ))}
-                              </IonList>
+                              </div>
                             </div>
                           )}
                         </div>
                       );
-                    })}
-                  </IonList>
-                ) : (
-                  <p>Nenhum torneio antigo.</p>
-                )}
-              </IonCardContent>
-            </IonCard>
+                    })
+                  ) : (
+                    <div className="rounded-3xl border border-slate-200/80 bg-slate-50 p-5 text-sm text-slate-600">
+                      Nenhum torneio antigo.
+                    </div>
+                  )}
+                </IonCardContent>
+              </IonCard>
 
-            <IonButton expand="block" color="success" onClick={handleSaveTournamentChanges}>
-              Salvar Alterações
-            </IonButton>
-            <IonButton expand="block" color="medium" onClick={() => setShowTournamentModal(false)}>
-              Cancelar
-            </IonButton>
+              <div className="flex flex-col gap-3">
+                <IonButton expand="block" className="rounded-full bg-emerald-600 text-white hover:bg-emerald-700" onClick={handleSaveTournamentChanges}>
+                  Salvar Alterações
+                </IonButton>
+                <IonButton expand="block" className="rounded-full bg-slate-100 text-slate-900 hover:bg-slate-200" onClick={() => setShowTournamentModal(false)}>
+                  Cancelar
+                </IonButton>
+              </div>
+            </div>
           </IonContent>
         </IonModal>
       </div>
@@ -1393,9 +1526,10 @@ const Home: React.FC = () => {
     const children = user.childrens || [];
     if (children.length > 1 && !selectedChild) {
       return (
-        <div className="page background">
-          <h2>Selecionar Atleta</h2>
-          <IonCard>
+        <div className="rounded-3xl bg-white/90 p-6 shadow-lg ring-1 ring-slate-200/70 text-slate-900">
+          <h2 className="text-2xl font-bold">Selecionar Atleta</h2>
+          <p className="mt-2 text-sm text-slate-600">Escolha um dos atletas vinculados ao seu perfil.</p>
+          <IonCard className="mt-6 border border-slate-200/80 bg-slate-50 shadow-sm">
             <IonCardContent>
               <IonSelect
                 placeholder="Escolha seu filho"
@@ -1476,14 +1610,17 @@ const Home: React.FC = () => {
         <div className="page">
           {dashboard}
         </div>
+      </IonContent>
+      {showScrollTopButton && (
         <button
           type="button"
           onClick={handleScrollToTop}
-          className={`fixed bottom-5 right-5 z-50 rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-xl transition-opacity duration-200 ${showScrollTopButton ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
+          className="fixed bottom-28 right-6 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-slate-900 text-white shadow-xl shadow-slate-900/25 transition-transform duration-200 hover:-translate-y-1 hover:bg-slate-800 animate-bounce"
+          aria-label="Voltar ao topo"
         >
-          Upper
+          <IonIcon icon={arrowUp} className="h-5 w-5" />
         </button>
-      </IonContent>
+      )}
       <Navbar />
     </IonPage>
   );
