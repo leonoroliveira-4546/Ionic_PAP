@@ -1,12 +1,14 @@
-Atleta:
+Corrigir o request dos conversations (ta a pegar apenas ele proprio )
 
-  Mudar style dos modals
+Atleta:
  
  Home:
-   no atlteta tem que ter a opção de pedir para entrar num dojo, e ai o sensei do dojo tem que aceitar ou rejeitar (apenas se nao tiver num dojo);
+   Ao sensei aceitar o pedido do atleta, o id club do dojo é guardado no user que pediu,
+   fazendo assim o atleta tar dentro do clube;
    
  Comunidade:
-   anda a mostrar o botão de criar posts do dojo (bug);
+   por o mesmo style que a home;
+   arranjar os likes;
 
  Profile:
    As vitórias tem a ver com ter acertos de predições;
@@ -54,9 +56,10 @@ Praticinador:
   Profile: ele tem mas sem estáticas;
   
   O resto ele não tem;
-      
    
 Geral:
+  Funcionar todo com sockets
+ 
   Home:
    Notificações;
 

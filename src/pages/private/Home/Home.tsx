@@ -60,9 +60,12 @@ const Home: React.FC = () => {
     date: '',
     location: ''
   });
+  const [dojos, setDojos] = useState<any[]>([]);
+  const [dojoSearchQuery, setDojoSearchQuery] = useState<string>('');
+  const [showDojosModal, setShowDojosModal] = useState(false);
 
   const { addPerformance, getPerformance, getAbsencesByMonth, addAbsence } = authApi(() => {});
-  const { getDojoMembers, removeMember, removeChildFromResponsible, addTrainingSchedule, updateTrainingSchedules, createTournament, getDojoTournaments, updateTournament, deleteTournament, inviteMemberByEmail, submitJoinRequest, acceptJoinRequest, rejectJoinRequest, getAthletesWithoutDojo } = dojosApi();
+  const { getDojos, getDojoMembers, removeMember, removeChildFromResponsible, addTrainingSchedule, updateTrainingSchedules, createTournament, getDojoTournaments, updateTournament, deleteTournament, inviteMemberByEmail, submitJoinRequest, acceptJoinRequest, rejectJoinRequest, getAthletesWithoutDojo } = dojosApi();
   const { getCurrentChallenge, getUserChallengeResponse } = educationalApi();
 
   const isAthlete = (type: string) => type === 'athlete' || type === 'atleta';
@@ -147,6 +150,53 @@ const Home: React.FC = () => {
     } catch (err) {
       alert("Erro ao buscar dados do dojo: " + err);
     }
+  };
+
+  const fetchDojos = async () => {
+    try {
+      const data = await getDojos();
+      if (!data.success) {
+        alert(data.error || 'Erro ao buscar dojos');
+        return;
+      }
+      setDojos(data.dojos || []);
+    } catch (err) {
+      alert('Erro ao buscar dojos: ' + err);
+    }
+  };
+
+  const handleOpenDojosModal = async () => {
+    await fetchDojos();
+    setShowDojosModal(true);
+  };
+
+  const handleRequestJoinDojo = async (dojoId: string) => {
+    if (user.dojoId) {
+      alert('Você já está em um dojo.');
+      return;
+    }
+
+    try {
+      const result = await submitJoinRequest(dojoId);
+      if (!result.success) {
+        alert(result.error || 'Erro ao enviar pedido');
+        return;
+      }
+      alert('Pedido de entrada enviado com sucesso!');
+      await fetchDojos();
+    } catch (err) {
+      alert('Erro ao enviar pedido de entrada: ' + err);
+    }
+  };
+
+  const hasRequestedJoin = (dojo: any) => {
+    return dojo.joinRequests?.some((request: any) => {
+      if (!request) return false;
+      if (typeof request.user === 'string') {
+        return request.user === user._id;
+      }
+      return request.user?._id === user._id;
+    }) || false;
   };
 
   const loadDailyChallenge = async () => {
@@ -639,7 +689,7 @@ const Home: React.FC = () => {
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
-              <button type="button" className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800" >
+              <button type="button" className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800" onClick={handleOpenDojosModal}>
                 Buscar Dojos
               </button>
               <button type="button" className="rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50" onClick={() => alert('Peça ao seu sensei ou responsável para adicioná-lo ao dojo.') }>
@@ -647,6 +697,57 @@ const Home: React.FC = () => {
               </button>
             </div>
           </section>
+          <IonModal isOpen={showDojosModal} onDidDismiss={() => setShowDojosModal(false)}>
+          <IonHeader>
+            <IonToolbar>
+              <IonTitle>Buscar Dojos</IonTitle>
+              <IonButton slot="end" fill="clear" onClick={() => setShowDojosModal(false)}>
+                <IonIcon slot="icon-only" icon={close}></IonIcon>
+              </IonButton>
+            </IonToolbar>
+          </IonHeader>
+          <IonContent className="modal-shell bg-slate-950/5 text-slate-900">
+            <div className="space-y-4 p-4">
+              <IonInput
+                value={dojoSearchQuery}
+                placeholder="Buscar por nome do dojo"
+                onIonChange={e => setDojoSearchQuery(e.detail.value || '')}
+                className="mb-4 rounded-3xl bg-slate-100 px-4 py-3 text-sm text-slate-900"
+              />
+              {dojos.filter((dojo: any) => dojo.name?.toLowerCase().includes(dojoSearchQuery.toLowerCase())).length > 0 ? (
+                <div className="space-y-4">
+                  {dojos.filter((dojo: any) => dojo.name?.toLowerCase().includes(dojoSearchQuery.toLowerCase())).map((dojo: any) => (
+                    <div key={dojo._id} className="rounded-3xl bg-slate-50 p-4 shadow-sm ring-1 ring-slate-200/70">
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <p className="text-lg font-semibold text-slate-900">{dojo.name}</p>
+                          <p className="text-sm text-slate-600">{dojo.description || 'Dojo sem descrição disponível.'}</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2 items-center">
+                          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                            {dojo.joinRequests?.length || 0} pedidos
+                          </span>
+                          <button
+                            type="button"
+                            disabled={!!user.dojoId || hasRequestedJoin(dojo)}
+                            className={`rounded-full px-5 py-3 text-sm font-semibold transition ${user.dojoId || hasRequestedJoin(dojo) ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-slate-900 text-white hover:bg-slate-800'}`}
+                            onClick={() => handleRequestJoinDojo(dojo._id)}
+                          >
+                            {user.dojoId ? 'Já está em dojo' : hasRequestedJoin(dojo) ? 'Pedido enviado' : 'Pedir para entrar'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-3xl bg-slate-50 p-6 text-center text-slate-700 shadow-sm ring-1 ring-slate-200/70">
+                  Nenhum dojo encontrado para essa pesquisa.
+                </div>
+              )}
+            </div>
+          </IonContent>
+        </IonModal>
         </div>
       );
     }
@@ -939,10 +1040,10 @@ const Home: React.FC = () => {
             <div className="space-y-4 p-4">
               <div className="rounded-full bg-slate-100 p-1 shadow-sm ring-1 ring-slate-200/70">
                 <div className="flex flex-wrap gap-2">
-                  <button className={`rounded-full px-4 py-2 text-sm font-semibold transition ${inviteTab === 'invite' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-200'}`} onClick={() => setInviteTab('invite')}>
+                  <button className={`rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800 transition ${inviteTab === 'invite' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-200'}`} onClick={() => setInviteTab('invite')}>
                     Convidar Atleta
                   </button>
-                  <button className={`rounded-full px-4 py-2 text-sm font-semibold transition ${inviteTab === 'requests' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-200'}`} onClick={() => setInviteTab('requests')}>
+                  <button className={`rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800 transition ${inviteTab === 'requests' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-200'}`} onClick={() => setInviteTab('requests')}>
                     Pedidos ({pendingRequests.length})
                   </button>
                 </div>
@@ -969,7 +1070,7 @@ const Home: React.FC = () => {
                             <p className="font-semibold text-slate-900">{athlete.username}</p>
                             <p className="text-sm text-slate-600">{athlete.email}</p>
                           </div>
-                          <IonButton className="rounded-full bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-800" onClick={async () => {
+                          <button className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800" onClick={async () => {
                             if (!user.dojoId) { alert('Dojo ID não encontrado'); return; }
                             const res = await inviteMemberByEmail(user.dojoId, athlete.email);
                             if (!res.success) alert(res.error || 'Erro ao enviar convite');
@@ -979,7 +1080,7 @@ const Home: React.FC = () => {
                             }
                           }}>
                             Convidar
-                          </IonButton>
+                          </button>
                         </div>
                       ))
                     ) : (
@@ -1006,7 +1107,7 @@ const Home: React.FC = () => {
                             <p className="text-sm text-slate-600">{r.user.email}</p>
                           </div>
                           <div className="flex flex-wrap gap-2">
-                            <IonButton className="rounded-full bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-800" onClick={async () => {
+                            <button className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800" onClick={async () => {
                               if (!user.dojoId) { alert('Dojo ID não encontrado'); return; }
                               const res = await acceptJoinRequest(user.dojoId, r.user._id);
                               if (!res.success) alert(res.error || 'Erro');
@@ -1016,8 +1117,8 @@ const Home: React.FC = () => {
                               }
                             }}>
                               Aceitar
-                            </IonButton>
-                            <IonButton className="rounded-full bg-rose-500 px-4 py-2 text-sm text-white hover:bg-rose-600" onClick={async () => {
+                            </button>
+                            <button className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800" onClick={async () => {
                               if (!user.dojoId) { alert('Dojo ID não encontrado'); return; }
                               const res = await rejectJoinRequest(user.dojoId, r.user._id);
                               if (!res.success) alert(res.error || 'Erro');
@@ -1027,7 +1128,7 @@ const Home: React.FC = () => {
                               }
                             }}>
                               Rejeitar
-                            </IonButton>
+                            </button>
                           </div>
                         </div>
                       ))}
@@ -1083,7 +1184,7 @@ const Home: React.FC = () => {
                         <button className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-slate-50" onClick={() => handleViewMemberDetails(member)}>
                           Detalhes
                         </button>
-                        <button className="rounded-full bg-rose-500 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-rose-500/20 transition hover:bg-rose-600" onClick={() => handleRemoveMember(member)}>
+                        <button className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800" onClick={() => handleRemoveMember(member)}>
                           Remover
                         </button>
                       </div>
@@ -1132,10 +1233,10 @@ const Home: React.FC = () => {
 
                   <IonInput className="rounded-3xl bg-slate-100 px-4 py-3 text-sm text-slate-900" placeholder="Local" value={newSchedule.location} onIonChange={e => setNewSchedule({...newSchedule, location: e.detail.value || ''})} />
 
-                  <IonButton expand="block" className="rounded-full bg-slate-900 text-white hover:bg-slate-800" onClick={handleAddScheduleInModal}>
+                  <button className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800" onClick={handleAddScheduleInModal}>
                     <IonIcon slot="start" icon={add}></IonIcon>
                     Adicionar
-                  </IonButton>
+                  </button>
                 </IonCardContent>
               </IonCard>
 
@@ -1151,9 +1252,9 @@ const Home: React.FC = () => {
                           <h3 className="font-semibold text-slate-900">{schedule.day}</h3>
                           <p className="text-sm text-slate-600">{schedule.time} • {schedule.location}</p>
                         </IonLabel>
-                        <IonButton fill="clear" color="danger" onClick={() => handleRemoveSchedule(index)}>
+                        <button className="rounded-full bg-rose-500 px-4 py-2 text-sm text-white hover:bg-rose-600" onClick={() => handleRemoveSchedule(index)}>
                           <IonIcon slot="icon-only" icon={trash}></IonIcon>
-                        </IonButton>
+                        </button>
                       </IonItem>
                     ))
                   ) : (
@@ -1163,12 +1264,12 @@ const Home: React.FC = () => {
               </IonCard>
 
               <div className="flex flex-col gap-3">
-                <IonButton expand="block" className="rounded-full bg-emerald-600 text-white hover:bg-emerald-700" onClick={handleSaveScheduleChanges}>
+                <button className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800" onClick={handleSaveScheduleChanges}>
                   Salvar Alterações
-                </IonButton>
-                <IonButton expand="block" className="rounded-full bg-slate-100 text-slate-900 hover:bg-slate-200" onClick={() => setShowScheduleModal(false)}>
+                </button>
+                <button className="rounded-full bg-slate-100 text-slate-900 hover:bg-slate-200" onClick={() => setShowScheduleModal(false)}>
                   Cancelar
-                </IonButton>
+                </button>
               </div>
             </div>
           </IonContent>
@@ -1265,7 +1366,7 @@ const Home: React.FC = () => {
                       ) : (
                         <p className="text-sm text-slate-600">Nenhuma performance registrada ainda.</p>
                       )}
-                      <IonButton expand="block" className="rounded-full bg-slate-900 text-white hover:bg-slate-800" onClick={() => {
+                      <button className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800" onClick={() => {
                         if (performance) {
                           setNewPerformance({
                             rating: performance.rating || 0,
@@ -1278,25 +1379,25 @@ const Home: React.FC = () => {
                         setShowPerformanceModal(true);
                       }}>
                         {performance ? 'Editar Performance' : 'Adicionar Performance'}
-                      </IonButton>
+                      </button>
                     </IonCardContent>
                   </IonCard>
 
                   <div className="flex flex-col gap-3">
-                    <IonButton expand="block" className="rounded-full bg-rose-500 text-white hover:bg-rose-600" onClick={() => {
+                    <button className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800" onClick={() => {
                       handleRemoveMember(selectedMemberDetails);
                       setShowMemberDetailsModal(false);
                     }}>
                       Remover Atleta
-                    </IonButton>
-                    <IonButton expand="block" className="rounded-full bg-emerald-600 text-white hover:bg-emerald-700" onClick={() => {
+                    </button>
+                    <button className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800" onClick={() => {
                       handleSaveMemberDetailsChanges();
                     }}>
                       Guardar Alterações
-                    </IonButton>
-                    <IonButton expand="block" className="rounded-full bg-slate-100 text-slate-900 hover:bg-slate-200" onClick={() => setShowMemberDetailsModal(false)}>
+                    </button>
+                    <button className="rounded-full bg-slate-100 text-slate-900 hover:bg-slate-200" onClick={() => setShowMemberDetailsModal(false)}>
                       Cancelar
-                    </IonButton>
+                    </button>
                   </div>
                 </>
               )}
@@ -1325,15 +1426,15 @@ const Home: React.FC = () => {
                   <IonInput className="rounded-3xl bg-slate-100 px-4 py-3 text-sm text-slate-900" placeholder="O que precisa melhorar (separadas por vírgula)" value={newPerformance.needsImprovement} onIonChange={e => setNewPerformance({...newPerformance, needsImprovement: e.detail.value || ''})} />
 
                   <div className="flex flex-col gap-3">
-                    <IonButton expand="block" className="rounded-full bg-emerald-600 text-white hover:bg-emerald-700" onClick={() => {
+                    <button className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800" onClick={() => {
                       handleAddPerformanceToMember();
                       setShowPerformanceModal(false);
                     }}>
                       Guardar Alterações
-                    </IonButton>
-                    <IonButton expand="block" className="rounded-full bg-slate-100 text-slate-900 hover:bg-slate-200" onClick={() => setShowPerformanceModal(false)}>
+                    </button>
+                    <button className="rounded-full bg-slate-100 text-slate-900 hover:bg-slate-200" onClick={() => setShowPerformanceModal(false)}>
                       Cancelar
-                    </IonButton>
+                    </button>
                   </div>
                 </IonCardContent>
               </IonCard>
@@ -1368,10 +1469,10 @@ const Home: React.FC = () => {
 
                   <IonInput className="rounded-3xl bg-slate-100 px-4 py-3 text-sm text-slate-900" placeholder="Local" value={newTournamentData.location} onIonChange={e => setNewTournamentData({...newTournamentData, location: e.detail.value || ''})} />
 
-                  <IonButton expand="block" className="rounded-full bg-slate-900 text-white hover:bg-slate-800" onClick={handleAddTournamentInModal}>
+                  <button className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800" onClick={handleAddTournamentInModal}>
                     <IonIcon slot="start" icon={add}></IonIcon>
                     Adicionar
-                  </IonButton>
+                  </button>
                 </IonCardContent>
               </IonCard>
 
@@ -1399,9 +1500,9 @@ const Home: React.FC = () => {
                             <p className="font-semibold text-slate-900">{tournament.name}</p>
                             <p className="text-sm text-slate-600">{tournament.date} • {tournament.location}</p>
                           </div>
-                          <IonButton fill="clear" color="danger" onClick={() => handleRemoveTournament(index)}>
+                          <button className="rounded-full bg-red-500 text-white hover:bg-red-600" onClick={() => handleRemoveTournament(index)}>
                             <IonIcon slot="icon-only" icon={trash}></IonIcon>
-                          </IonButton>
+                          </button>
                         </div>
                       );
                     })
@@ -1438,13 +1539,13 @@ const Home: React.FC = () => {
                               <p className="font-semibold text-slate-900">{tournament.name}</p>
                               <p className="text-sm text-slate-600">{tournament.date} • {tournament.location}</p>
                             </IonLabel>
-                            <IonButton fill="clear" color="danger" onClick={() => handleRemoveTournament(index)}>
+                            <button className="rounded-full bg-red-500 text-white hover:bg-red-600" onClick={() => handleRemoveTournament(index)}>
                               <IonIcon slot="icon-only" icon={trash}></IonIcon>
-                            </IonButton>
+                            </button>
                           </IonItem>
-                          <IonButton expand="block" size="small" className="mt-3 rounded-full bg-slate-900 text-white hover:bg-slate-800" onClick={() => setParticipantsOpenIndex(participantsOpenIndex === index ? null : index)}>
+                          <button className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800" onClick={() => setParticipantsOpenIndex(participantsOpenIndex === index ? null : index)}>
                             {participantsOpenIndex === index ? 'Fechar Participantes' : 'Gerir Participantes'}
-                          </IonButton>
+                          </button>
                           {participantsOpenIndex === index && (
                             <div className="mt-4 rounded-3xl bg-slate-100 p-4">
                               <h4 className="text-sm font-semibold text-slate-900 mb-3">Escolher participantes</h4>
@@ -1481,12 +1582,12 @@ const Home: React.FC = () => {
               </IonCard>
 
               <div className="flex flex-col gap-3">
-                <IonButton expand="block" className="rounded-full bg-emerald-600 text-white hover:bg-emerald-700" onClick={handleSaveTournamentChanges}>
+                <button className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800" onClick={handleSaveTournamentChanges}>
                   Salvar Alterações
-                </IonButton>
-                <IonButton expand="block" className="rounded-full bg-slate-100 text-slate-900 hover:bg-slate-200" onClick={() => setShowTournamentModal(false)}>
+                </button>
+                <button className="rounded-full bg-slate-100 text-slate-900 hover:bg-slate-200" onClick={() => setShowTournamentModal(false)}>
                   Cancelar
-                </IonButton>
+                </button>
               </div>
             </div>
           </IonContent>

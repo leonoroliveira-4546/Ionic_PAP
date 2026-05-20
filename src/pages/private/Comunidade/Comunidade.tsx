@@ -208,8 +208,12 @@ const Comunidade: React.FC = () => {
 
   // ---------------- LIKE ----------------
   const handleLike = async (id: string) => {
-    await likeContent(id);
-    loadContents();
+    try {
+      await likeContent(id);
+      await loadContents();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   // ---------------- COMMENTS ----------------
@@ -221,8 +225,12 @@ const Comunidade: React.FC = () => {
 
   // ---------------- DOJO ACTIONS ----------------
   const handleLikeDojoPost = async (id: string) => {
-    await likeContent(id);
-    loadContents();
+    try {
+      await likeContent(id);
+      await loadContents();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleAddDojoComment = async (id: string) => {
@@ -328,7 +336,7 @@ const Comunidade: React.FC = () => {
 
       <IonList className='background'>
         {news.map(item => (
-          <IonCard key={item._id} className="news-card" style={{ marginBottom: 16 }}>
+          <IonCard key={item._id} className="news-card rounded-3xl bg-white shadow-lg ring-1 ring-slate-200/70" style={{ marginBottom: 16 }}>
             <IonCardHeader>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                 <IonAvatar style={{ width: 32, height: 32 }}>
@@ -373,14 +381,8 @@ const Comunidade: React.FC = () => {
               )}
 
               {/* LIKE + COMMENTS */}
-              <div style={{
-                marginTop: 12,
-                paddingTop: 12,
-                borderTop: '1px solid #ddd',
-                display: 'flex',
-                justifyContent: 'space-between'
-              }}>
-                <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+              <div className="flex items-center justify-between gap-3 border-t border-slate-200/70 pt-3 mt-3">
+                <div className="flex items-center gap-2">
                   {user?._id === item.author?._id && (
                     <>
                       <IonButton fill="clear" size="small" onClick={() => handleOpenEdit(item)}>
@@ -395,16 +397,7 @@ const Comunidade: React.FC = () => {
 
                 <button
                   onClick={() => handleLike(item._id)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 4,
-                    fontSize: 14,
-                    color: user?._id && item.likes?.includes(user._id) ? '#e74c3c' : '#999'
-                  }}
+                  className={`inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold transition ${user?._id && item.likes?.includes(user._id) ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
                 >
                   <IonIcon icon={user?._id && item.likes?.includes(user._id) ? heart : heartOutline} />
                   {item.likes?.length || 0}
@@ -539,7 +532,7 @@ const Comunidade: React.FC = () => {
         )}
 
       {dojoPosts.map(post => (
-        <IonCard key={post._id} className="news-card" style={{ marginBottom: 16 }}>
+        <IonCard key={post._id} className="news-card rounded-3xl bg-white shadow-lg ring-1 ring-slate-200/70" style={{ marginBottom: 16 }}>
           <IonCardHeader>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
               <IonAvatar style={{ width: 32, height: 32 }}>
@@ -644,25 +637,10 @@ const Comunidade: React.FC = () => {
             )}
 
             {/* LIKE + COMMENTS */}
-            <div style={{
-              marginTop: 12,
-              paddingTop: 12,
-              borderTop: '1px solid #ddd',
-              display: 'flex',
-              justifyContent: 'space-between'
-            }}>
+            <div className="flex items-center justify-between gap-3 border-t border-slate-200/70 pt-3 mt-3">
               <button
                 onClick={() => handleLikeDojoPost(post._id)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  fontSize: 14,
-                  color: user?._id && post.likes?.includes(user._id) ? '#e74c3c' : '#999'
-                }}
+                className={`inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold transition ${user?._id && post.likes?.includes(user._id) ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
               >
                 <IonIcon icon={user?._id && post.likes?.includes(user._id) ? heart : heartOutline} />
                 {post.likes?.length || 0}
@@ -716,13 +694,15 @@ const Comunidade: React.FC = () => {
                       </div>
                     </div>
 
-                    <IonButton
-                      fill="clear"
-                      color="danger"
-                      onClick={() => handleDeleteDojoComment(c._id)}
-                    >
-                      <IonIcon icon={trash} />
-                    </IonButton>
+                    {user?._id === c.author?._id && (
+                      <IonButton
+                        fill="clear"
+                        color="danger"
+                        onClick={() => handleDeleteDojoComment(c._id)}
+                      >
+                        <IonIcon icon={trash} />
+                      </IonButton>
+                    )}
                   </div>
                 ))}
 
