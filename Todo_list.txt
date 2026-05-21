@@ -1,14 +1,9 @@
 Corrigir o request dos conversations (ta a pegar apenas ele proprio )
 
 Atleta:
- 
- Home:
-   Ao sensei aceitar o pedido do atleta, o id club do dojo é guardado no user que pediu,
-   fazendo assim o atleta tar dentro do clube;
    
  Comunidade:
    por o mesmo style que a home;
-   arranjar os likes;
 
  Profile:
    As vitórias tem a ver com ter acertos de predições;

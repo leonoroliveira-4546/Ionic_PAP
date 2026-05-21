@@ -83,25 +83,11 @@ const YouTubeFeed: React.FC<YouTubeFeedProps> = ({ category = 'videos', limit = 
 
   return (
     <div>
-      {selectedVideoId && (
-        <div style={{ marginBottom: 16, width: '100%', overflow: 'hidden', borderRadius: 12 }}>
-          <iframe
-            width="100%"
-            height="280"
-            src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1&rel=0&modestbranding=1`}
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            title="YouTube video player"
-            style={{ borderRadius: 12, minHeight: 200 }}
-          />
-        </div>
-      )}
-
       {videos.map(video => (
         <VideoCard
           key={video.videoId}
           video={video}
+          isSelected={selectedVideoId === video.videoId}
           onClick={() => setSelectedVideoId(prev => (prev === video.videoId ? null : video.videoId))}
         />
       ))}

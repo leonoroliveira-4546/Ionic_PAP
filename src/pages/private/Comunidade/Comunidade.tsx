@@ -320,23 +320,26 @@ const Comunidade: React.FC = () => {
   };
 
   const renderGeralTab = () => (
-  <div className="page background">
+  <div className="page">
     <h2>🌍 Comunidade Geral</h2>
 
     {isAdmin && (
       <div style={{ marginBottom: 16 }}>
-        <IonButton expand="block" onClick={() => setShowNewsModal(true)}>
+        <button
+          type="button"
+          className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800"
+          onClick={() => setShowNewsModal(true)}
+        >
           ✍️ Adicionar notícia
-        </IonButton>
+        </button>
       </div>
     )}
 
-    <div className="news-section">
-      <div className="news-label">📰 Notícias</div>
+    <section className="news-section">
+      <h3 className="news-label">📰 Notícias</h3>
 
-      <IonList className='background'>
-        {news.map(item => (
-          <IonCard key={item._id} className="news-card rounded-3xl bg-white shadow-lg ring-1 ring-slate-200/70" style={{ marginBottom: 16 }}>
+      {news.map(item => (
+        <IonCard key={item._id} className="news-card rounded-3xl bg-white shadow-lg ring-1 ring-slate-200/70" style={{ marginBottom: 16 }}>
             <IonCardHeader>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                 <IonAvatar style={{ width: 32, height: 32 }}>
@@ -395,34 +398,27 @@ const Comunidade: React.FC = () => {
                   )}
                 </div>
 
-                <button
-                  onClick={() => handleLike(item._id)}
-                  className={`inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold transition ${user?._id && item.likes?.includes(user._id) ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
-                >
-                  <IonIcon icon={user?._id && item.likes?.includes(user._id) ? heart : heartOutline} />
-                  {item.likes?.length || 0}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleLike(item._id)}
+                    className={`inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold transition ${user?._id && item.likes?.includes(user._id) ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                  >
+                    <IonIcon icon={user?._id && item.likes?.includes(user._id) ? heart : heartOutline} />
+                    {item.likes?.length || 0}
+                  </button>
 
-                <button
-                  onClick={() =>
-                    setSelectedNewsForComments(
-                      selectedNewsForComments === item._id ? null : item._id
-                    )
-                  }
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 4,
-                    fontSize: 14,
-                    color: '#999'
-                  }}
-                >
-                  <IonIcon icon={chatbubbleOutline} />
-                  {item.comments?.length || 0}
-                </button>
+                  <button
+                    onClick={() =>
+                      setSelectedNewsForComments(
+                        selectedNewsForComments === item._id ? null : item._id
+                      )
+                    }
+                    className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-slate-500 hover:bg-slate-100 transition"
+                  >
+                    <IonIcon icon={chatbubbleOutline} />
+                    {item.comments?.length || 0}
+                  </button>
+                </div>
               </div>
 
               {/* COMMENTS */}
@@ -485,43 +481,46 @@ const Comunidade: React.FC = () => {
             </IonCardContent>
           </IonCard>
         ))}
-      </IonList>
-    </div>
+      </section>
 
-    <div className="news-section">
-      <div className="news-label">🔴 Ao Vivo Agora</div>
+    <section className="news-section">
+      <h3 className="news-label">🔴 Ao Vivo Agora</h3>
       <YouTubeFeed
         category="lives"
         limit={3}
         onLoaded={setLivesCount}
       />
-    </div>
+    </section>
 
-    <div className="news-section">
-      <div className="news-label">🎥 Vídeos em Destaque</div>
+    <section className="news-section">
+      <h3 className="news-label">🎥 Vídeos em Destaque</h3>
       <YouTubeFeed
         category="videos"
         limit={5}
         onLoaded={setVideosCount}
       />
-    </div>
+    </section>
   </div>
 );
 
   const renderDojoTab = () => (
-    <div className="page background">
+    <div className="page">
       <h2>🥋 Dojo</h2>
 
       {isSensei && (
         <div style={{ marginBottom: 16 }}>
-          <IonButton expand="block" onClick={() => setShowDojoModal(true)}>
+          <button
+            type="button"
+            className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800"
+            onClick={() => setShowDojoModal(true)}
+          >
             📝 Adicionar post do dojo
-          </IonButton>
+          </button>
         </div>
       )}
 
-      <div className="news-section">
-        <div className="news-label">🥋 Feed do Dojo</div>
+      <section className="news-section">
+        <h3 className="news-label">🥋 Feed do Dojo</h3>
 
         {dojoPosts.length === 0 && (
           <IonCard className="news-card community-empty-card">
@@ -638,34 +637,27 @@ const Comunidade: React.FC = () => {
 
             {/* LIKE + COMMENTS */}
             <div className="flex items-center justify-between gap-3 border-t border-slate-200/70 pt-3 mt-3">
-              <button
-                onClick={() => handleLikeDojoPost(post._id)}
-                className={`inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold transition ${user?._id && post.likes?.includes(user._id) ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
-              >
-                <IonIcon icon={user?._id && post.likes?.includes(user._id) ? heart : heartOutline} />
-                {post.likes?.length || 0}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleLikeDojoPost(post._id)}
+                  className={`inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold transition ${user?._id && post.likes?.includes(user._id) ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                >
+                  <IonIcon icon={user?._id && post.likes?.includes(user._id) ? heart : heartOutline} />
+                  {post.likes?.length || 0}
+                </button>
 
-              <button
-                onClick={() =>
-                  setSelectedDojoPostForComments(
-                    selectedDojoPostForComments === post._id ? null : post._id
-                  )
-                }
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  fontSize: 14,
-                  color: '#999'
-                }}
-              >
-                <IonIcon icon={chatbubbleOutline} />
-                {post.comments?.length || 0}
-              </button>
+                <button
+                  onClick={() =>
+                    setSelectedDojoPostForComments(
+                      selectedDojoPostForComments === post._id ? null : post._id
+                    )
+                  }
+                  className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-slate-500 hover:bg-slate-100 transition"
+                >
+                  <IonIcon icon={chatbubbleOutline} />
+                  {post.comments?.length || 0}
+                </button>
+              </div>
             </div>
 
             {/* COMMENTS */}
@@ -723,36 +715,34 @@ const Comunidade: React.FC = () => {
           </IonCardContent>
         </IonCard>
       ))}
-      </div>
+      </section>
     </div>
   );
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>Comunidade</IonTitle>
-        </IonToolbar>
-        <div className="community-tabs">
-          <button
-            className={`community-tab-btn${activeTab === 'geral' ? ' active' : ''}`}
-            onClick={() => setActiveTab('geral')}
-          >
-            Geral
-          </button>
-          {!isAdmin && (
+      <IonContent fullscreen className="background">
+        <div className="page">
+          <div className="community-tabs">
             <button
-              className={`community-tab-btn${activeTab === 'dojo' ? ' active' : ''}`}
-              onClick={() => setActiveTab('dojo')}
+              className={`community-tab-btn${activeTab === 'geral' ? ' active' : ''}`}
+              onClick={() => setActiveTab('geral')}
             >
-              Dojo
+              Geral
             </button>
-          )}
+            {!isAdmin && (
+              <button
+                className={`community-tab-btn${activeTab === 'dojo' ? ' active' : ''}`}
+                onClick={() => setActiveTab('dojo')}
+              >
+                Dojo
+              </button>
+            )}
+          </div>
+
+          {activeTab === 'geral' && renderGeralTab()}
+          {activeTab === 'dojo' && !isAdmin && renderDojoTab()}
         </div>
-      </IonHeader>
-      <IonContent fullscreen>
-        {activeTab === 'geral' && renderGeralTab()}
-        {activeTab === 'dojo' && !isAdmin && renderDojoTab()}
       </IonContent>
 
       {/* News Creation Modal */}

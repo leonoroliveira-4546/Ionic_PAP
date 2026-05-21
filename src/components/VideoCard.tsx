@@ -5,9 +5,10 @@ import { play, timeOutline } from 'ionicons/icons';
 interface VideoCardProps {
   video: any;
   onClick?: () => void;
+  isSelected?: boolean;
 }
 
-const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
+const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, isSelected = false }) => {
   const formatDuration = (duration: string) => {
     if (!duration) return '00:00';
     const matches = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
@@ -42,23 +43,43 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
         margin: '8px 0',
         borderRadius: 12,
         overflow: 'hidden',
-        cursor: onClick ? 'pointer' : 'default',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+        cursor: onClick && !isSelected ? 'pointer' : 'default',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+        backgroundColor: '#ffffff',
+        border: '1px solid rgba(15, 23, 42, 0.08)'
       }}
-      button={!!onClick}
-      onClick={onClick}
+      button={!!onClick && !isSelected}
+      onClick={!isSelected ? onClick : undefined}
     >
-      {/* Thumbnail */}
+      {/* Thumbnail or Selected Video */}
       <div style={{ position: 'relative' }}>
-        <img
-          src={video.thumbnail}
-          alt={video.title}
-          style={{
-            width: '100%',
-            height: 180,
-            objectFit: 'cover'
-          }}
-        />
+        {isSelected ? (
+          <iframe
+            width="100%"
+            height="220"
+            src={`https://www.youtube.com/embed/${video.videoId}?rel=0&modestbranding=1&controls=1&fs=1`}
+            frameBorder="0"
+            allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+            allowFullScreen
+            title={video.title}
+            style={{
+              width: '100%',
+              minHeight: 220,
+              borderRadius: 12,
+              border: 'none'
+            }}
+          />
+        ) : (
+          <img
+            src={video.thumbnail}
+            alt={video.title}
+            style={{
+              width: '100%',
+              height: 180,
+              objectFit: 'cover'
+            }}
+          />
+        )}
 
         {/* Duration/Live Badge */}
         <div
@@ -99,25 +120,26 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
           )}
         </div>
 
-        {/* Play Button Overlay */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            backgroundColor: 'rgba(0,0,0,0.7)',
-            borderRadius: '50%',
-            width: 48,
-            height: 48,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'all 0.3s ease'
-          }}
-        >
-          <IonIcon icon={play} style={{ color: 'white', fontSize: 20 }} />
-        </div>
+        {!isSelected && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              backgroundColor: 'rgba(0,0,0,0.7)',
+              borderRadius: '50%',
+              width: 48,
+              height: 48,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            <IonIcon icon={play} style={{ color: 'white', fontSize: 20 }} />
+          </div>
+        )}
       </div>
 
       {/* Content */}

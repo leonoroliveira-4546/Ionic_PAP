@@ -371,77 +371,49 @@
 /* COMMUNITY TABS */
 .community-tabs {
   display: flex;
-  background: var(--ion-toolbar-background, #fff);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  padding: 0 16px;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.88);
+  border-radius: 9999px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+  padding: 6px;
+  margin: 0 auto 22px;
+  max-width: 640px;
+  overflow: hidden;
 }
 
 .community-tab-btn {
   flex: 1;
-  background: none;
-  border: none;
-  border-bottom: 3px solid transparent;
-  padding: 12px 0;
-  font-size: 15px;
-  font-weight: 600;
-  color: #888;
-  cursor: pointer;
-  transition: color 0.2s ease, border-color 0.2s ease;
-  letter-spacing: 0.3px;
-}
-
-.community-tab-btn.active {
-  color: #3a0000;
-  border-bottom-color: #3a0000;
-}
-
-.background{
-  background: linear-gradient(
-    135deg,
-    #ffd18b8e 0%,
-    #ffffff 50%,
-    #ffd18b5d 100%
-  );
-}
-
-.nav-button {
-  color: #800505;
-}
-
-/* COMUNIDADE STYLES */
-.community-tabs {
-  display: flex;
-  gap: 0;
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 8px;
-  padding: 4px;
-  margin: 0 16px;
-}
-
-.community-tab-btn {
-  flex: 1;
-  padding: 10px 16px;
+  padding: 12px 18px;
   border: none;
   background: transparent;
-  color: #666;
-  font-weight: 600;
+  color: #64748b;
+  font-weight: 700;
   font-size: 14px;
   cursor: pointer;
-  border-radius: 6px;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
+  border-radius: 9999px;
+  transition: all 0.25s ease;
   letter-spacing: 0.5px;
 }
 
 .community-tab-btn.active {
-  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
-  color: white;
-  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+  background: #0f172a;
+  color: #ffffff;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.18);
 }
 
 .community-tab-btn:hover:not(.active) {
-  color: #333;
-  background: rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+  background: rgba(15, 23, 42, 0.05);
+  color: #111827;
+}
+
+.background {
+  --background: linear-gradient(135deg, #fffdf5 0%, #ffd18b 45%, #fd8772 100%);
+  background: linear-gradient(135deg, #fffdf5 0%, #ffd18b 45%, #fd8772 100%);
+}
+
+.nav-button {
+  color: #800505;
 }
 
 /* News Section */
