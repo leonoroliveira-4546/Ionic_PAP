@@ -18,8 +18,8 @@ interface User {
     belt?: string;
     points?: number;
     ranking?: number;
-    tournamentParticipations?: number;
-    tournamentVictories?: number;
+    tournamentParticipations?: number; // Total de torneios que o atleta participou
+    tournamentVictories?: number; // Total de vitórias por acertos de predições
     childrenStats?: Array<{
         _id: string;
         username: string;
@@ -39,6 +39,11 @@ interface User {
         }[];
     }[];
 }
+
+export const getAthleteProfileStats = (user: User | null | undefined) => ({
+    predictionVictories: user?.tournamentVictories ?? 0,
+    tournamentParticipations: user?.tournamentParticipations ?? 0,
+});
 
 interface AuthContextType {
     user: User | null;

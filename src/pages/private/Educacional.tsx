@@ -8,7 +8,7 @@ import {
 } from '@ionic/react';
 import { bookOutline, playOutline, add, trash, create, close } from 'ionicons/icons';
 import Navbar from '../../components/MainLayout';
-import VideoCard from '../../components/VideoCard';
+import VideoCard from '../../components/VideoCardMobile';
 import { educationalApi } from '../../hooks/educationalApi';
 
 interface Video {

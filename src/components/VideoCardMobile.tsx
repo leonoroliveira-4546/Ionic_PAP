@@ -1,5 +1,5 @@
 import React from 'react';
-import { IonCard, IonCardContent, IonText, IonIcon } from '@ionic/react';
+import { IonCardContent, IonText, IonIcon } from '@ionic/react';
 import { play, timeOutline } from 'ionicons/icons';
 
 interface VideoCardProps {
@@ -8,7 +8,7 @@ interface VideoCardProps {
   isSelected?: boolean;
 }
 
-const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, isSelected = false }) => {
+const VideoCardMobile: React.FC<VideoCardProps> = ({ video, onClick, isSelected = false }) => {
   const formatDuration = (duration: string) => {
     if (!duration) return '00:00';
     const matches = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
@@ -37,35 +37,39 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, isSelected = fals
 
   const durationText = formatDuration(video.duration || 'PT0S');
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    e.preventDefault?.();
+  const handleCardClick = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (!isSelected) {
       onClick?.();
     }
   };
 
-  const handleCloseButton = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault?.();
+  const handleCloseClick = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     onClick?.();
   };
 
   return (
-    <IonCard
+    <div
+      onClick={handleCardClick}
+      onTouchEnd={handleCardClick}
       style={{
         margin: '8px 0',
         borderRadius: 12,
         overflow: 'hidden',
-        cursor: !isSelected ? 'pointer' : 'default',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-        backgroundColor: '#ffffff',
         border: '1px solid rgba(15, 23, 42, 0.08)',
+        background: 'white',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+        transition: 'all 0.3s ease',
+        cursor: !isSelected ? 'pointer' : 'default',
         touchAction: 'manipulation',
-        WebkitTouchCallout: 'none'
+        WebkitTouchCallout: 'none',
+        WebkitUserSelect: 'none',
+        userSelect: 'none',
+        WebkitTapHighlightColor: 'transparent'
       }}
-      button={!isSelected}
-      onClick={!isSelected ? onClick : undefined}
-      onTouchEnd={handleTouchEnd}
     >
       {/* Thumbnail container - Hidden when selected */}
       {!isSelected && (
@@ -168,8 +172,8 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, isSelected = fals
 
           {/* Close Button */}
           <button
-            onClick={handleCloseButton}
-            onTouchEnd={handleCloseButton}
+            onClick={handleCloseClick}
+            onTouchEnd={handleCloseClick}
             style={{
               position: 'absolute',
               top: '8px',
@@ -210,10 +214,10 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, isSelected = fals
             {video.title}
           </IonText>
 
-        <IonText color="medium" style={{ fontSize: 12 }}>
-          {formatDate(video.publishedAt)}
-        </IonText>
-      </IonCardContent>
+          <IonText color="medium" style={{ fontSize: 12 }}>
+            {formatDate(video.publishedAt)}
+          </IonText>
+        </IonCardContent>
       )}
       <style>{`
         @keyframes pulse {
@@ -224,8 +228,8 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, isSelected = fals
           transform: scale(0.95);
         }
       `}</style>
-    </IonCard>
+    </div>
   );
 };
 
-export default VideoCard;
+export default VideoCardMobile;

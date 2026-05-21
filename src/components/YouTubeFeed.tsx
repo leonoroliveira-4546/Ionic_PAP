@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { IonText, IonSpinner } from '@ionic/react';
-import VideoCard from './VideoCard';
+import VideoCard from './VideoCardMobile';
 import comunidadeApi from '../hooks/comunidadeApi';
 
 interface YouTubeVideo {
@@ -52,16 +52,18 @@ const YouTubeFeed: React.FC<YouTubeFeedProps> = ({ category = 'videos', limit = 
         }));
 
         setVideos(transformedVideos);
+        onLoaded?.(transformedVideos.length);
       } catch (error) {
         console.error(`Error loading ${category}:`, error);
         setVideos([]);
+        onLoaded?.(0);
       } finally {
         setLoading(false);
       }
     };
 
     loadVideos();
-  }, [category, limit, getYoutubeVideos, getLives]);
+  }, [category, limit]);
 
   if (loading) {
     return (
