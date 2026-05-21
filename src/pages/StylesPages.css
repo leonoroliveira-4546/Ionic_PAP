@@ -485,18 +485,49 @@
 }
 
 .community-modal-content {
-  padding: 16px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
+}
+
+.community-modal-content > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.community-modal-content ion-label {
+  font-weight: 600;
+  font-size: 14px;
+  color: #1a1a1a;
+  display: block;
+}
+
+.community-modal-content ion-input,
+.community-modal-content ion-textarea {
+  border: 1px solid #ddd !important;
+  border-radius: 12px !important;
+  padding: 12px 16px !important;
+  background: #ffffff !important;
+  --background: #ffffff !important;
+  --border-color: #ddd;
+  --highlight-height: 0;
 }
 
 .community-file-input {
-  padding: 8px;
+  padding: 12px;
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: 12px;
   width: 100%;
   background: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.community-file-input:hover {
+  border-color: #999;
+  background: #fafafa;
 }
 
 /* Section Titles */

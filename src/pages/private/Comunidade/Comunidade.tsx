@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonList, IonModal, IonButton, IonInput, IonTextarea, IonIcon, IonLabel, IonAvatar } from '@ionic/react';
-import '../../../pages/StylesPages.css';
 import { heart, heartOutline, chatbubbleOutline, trash, pencil, close } from 'ionicons/icons';
 import Navbar from '../../../components/MainLayout';
 import YouTubeFeed from '../../../components/YouTubeFeed';
@@ -320,11 +319,14 @@ const Comunidade: React.FC = () => {
   };
 
   const renderGeralTab = () => (
-  <div className="page">
-    <h2>🌍 Comunidade Geral</h2>
+  <div>
+    <div className="mb-8">
+      <h2 className="mb-2 text-2xl font-bold">🌍 Comunidade Geral</h2>
+      <p className="text-sm text-gray-600 m-0">Conecta-te com a comunidade, partilha notícias e acompanha vídeos em destaque.</p>
+    </div>
 
     {isAdmin && (
-      <div style={{ marginBottom: 16 }}>
+      <div className="mb-6">
         <button
           type="button"
           className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800"
@@ -335,56 +337,58 @@ const Comunidade: React.FC = () => {
       </div>
     )}
 
-    <section className="news-section">
-      <h3 className="news-label">📰 Notícias</h3>
+    <div className="mb-8">
+      <div className="mb-5">
+        <h3 className="m-0 mb-2 text-lg font-semibold">📰 Notícias</h3>
+      </div>
 
       {news.map(item => (
-        <IonCard key={item._id} className="news-card rounded-3xl bg-white shadow-lg ring-1 ring-slate-200/70" style={{ marginBottom: 16 }}>
-            <IonCardHeader>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <IonAvatar style={{ width: 32, height: 32 }}>
+        <IonCard key={item._id} className="rounded-3xl bg-white shadow-lg ring-1 ring-slate-200/70 mb-8">
+            <IonCardHeader className="pb-0 p-6">
+              <div className="flex items-center gap-2.5 mb-3">
+                <IonAvatar className="w-10 h-10">
                   <img
                     src={item.author?.profilePic || 'https://ui-avatars.com/api/?name=Admin'}
                     alt={item.author?.username}
                   />
                 </IonAvatar>
 
-                <div style={{ flex: 1 }}>
-                  <strong>{item.author?.username || 'Admin'}</strong>
-                  <div style={{ fontSize: 12, color: '#999' }}>
+                <div className="flex-1">
+                  <strong className="text-sm">{item.author?.username || 'Admin'}</strong>
+                  <div className="text-xs text-gray-500 mt-0.5">
                     {new Date(item.createdAt).toLocaleDateString('pt-BR')}{' '}
                     {new Date(item.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 </div>
               </div>
 
-              <IonCardTitle>{item.title}</IonCardTitle>
+              <IonCardTitle className="text-lg font-semibold mb-2">{item.title}</IonCardTitle>
             </IonCardHeader>
 
-            <IonCardContent>
+            <IonCardContent className="p-6 pt-0">
               {item.imagens?.[0] && (
                 <img
                   src={item.imagens[0]}
                   alt={item.title}
-                  style={{ width: '100%', maxHeight: 300, objectFit: 'cover', marginBottom: 12, borderRadius: 8 }}
+                  className="w-full max-h-70 object-cover mb-4 rounded-xl"
                 />
               )}
 
-              <p>{item.content || item.message}</p>
+              <p className="text-sm leading-relaxed mb-3 text-gray-800">{item.content || item.message}</p>
 
               {item.link && (
                 <a
                   href={item.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ color: '#007bff', textDecoration: 'none', fontSize: 12 }}
+                  className="text-blue-500 no-underline text-xs font-medium"
                 >
-                  🔗 {item.link}
+                  🔗 Ver link
                 </a>
               )}
 
               {/* LIKE + COMMENTS */}
-              <div className="flex items-center justify-between gap-3 border-t border-slate-200/70 pt-3 mt-3">
+              <div className="flex items-center justify-between gap-3 border-t border-slate-200/70 pt-4 mt-4">
                 <div className="flex items-center gap-2">
                   {user?._id === item.author?._id && (
                     <>
@@ -401,7 +405,7 @@ const Comunidade: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleLike(item._id)}
-                    className={`inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold transition ${user?._id && item.likes?.includes(user._id) ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                    className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${user?._id && item.likes?.includes(user._id) ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
                   >
                     <IonIcon icon={user?._id && item.likes?.includes(user._id) ? heart : heartOutline} />
                     {item.likes?.length || 0}
@@ -413,7 +417,7 @@ const Comunidade: React.FC = () => {
                         selectedNewsForComments === item._id ? null : item._id
                       )
                     }
-                    className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-slate-500 hover:bg-slate-100 transition"
+                    className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 transition"
                   >
                     <IonIcon icon={chatbubbleOutline} />
                     {item.comments?.length || 0}
@@ -423,14 +427,14 @@ const Comunidade: React.FC = () => {
 
               {/* COMMENTS */}
               {selectedNewsForComments === item._id && (
-                <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #ddd' }}>
+                <div className="mt-4 pt-4 border-t border-gray-200">
 
-                  <div style={{ marginBottom: 12, maxHeight: 200, overflowY: 'auto' }}>
+                  <div className="mb-4 max-h-60 overflow-y-auto">
                     {(item.comments?.length ?? 0) > 0 ? (
                       (item.comments ?? []).map((comment: CommunityComment) => (
-                        <div key={comment._id} style={{ marginBottom: 10, paddingBottom: 10, borderBottom: '1px solid #eee' }}>
-                          <div style={{ display: 'flex', gap: 8 }}>
-                            <IonAvatar style={{ width: 24, height: 24 }}>
+                        <div key={comment._id} className="mb-3 pb-3 border-b border-gray-100">
+                          <div className="flex gap-2.5">
+                            <IonAvatar className="w-7 h-7 min-w-7">
                               <img
                                 src={
                                   comment.author?.profilePic ||
@@ -440,16 +444,16 @@ const Comunidade: React.FC = () => {
                               />
                             </IonAvatar>
 
-                            <div style={{ flex: 1 }}>
-                              <strong style={{ fontSize: 12 }}>
+                            <div className="flex-1">
+                              <strong className="text-xs block">
                                 {comment.author?.username}
                               </strong>
 
-                              <p style={{ margin: '4px 0', fontSize: 13 }}>
+                              <p className="m-1 text-xs text-gray-800 leading-relaxed">
                                 {comment.message}
                               </p>
 
-                              <small style={{ color: '#999' }}>
+                              <small className="text-gray-400 text-xs">
                                 {new Date(comment.createdAt).toLocaleDateString('pt-BR')}
                               </small>
                             </div>
@@ -457,22 +461,22 @@ const Comunidade: React.FC = () => {
                         </div>
                       ))
                     ) : (
-                      <p style={{ fontSize: 12, color: '#999' }}>
+                      <p className="text-xs text-gray-400">
                         Sem comentários ainda
                       </p>
                     )}
                   </div>
 
                   {/* ADD COMMENT */}
-                  <div style={{ display: 'flex', gap: 8 }}>
+                  <div className="flex gap-2.5">
                     <IonInput
                       placeholder="Adicionar comentário..."
                       value={newComment}
                       onIonChange={e => setNewComment(e.detail.value || '')}
-                      style={{ flex: 1 }}
+                      className="flex-1"
                     />
 
-                    <IonButton fill="clear" onClick={() => handleAddComment(item._id)}>
+                    <IonButton fill="solid" size="small" onClick={() => handleAddComment(item._id)}>
                       Enviar
                     </IonButton>
                   </div>
@@ -481,34 +485,41 @@ const Comunidade: React.FC = () => {
             </IonCardContent>
           </IonCard>
         ))}
-      </section>
+      </div>
 
-    <section className="news-section">
-      <h3 className="news-label">🔴 Ao Vivo Agora</h3>
+    <div className="mb-8">
+      <div className="mb-5">
+        <h3 className="m-0 mb-2 text-lg font-semibold">🔴 Ao Vivo Agora</h3>
+      </div>
       <YouTubeFeed
         category="lives"
         limit={3}
         onLoaded={setLivesCount}
       />
-    </section>
+    </div>
 
-    <section className="news-section">
-      <h3 className="news-label">🎥 Vídeos em Destaque</h3>
+    <div>
+      <div className="mb-5">
+        <h3 className="m-0 mb-2 text-lg font-semibold">🎥 Vídeos em Destaque</h3>
+      </div>
       <YouTubeFeed
         category="videos"
         limit={5}
         onLoaded={setVideosCount}
       />
-    </section>
+    </div>
   </div>
 );
 
   const renderDojoTab = () => (
-    <div className="page">
-      <h2>🥋 Dojo</h2>
+    <div>
+      <div className="mb-8">
+        <h2 className="mb-2 text-2xl font-bold">🥋 Dojo</h2>
+        <p className="text-sm text-gray-600 m-0">Partilha atualizações, cria votações e conecta-te com o teu dojo.</p>
+      </div>
 
       {isSensei && (
-        <div style={{ marginBottom: 16 }}>
+        <div className="mb-6">
           <button
             type="button"
             className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800"
@@ -519,38 +530,37 @@ const Comunidade: React.FC = () => {
         </div>
       )}
 
-      <section className="news-section">
-        <h3 className="news-label">🥋 Feed do Dojo</h3>
+      <div>
 
         {dojoPosts.length === 0 && (
-          <IonCard className="news-card community-empty-card">
-            <IonCardContent>
-              <p>Ainda não existem publicações no dojo.</p>
+          <IonCard className="rounded-3xl bg-white shadow-lg ring-1 ring-slate-200/70">
+            <IonCardContent className="text-center p-8">
+              <p className="text-sm text-gray-600 m-0">Ainda não existem publicações no dojo.</p>
             </IonCardContent>
           </IonCard>
         )}
 
       {dojoPosts.map(post => (
-        <IonCard key={post._id} className="news-card rounded-3xl bg-white shadow-lg ring-1 ring-slate-200/70" style={{ marginBottom: 16 }}>
-          <IonCardHeader>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-              <IonAvatar style={{ width: 32, height: 32 }}>
+        <IonCard key={post._id} className="rounded-3xl bg-white shadow-lg ring-1 ring-slate-200/70 mb-8">
+          <IonCardHeader className="pb-0 p-6">
+            <div className="flex items-center gap-2.5 mb-3">
+              <IonAvatar className="w-10 h-10">
                 <img
                   src={post.author?.profilePic || 'https://ui-avatars.com/api/?name=Dojo'}
                   alt={post.author?.username}
                 />
               </IonAvatar>
 
-              <div style={{ flex: 1 }}>
-                <strong>{post.author?.username || 'Dojo'}</strong>
-                <div style={{ fontSize: 12, color: '#999' }}>
+              <div className="flex-1">
+                <strong className="text-sm">{post.author?.username || 'Dojo'}</strong>
+                <div className="text-xs text-gray-500 mt-0.5">
                   {new Date(post.createdAt).toLocaleDateString('pt-BR')}{' '}
                   {new Date(post.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                 </div>
               </div>
 
               {user?._id === post.author?._id && (
-                <div style={{ display: 'flex', gap: 4 }}>
+                <div className="flex gap-1">
                   <IonButton fill="clear" size="small" onClick={() => handleOpenEdit(post)}>
                     <IonIcon slot="icon-only" icon={pencil}></IonIcon>
                   </IonButton>
@@ -561,44 +571,51 @@ const Comunidade: React.FC = () => {
               )}
             </div>
 
-            <IonCardTitle>{post.title}</IonCardTitle>
+            <IonCardTitle className="text-lg font-semibold mb-2">{post.title}</IonCardTitle>
           </IonCardHeader>
 
-          <IonCardContent>
+          <IonCardContent className="p-6 pt-0">
             {post.imagens?.[0] && (
               <img
                 src={post.imagens[0]}
                 alt={post.title}
-                className="community-attachment"
+                className="w-full max-h-70 object-cover mb-4 rounded-xl"
               />
             )}
 
-            <p>{post.message || post.content}</p>
+            <p className="text-sm leading-relaxed mb-3 text-gray-800">{post.message || post.content}</p>
 
             {post.link && (
               <a
                 href={post.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: '#007bff', textDecoration: 'none', fontSize: 12 }}
+                className="text-blue-500 no-underline text-xs font-medium block mb-3"
               >
-                🔗 {post.link}
+                🔗 Ver link
               </a>
             )}
 
             {/* ATTACHMENTS */}
             {post.attachments?.map((att: CommunityAttachment, i: number) => (
-              <div key={i} style={{ marginBottom: 12 }}>
-                {att.type === 'image' && <img src={att.url} className="community-attachment" style={{ width: '100%', maxHeight: 300, objectFit: 'cover', borderRadius: 8 }} />}
+              <div key={i} className="mb-4">
+                {att.type === 'image' && <img src={att.url} alt="attachment" className="w-full max-h-70 object-cover rounded-xl" />}
                 {att.type === 'video' && (
-                  <video 
-                    src={att.url} 
-                    controls 
-                    style={{ width: '100%', maxHeight: 300, borderRadius: 8, backgroundColor: '#000' }}
-                  />
+                  <div className="mb-3">
+                    <iframe
+                      width="100%"
+                      height="280"
+                      src={att.url.includes('youtube') ? att.url.replace('watch?v=', 'embed/') : att.url}
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                      allowFullScreen
+                      title="Video player"
+                      className="rounded-xl"
+                    />
+                  </div>
                 )}
                 {att.type === 'link' && (
-                  <a href={att.url} target="_blank" rel="noopener noreferrer" style={{ color: '#007bff', textDecoration: 'none', fontSize: 12 }}>
+                  <a href={att.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 no-underline text-xs font-medium">
                     🔗 {att.title || att.url}
                   </a>
                 )}
@@ -607,28 +624,28 @@ const Comunidade: React.FC = () => {
 
             {/* POLL */}
             {post.poll && (
-              <div style={{ marginTop: 12, padding: '12px 8px', backgroundColor: '#f5f5f5', borderRadius: 8 }}>
-                <strong style={{ display: 'block', marginBottom: 8 }}>📊 {post.poll?.question}</strong>
+              <div className="mt-3 p-4 bg-gray-50 rounded-xl mb-4">
+                <strong className="block mb-3 text-sm">📊 {post.poll?.question}</strong>
                 {post.poll?.options.map((o: CommunityPollOption, i: number) => {
                   const totalVotes = post.poll?.options.reduce((acc, opt) => acc + opt.votes.length, 0) || 0;
                   const percentage = totalVotes > 0 ? Math.round((o.votes.length / totalVotes) * 100) : 0;
                   
                   return (
-                    <div key={i} style={{ marginBottom: 8 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div key={i} className="mb-3">
+                      <div className="flex items-center gap-2.5">
                         <input
                           type="radio"
                           name={`poll-${post._id}`}
                           onChange={() => handleVotePoll(post._id, i)}
-                          style={{ cursor: 'pointer' }}
+                          className="cursor-pointer"
                         />
-                        <span style={{ flex: 1 }}>{o.text}</span>
-                        <span style={{ fontSize: 12, color: '#666', minWidth: 40 }}>{percentage}%</span>
+                        <span className="flex-1 text-xs">{o.text}</span>
+                        <span className="text-xs text-gray-500 min-w-10">{percentage}%</span>
                       </div>
-                      <div style={{ height: 6, backgroundColor: '#e0e0e0', borderRadius: 3, marginLeft: 28, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', backgroundColor: '#007bff', width: `${percentage}%`, transition: 'width 0.3s' }} />
+                      <div className="h-1.5 bg-gray-200 rounded overflow-hidden ml-7 mt-1">
+                        <div className="h-full bg-blue-500 transition-all" style={{ width: `${percentage}%` }} />
                       </div>
-                      <div style={{ fontSize: 11, color: '#999', marginLeft: 28, marginTop: 2 }}>{o.votes.length} voto{o.votes.length !== 1 ? 's' : ''}</div>
+                      <div className="text-xs text-gray-400 ml-7 mt-1">{o.votes.length} voto{o.votes.length !== 1 ? 's' : ''}</div>
                     </div>
                   );
                 })}
@@ -636,11 +653,11 @@ const Comunidade: React.FC = () => {
             )}
 
             {/* LIKE + COMMENTS */}
-            <div className="flex items-center justify-between gap-3 border-t border-slate-200/70 pt-3 mt-3">
+            <div className="flex items-center justify-between gap-3 border-t border-slate-200/70 pt-4 mt-4">
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => handleLikeDojoPost(post._id)}
-                  className={`inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold transition ${user?._id && post.likes?.includes(user._id) ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${user?._id && post.likes?.includes(user._id) ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
                 >
                   <IonIcon icon={user?._id && post.likes?.includes(user._id) ? heart : heartOutline} />
                   {post.likes?.length || 0}
@@ -652,7 +669,7 @@ const Comunidade: React.FC = () => {
                       selectedDojoPostForComments === post._id ? null : post._id
                     )
                   }
-                  className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-slate-500 hover:bg-slate-100 transition"
+                  className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 transition"
                 >
                   <IonIcon icon={chatbubbleOutline} />
                   {post.comments?.length || 0}
@@ -662,51 +679,54 @@ const Comunidade: React.FC = () => {
 
             {/* COMMENTS */}
             {selectedDojoPostForComments === post._id && (
-              <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #ddd' }}>
-                {(post.comments ?? []).map((c: CommunityComment) => (
-                  <div key={c._id} style={{ marginBottom: 10, paddingBottom: 10, borderBottom: '1px solid #eee' }}>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <IonAvatar style={{ width: 24, height: 24 }}>
-                        <img
-                          src={
-                            c.author?.profilePic ||
-                            'https://ui-avatars.com/api/?name=' + (c.author?.username || 'User')
-                          }
-                          alt={c.author?.username || 'User'}
-                        />
-                      </IonAvatar>
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <div className="mb-4 max-h-60 overflow-y-auto">
+                  {(post.comments ?? []).map((c: CommunityComment) => (
+                    <div key={c._id} className="mb-3 pb-3 border-b border-gray-100">
+                      <div className="flex gap-2.5">
+                        <IonAvatar className="w-7 h-7 min-w-7">
+                          <img
+                            src={
+                              c.author?.profilePic ||
+                              'https://ui-avatars.com/api/?name=' + (c.author?.username || 'User')
+                            }
+                            alt={c.author?.username || 'User'}
+                          />
+                        </IonAvatar>
 
-                      <div style={{ flex: 1 }}>
-                        <strong style={{ fontSize: 12 }}>{c.author?.username}</strong>
-                        <p style={{ margin: '4px 0', fontSize: 13 }}>{c.message}</p>
+                        <div className="flex-1">
+                          <strong className="text-xs block">{c.author?.username}</strong>
+                          <p className="m-1 text-xs text-gray-800 leading-relaxed">{c.message}</p>
 
-                        <small style={{ color: '#999' }}>
-                          {new Date(c.createdAt).toLocaleDateString('pt-BR')}
-                        </small>
+                          <small className="text-gray-400 text-xs">
+                            {new Date(c.createdAt).toLocaleDateString('pt-BR')}
+                          </small>
+                        </div>
                       </div>
+
+                      {user?._id === c.author?._id && (
+                        <IonButton
+                          fill="clear"
+                          color="danger"
+                          size="small"
+                          onClick={() => handleDeleteDojoComment(c._id)}
+                        >
+                          <IonIcon icon={trash} />
+                        </IonButton>
+                      )}
                     </div>
+                  ))}
+                </div>
 
-                    {user?._id === c.author?._id && (
-                      <IonButton
-                        fill="clear"
-                        color="danger"
-                        onClick={() => handleDeleteDojoComment(c._id)}
-                      >
-                        <IonIcon icon={trash} />
-                      </IonButton>
-                    )}
-                  </div>
-                ))}
-
-                <div style={{ display: 'flex', gap: 8 }}>
+                <div className="flex gap-2.5">
                   <IonInput
                     placeholder="Adicionar comentário..."
                     value={newComment}
                     onIonChange={e => setNewComment(e.detail.value || '')}
-                    style={{ flex: 1 }}
+                    className="flex-1"
                   />
 
-                  <IonButton fill="clear" onClick={() => handleAddDojoComment(post._id)}>
+                  <IonButton fill="solid" size="small" onClick={() => handleAddDojoComment(post._id)}>
                     Enviar
                   </IonButton>
                 </div>
@@ -715,24 +735,24 @@ const Comunidade: React.FC = () => {
           </IonCardContent>
         </IonCard>
       ))}
-      </section>
+      </div>
     </div>
   );
 
   return (
     <IonPage>
-      <IonContent fullscreen className="background">
-        <div className="page">
-          <div className="community-tabs">
+      <IonContent fullscreen className="content">
+        <div className="p-8">
+          <div className="flex gap-4 mb-6">
             <button
-              className={`community-tab-btn${activeTab === 'geral' ? ' active' : ''}`}
+              className={`px-4 py-2 font-semibold rounded-lg transition ${activeTab === 'geral' ? 'bg-slate-900 text-white' : 'bg-white text-slate-900 border border-slate-200'}`}
               onClick={() => setActiveTab('geral')}
             >
               Geral
             </button>
             {!isAdmin && (
               <button
-                className={`community-tab-btn${activeTab === 'dojo' ? ' active' : ''}`}
+                className={`px-4 py-2 font-semibold rounded-lg transition ${activeTab === 'dojo' ? 'bg-slate-900 text-white' : 'bg-white text-slate-900 border border-slate-200'}`}
                 onClick={() => setActiveTab('dojo')}
               >
                 Dojo
@@ -758,48 +778,51 @@ const Comunidade: React.FC = () => {
             </IonButton>
           </IonToolbar>
         </IonHeader>
-        <IonContent>
-          <div className="community-modal-content">
+        <IonContent className="bg-slate-50 text-slate-900">
+          <div className="p-6 space-y-4">
             <div>
-              <IonLabel>Título *</IonLabel>
+              <IonLabel className="block mb-2 font-medium text-sm">Título *</IonLabel>
               <IonInput
                 placeholder="Digite o título da notícia"
                 value={newNewsTitle}
                 onIonChange={e => setNewNewsTitle(e.detail.value || '')}
+                className="border border-slate-200 rounded-lg px-3 py-2"
               />
             </div>
 
             <div>
-              <IonLabel>Conteúdo *</IonLabel>
+              <IonLabel className="block mb-2 font-medium text-sm">Conteúdo *</IonLabel>
               <IonTextarea
                 placeholder="Digite o conteúdo da notícia"
                 value={newNewsContent}
                 onIonChange={e => setNewNewsContent(e.detail.value || '')}
+                className="border border-slate-200 rounded-lg px-3 py-2"
                 style={{ minHeight: 120 }}
               />
             </div>
 
             <div>
-              <IonLabel>Link Externo (opcional)</IonLabel>
+              <IonLabel className="block mb-2 font-medium text-sm">Link Externo (opcional)</IonLabel>
               <IonInput
                 placeholder="https://exemplo.com"
                 value={newNewsLink}
                 onIonChange={e => setNewNewsLink(e.detail.value || '')}
+                className="border border-slate-200 rounded-lg px-3 py-2"
               />
             </div>
 
             <div>
-              <IonLabel>Imagem (opcional)</IonLabel>
+              <IonLabel className="block mb-2 font-medium text-sm">Imagem (opcional)</IonLabel>
               <input
                 type="file"
                 accept="image/*"
                 onChange={e => setNewNewsImage(e.target.files?.[0] || null)}
-                className="community-file-input"
+                className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200"
               />
-              {newNewsImage && <p style={{ marginTop: 8, fontSize: 12, color: '#666' }}>✓ {newNewsImage.name}</p>}
+              {newNewsImage && <p className="mt-2 text-xs text-gray-600">✓ {newNewsImage.name}</p>}
             </div>
 
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div className="flex gap-2 pt-4">
               <IonButton expand="block" fill="solid" onClick={handleCreateNews} disabled={isSubmitting}>
                 Publicar Notícia
               </IonButton>
@@ -829,56 +852,60 @@ const Comunidade: React.FC = () => {
             </IonButton>
           </IonToolbar>
         </IonHeader>
-        <IonContent>
-          <div className="community-modal-content">
+        <IonContent className="bg-slate-50 text-slate-900">
+          <div className="p-6 space-y-4">
             <div>
-              <IonLabel>Título *</IonLabel>
+              <IonLabel className="block mb-2 font-medium text-sm">Título *</IonLabel>
               <IonInput
                 placeholder="Digite o título do post"
                 value={newDojoTitle}
                 onIonChange={e => setNewDojoTitle(e.detail.value || '')}
+                className="border border-slate-200 rounded-lg px-3 py-2"
               />
             </div>
 
             <div>
-              <IonLabel>Conteúdo *</IonLabel>
+              <IonLabel className="block mb-2 font-medium text-sm">Conteúdo *</IonLabel>
               <IonTextarea
                 placeholder="Partilha uma atualização com o dojo"
                 value={newDojoContent}
                 onIonChange={e => setNewDojoContent(e.detail.value || '')}
+                className="border border-slate-200 rounded-lg px-3 py-2"
                 style={{ minHeight: 120 }}
               />
             </div>
 
             <div>
-              <IonLabel>Link Externo (opcional)</IonLabel>
+              <IonLabel className="block mb-2 font-medium text-sm">Link Externo (opcional)</IonLabel>
               <IonInput
                 placeholder="https://exemplo.com"
                 value={newDojoLink}
                 onIonChange={e => setNewDojoLink(e.detail.value || '')}
+                className="border border-slate-200 rounded-lg px-3 py-2"
               />
             </div>
 
             <div>
-              <IonLabel>Vídeo - URL (opcional)</IonLabel>
+              <IonLabel className="block mb-2 font-medium text-sm">Vídeo - URL (opcional)</IonLabel>
               <IonInput
                 placeholder="https://exemplo.com/video.mp4"
                 value={newDojoVideo}
                 onIonChange={e => setNewDojoVideo(e.detail.value || '')}
+                className="border border-slate-200 rounded-lg px-3 py-2"
               />
             </div>
 
-            <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #ddd' }}>
-              <IonLabel style={{ display: 'block', marginBottom: 8 }}>Criar Votação (opcional)</IonLabel>
+            <div className="pt-4 border-t border-slate-200">
+              <IonLabel className="block mb-3 font-medium text-sm">Criar Votação (opcional)</IonLabel>
               <IonInput
                 placeholder="Pergunta da votação"
                 value={newPollQuestion}
                 onIonChange={e => setNewPollQuestion(e.detail.value || '')}
-                style={{ marginBottom: 8 }}
+                className="border border-slate-200 rounded-lg px-3 py-2 mb-3"
               />
 
               {newPollOptions.map((option, i) => (
-                <div key={i} style={{ display: 'flex', gap: 4, marginBottom: 8, alignItems: 'center' }}>
+                <div key={i} className="flex gap-1 mb-3 items-center">
                   <IonInput
                     placeholder={`Opção ${i + 1}`}
                     value={option}
@@ -887,7 +914,7 @@ const Comunidade: React.FC = () => {
                       newOptions[i] = e.detail.value || '';
                       setNewPollOptions(newOptions);
                     }}
-                    style={{ flex: 1 }}
+                    className="flex-1 border border-slate-200 rounded-lg px-3 py-2"
                   />
                   <IonButton
                     size="small"
@@ -903,24 +930,24 @@ const Comunidade: React.FC = () => {
                 size="small"
                 fill="outline"
                 onClick={() => setNewPollOptions([...newPollOptions, ''])}
-                style={{ marginBottom: 8 }}
+                className="mb-3"
               >
                 + Adicionar Opção
               </IonButton>
             </div>
 
             <div>
-              <IonLabel>Imagem (opcional)</IonLabel>
+              <IonLabel className="block mb-2 font-medium text-sm">Imagem (opcional)</IonLabel>
               <input
                 type="file"
                 accept="image/*"
                 onChange={e => setNewDojoImage(e.target.files?.[0] || null)}
-                className="community-file-input"
+                className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200"
               />
-              {newDojoImage && <p style={{ marginTop: 8, fontSize: 12, color: '#666' }}>✓ {newDojoImage.name}</p>}
+              {newDojoImage && <p className="mt-2 text-xs text-gray-600">✓ {newDojoImage.name}</p>}
             </div>
 
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div className="flex gap-2 pt-4">
               <IonButton expand="block" fill="solid" onClick={handleCreateDojoPost} disabled={isSubmitting}>
                 Publicar Post
               </IonButton>
@@ -945,56 +972,60 @@ const Comunidade: React.FC = () => {
             </IonButton>
           </IonToolbar>
         </IonHeader>
-        <IonContent>
-          <div className="community-modal-content">
+        <IonContent className="bg-slate-50 text-slate-900">
+          <div className="p-6 space-y-4">
             <div>
-              <IonLabel>Título *</IonLabel>
+              <IonLabel className="block mb-2 font-medium text-sm">Título *</IonLabel>
               <IonInput
                 placeholder="Digite o título do post"
                 value={editTitle}
                 onIonChange={e => setEditTitle(e.detail.value || '')}
+                className="border border-slate-200 rounded-lg px-3 py-2"
               />
             </div>
 
             <div>
-              <IonLabel>Conteúdo *</IonLabel>
+              <IonLabel className="block mb-2 font-medium text-sm">Conteúdo *</IonLabel>
               <IonTextarea
                 placeholder="Partilha uma atualização com o dojo"
                 value={editContent}
                 onIonChange={e => setEditContent(e.detail.value || '')}
+                className="border border-slate-200 rounded-lg px-3 py-2"
                 style={{ minHeight: 120 }}
               />
             </div>
 
             <div>
-              <IonLabel>Link Externo (opcional)</IonLabel>
+              <IonLabel className="block mb-2 font-medium text-sm">Link Externo (opcional)</IonLabel>
               <IonInput
                 placeholder="https://exemplo.com"
                 value={editLink}
                 onIonChange={e => setEditLink(e.detail.value || '')}
+                className="border border-slate-200 rounded-lg px-3 py-2"
               />
             </div>
 
             <div>
-              <IonLabel>Vídeo - URL (opcional)</IonLabel>
+              <IonLabel className="block mb-2 font-medium text-sm">Vídeo - URL (opcional)</IonLabel>
               <IonInput
                 placeholder="https://exemplo.com/video.mp4"
                 value={editVideo}
                 onIonChange={e => setEditVideo(e.detail.value || '')}
+                className="border border-slate-200 rounded-lg px-3 py-2"
               />
             </div>
 
-            <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #ddd' }}>
-              <IonLabel style={{ display: 'block', marginBottom: 8 }}>Criar Votação (opcional)</IonLabel>
+            <div className="pt-4 border-t border-slate-200">
+              <IonLabel className="block mb-3 font-medium text-sm">Criar Votação (opcional)</IonLabel>
               <IonInput
                 placeholder="Pergunta da votação"
                 value={editPollQuestion}
                 onIonChange={e => setEditPollQuestion(e.detail.value || '')}
-                style={{ marginBottom: 8 }}
+                className="border border-slate-200 rounded-lg px-3 py-2 mb-3"
               />
               
               {editPollOptions.map((option, i) => (
-                <div key={i} style={{ display: 'flex', gap: 4, marginBottom: 8, alignItems: 'center' }}>
+                <div key={i} className="flex gap-1 mb-3 items-center">
                   <IonInput
                     placeholder={`Opção ${i + 1}`}
                     value={option}
@@ -1003,7 +1034,7 @@ const Comunidade: React.FC = () => {
                       newOptions[i] = e.detail.value || '';
                       setEditPollOptions(newOptions);
                     }}
-                    style={{ flex: 1 }}
+                    className="flex-1 border border-slate-200 rounded-lg px-3 py-2"
                   />
                   <IonButton 
                     size="small" 
@@ -1019,13 +1050,13 @@ const Comunidade: React.FC = () => {
                 size="small"
                 fill="outline"
                 onClick={() => setEditPollOptions([...editPollOptions, ''])}
-                style={{ marginBottom: 8 }}
+                className="mb-3"
               >
                 + Adicionar Opção
               </IonButton>
             </div>
 
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div className="flex gap-2 pt-4">
               <IonButton expand="block" fill="solid" onClick={handleSaveEdit} disabled={isSubmitting}>
                 Guardar Alterações
               </IonButton>

@@ -82,43 +82,45 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, isSelected = fals
         )}
 
         {/* Duration/Live Badge */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 8,
-            right: 8,
-            backgroundColor: video.isLive ? '#ff0000' : 'rgba(0,0,0,0.8)',
-            color: 'white',
-            padding: '2px 6px',
-            borderRadius: 4,
-            fontSize: 12,
-            fontWeight: 500,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 4,
-            animation: video.isLive ? 'pulse 2s infinite' : 'none'
-          }}
-        >
-          {video.isLive ? (
-            <>
-              <div
-                style={{
-                  width: 8,
-                  height: 8,
-                  backgroundColor: 'white',
-                  borderRadius: '50%',
-                  animation: 'pulse 1.5s infinite'
-                }}
-              />
-              LIVE
-            </>
-          ) : (
-            <>
-              <IonIcon icon={timeOutline} style={{ fontSize: 10 }} />
-              {durationText}
-            </>
-          )}
-        </div>
+        {!isSelected && (
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 8,
+              right: 8,
+              backgroundColor: video.isLive ? '#ff0000' : 'rgba(0,0,0,0.8)',
+              color: 'white',
+              padding: '2px 6px',
+              borderRadius: 4,
+              fontSize: 12,
+              fontWeight: 500,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              animation: video.isLive ? 'pulse 2s infinite' : 'none'
+            }}
+          >
+            {video.isLive ? (
+              <>
+                <div
+                  style={{
+                    width: 8,
+                    height: 8,
+                    backgroundColor: 'white',
+                    borderRadius: '50%',
+                    animation: 'pulse 1.5s infinite'
+                  }}
+                />
+                LIVE
+              </>
+            ) : (
+              <>
+                <IonIcon icon={timeOutline} style={{ fontSize: 10 }} />
+                {durationText}
+              </>
+            )}
+          </div>
+        )}
 
         {!isSelected && (
           <div
@@ -143,16 +145,17 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, isSelected = fals
       </div>
 
       {/* Content */}
-      <IonCardContent style={{ padding: '12px 16px' }}>
-        <IonText style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.3, marginBottom: 8, display: 'block' }}>
-          {video.title}
-        </IonText>
+      {!isSelected && (
+        <IonCardContent style={{ padding: '12px 16px' }}>
+          <IonText style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.3, marginBottom: 8, display: 'block', color: '#000' }}>
+            {video.title}
+          </IonText>
 
         <IonText color="medium" style={{ fontSize: 12 }}>
           {formatDate(video.publishedAt)}
         </IonText>
       </IonCardContent>
-
+      )}
       <style>{`
         @keyframes pulse {
           0%, 100% { opacity: 1; }
