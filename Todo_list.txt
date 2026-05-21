@@ -1,22 +1,15 @@
 Corrigir o request dos conversations (ta a pegar apenas ele proprio )
 
-Atleta:
-   
- Comunidade:
-   por o mesmo style que a home;
-
- Profile:
-   As vitórias tem a ver com ter acertos de predições;
-   torneios participações tem a ver que os torneios que participou;
-
 Admin:
  Login:
     Quando fazer login deve ir direto para a painel de controlo;
  
  Loja:
-    Na loja deve ter um opção de permissão de produtos ou rejeição;
-    so mostra os permitidos;
-    notificações;
+    tera na loja um botao em cima "gerir produtos", onde da para ver,
+    os produtos com mais detalhes, editar ou remover, e pedidos para
+    adicionar seus produtos, o admin pode rejeitar ou aceitar, fazendo
+    poder aparecer na loja;
+    tira os mockdatas e usa a database;
 
  Rankings:
     So consegue ver o geral;
@@ -65,6 +58,7 @@ Geral:
 
   Loja:
    ta a mostrar os produtos de mockdata e não os da database;
+   mostrar apenas produtos permitidos;
    tem que ter o carrinho;
    funcionar com o pagamentos;
    
