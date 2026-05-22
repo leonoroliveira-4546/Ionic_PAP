@@ -41,6 +41,11 @@ interface Order {
   createdAt: string;
 }
 
+interface CartItem {
+  product: ExtendedProduct;
+  quantity: number;
+}
+
 interface ExtendedProduct extends Product {
   _id?: string;
   published?: boolean;
@@ -80,7 +85,7 @@ const Stars: React.FC<{ rating: number }> = ({ rating }) => {
   );
 };
 
-const ProductCard: React.FC<{ product: ExtendedProduct; onAdd: (name: string) => void; isAdmin?: boolean; disableBuy?: boolean }> = ({ product, onAdd, isAdmin, disableBuy }) => (
+const ProductCard: React.FC<{ product: ExtendedProduct; onAdd: (product: ExtendedProduct) => void; isAdmin?: boolean; disableBuy?: boolean }> = ({ product, onAdd, isAdmin, disableBuy }) => (
   <IonCard
     style={{
       borderRadius: 16,
@@ -148,7 +153,7 @@ const ProductCard: React.FC<{ product: ExtendedProduct; onAdd: (name: string) =>
             fill="solid"
             color="primary"
             disabled={!product.inStock}
-            onClick={() => onAdd(product.name)}
+            onClick={() => onAdd(product)}
             style={{ '--border-radius': '10px', '--padding-start': '10px', '--padding-end': '10px' }}
           >
             <IonIcon slot="icon-only" icon={cartOutline} />
@@ -168,7 +173,7 @@ const ProductCard: React.FC<{ product: ExtendedProduct; onAdd: (name: string) =>
 
 const Loja: React.FC = () => {
   const { user } = useAuth();
-  const { getProducts, getAdminProducts, createProduct, updateProduct, deleteProduct, getAdminOrders, updateOrderStatus } = shopApi();
+  const { getProducts, getAdminProducts, createProduct, updateProduct, deleteProduct, getAdminOrders, updateOrderStatus, createCheckoutSession } = shopApi();
   
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<Category>('Todos');
@@ -177,6 +182,8 @@ const Loja: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [adminTab, setAdminTab] = useState<AdminTab>('productos');
   const [orders, setOrders] = useState<Order[]>([]);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [showProductModal, setShowProductModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ExtendedProduct | null>(null);
   const [showDeleteAlert, setShowDeleteAlert] = useState<string | null>(null);
@@ -206,6 +213,21 @@ const Loja: React.FC = () => {
 
   const isAdmin = user?.type === 'admin';
   const isPraticinador = user?.type === 'praticinador';
+
+  useEffect(() => {
+    const storedCart = localStorage.getItem('shopCart');
+    if (storedCart) {
+      try {
+        setCart(JSON.parse(storedCart));
+      } catch (err) {
+        console.error('Falha ao carregar carrinho', err);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('shopCart', JSON.stringify(cart));
+  }, [cart]);
 
   useEffect(() => {
     loadData();
@@ -318,6 +340,71 @@ const Loja: React.FC = () => {
     }
   };
 
+  const addToCart = (product: ExtendedProduct) => {
+    if (!product._id) return;
+    setCart(prev => {
+      const existing = prev.find(item => item.product._id === product._id);
+      if (existing) {
+        return prev.map(item =>
+          item.product._id === product._id ? { ...item, quantity: item.quantity + 1 } : item
+        );
+      }
+      return [...prev, { product, quantity: 1 }];
+    });
+    setToastMessage(`"${product.name}" adicionado ao carrinho!`);
+  };
+
+  const removeFromCart = (productId: string) => {
+    setCart(prev => prev.filter(item => item.product._id !== productId));
+  };
+
+  const updateCartQuantity = (productId: string, quantity: number) => {
+    if (quantity < 1) {
+      removeFromCart(productId);
+      return;
+    }
+
+    setCart(prev => prev.map(item =>
+      item.product._id === productId ? { ...item, quantity } : item
+    ));
+  };
+
+  const cartTotal = cart.reduce((total, item) => total + item.product.price * item.quantity, 0);
+
+  const handleCheckout = async () => {
+    if (cart.length === 0) {
+      setToastMessage('O carrinho está vazio.');
+      return;
+    }
+
+    setCheckoutLoading(true);
+    try {
+      const items = cart.map(item => ({
+        name: item.product.name,
+        description: item.product.description,
+        price: item.product.price,
+        quantity: item.quantity,
+      }));
+
+      const data = await createCheckoutSession({ items });
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        setToastMessage('Não foi possível iniciar o pagamento.');
+      }
+    } catch (caughtError) {
+      console.error('Erro ao iniciar checkout', caughtError);
+      const err = caughtError as any;
+      if (err?.response?.data?.message) {
+        setToastMessage(err.response.data.message);
+      } else {
+        setToastMessage('Erro ao iniciar o pagamento.');
+      }
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
+
   const filtered = products.filter(p => {
     const matchesCategory = activeCategory === 'Todos' || p.category === activeCategory;
     const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -389,6 +476,64 @@ const Loja: React.FC = () => {
                     <IonLabel>{cat}</IonLabel>
                   </IonChip>
                 ))}
+              </div>
+            )}
+
+            {!isAdmin && (
+              <div className="mx-4 mb-4 rounded-3xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70">
+                <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
+                  <div>
+                    <IonText className="font-semibold">Carrinho</IonText>
+                    <p className="text-sm text-slate-600">{cart.length} item{cart.length !== 1 ? 's' : ''}</p>
+                  </div>
+                  <IonButton size="small" fill="clear" onClick={() => setCart([])} disabled={cart.length === 0}>
+                    Limpar carrinho
+                  </IonButton>
+                </div>
+                {cart.length === 0 ? (
+                  <p className="text-sm text-slate-600">O seu carrinho está vazio.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {cart.map(item => (
+                      <div key={item.product._id || item.product.id} className="rounded-3xl border border-slate-200 p-3 bg-slate-50">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex-1">
+                            <IonText className="font-semibold">{item.product.name}</IonText>
+                            <p className="text-sm text-slate-600">€{item.product.price.toFixed(2)}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <IonButton size="small" onClick={() => updateCartQuantity(item.product._id || '', item.quantity - 1)}>
+                              -
+                            </IonButton>
+                            <span className="text-sm">{item.quantity}</span>
+                            <IonButton size="small" onClick={() => updateCartQuantity(item.product._id || '', item.quantity + 1)}>
+                              +
+                            </IonButton>
+                          </div>
+                        </div>
+                        <div className="mt-3 flex items-center justify-between gap-3 text-sm text-slate-600">
+                          <span>Total</span>
+                          <span>€{(item.product.price * item.quantity).toFixed(2)}</span>
+                        </div>
+                        <IonButton size="small" color="danger" fill="clear" onClick={() => removeFromCart(item.product._id || '')}>
+                          Remover
+                        </IonButton>
+                      </div>
+                    ))}
+                    <div className="flex items-center justify-between border-t border-slate-200 pt-4">
+                      <IonText className="font-semibold">Total do carrinho</IonText>
+                      <IonText className="font-semibold">€{cartTotal.toFixed(2)}</IonText>
+                    </div>
+                    <IonButton
+                      expand="block"
+                      color="success"
+                      onClick={handleCheckout}
+                      disabled={checkoutLoading || cart.length === 0}
+                    >
+                      {checkoutLoading ? 'A processar...' : 'Pagar com Stripe'}
+                    </IonButton>
+                  </div>
+                )}
               </div>
             )}
 
@@ -493,9 +638,9 @@ const Loja: React.FC = () => {
                   <div className="grid gap-4 px-4 pb-24 sm:grid-cols-2">
                     {filtered.map(product => (
                       <ProductCard
-                        key={product.id}
+                        key={product._id || product.id}
                         product={product}
-                        onAdd={name => setToastMessage(`"${name}" adicionado ao carrinho!`)}
+                        onAdd={addToCart}
                         disableBuy={isPraticinador}
                       />
                     ))}

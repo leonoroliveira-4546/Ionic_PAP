@@ -1,12 +1,12 @@
 Corrigir o request dos conversations (ta a pegar apenas ele proprio )
    
 Geral:
-  Comunidade:
-   poder responder aos comentários;
-
   Loja:
-   mostrar apenas produtos permitidos;
    tem que ter o carrinho;
+   adicionar produtos ao carrinho;
+   remover produtos do carrinho;
+   visualizar o total do carrinho;
+   adicionar o stripe para pagamentos;
    funcionar com o pagamentos;
    
   Chat:

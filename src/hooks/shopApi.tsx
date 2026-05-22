@@ -39,6 +39,11 @@ export const shopApi = () => {
     return data;
   }, []);
 
+  const createCheckoutSession = useCallback(async (payload: any) => {
+    const { data } = await api.post('/shop/checkout', payload);
+    return data;
+  }, []);
+
   const getAdminOrders = useCallback(async () => {
     const { data } = await api.get('/shop/admin/orders');
     return data;
@@ -62,6 +67,7 @@ export const shopApi = () => {
     updateProduct, 
     deleteProduct,
     createOrder,
+    createCheckoutSession,
     getAdminOrders,
     getUserOrders,
     updateOrderStatus
