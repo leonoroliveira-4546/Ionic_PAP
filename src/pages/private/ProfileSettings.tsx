@@ -54,6 +54,7 @@ const ProfileSettings: React.FC = () => {
   const isAthlete = (type: string) => type?.toLowerCase() === 'athlete' || type?.toLowerCase() === 'atleta';
   const isResponsavel = (type: string) => type?.toLowerCase() === 'responsavel';
   const isSensei = (type: string) => type?.toLowerCase() === 'sensei';
+  const isPraticinador = (type: string) => type?.toLowerCase() === 'praticinador';
 
   useEffect(() => {
     if (!user) return;
@@ -325,6 +326,16 @@ const ProfileSettings: React.FC = () => {
             <IonLabel>
               <h3>Sem ranking reservado</h3>
               <p>Senseis não têm estatísticas de ranking exibidas aqui.</p>
+            </IonLabel>
+          </IonItem>
+        </IonList>
+      ) : isPraticinador(user.type) ? (
+        <IonList inset lines="inset">
+          <IonItem>
+            <IonIcon icon={trophyOutline} slot="start" color="medium" />
+            <IonLabel>
+              <h3>Perfil de Praticinador</h3>
+              <p>Esta página existe para o praticinador, mas não mostra estatísticas aqui.</p>
             </IonLabel>
           </IonItem>
         </IonList>

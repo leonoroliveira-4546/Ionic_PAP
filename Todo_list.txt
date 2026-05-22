@@ -1,15 +1,4 @@
 Corrigir o request dos conversations (ta a pegar apenas ele proprio )
-
-Praticinador:
-  
-  SeusProdutos (NOVO):
-    aqui ele pode ver seus produtos, criando um novo produto, editando ou deletando os produtos que ele tem;
-    O praticionador para de poder mecher quando o produto for aceite ou rejeitado, ou seja, quando tiver um feedback do admin;
-
-  Profile: 
-   o praticinador pode ter esta pagina, mas nao tera estaticas para mostrar;
-  
-  O resto das paginas nao aparece para ele, como o chat, rankings, predições, area educativa e etc;
    
 Geral:
   Funcionar todo com sockets
