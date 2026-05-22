@@ -1,15 +1,9 @@
 Corrigir o request dos conversations (ta a pegar apenas ele proprio )
 
 Admin:
- Login:
-    Quando fazer login deve ir direto para a painel de controlo;
  
  Loja:
-    tera na loja um botao em cima "gerir produtos", onde da para ver,
-    os produtos com mais detalhes, editar ou remover, e pedidos para
-    adicionar seus produtos, o admin pode rejeitar ou aceitar, fazendo
-    poder aparecer na loja;
-    tira os mockdatas e usa a database;
+    O admin não é quem cria os produtos, ele apenas aprova ou rejeita os produtos criados pelos praticinadores, ele pode editar ou remover os produtos criados pelos praticinadores;
 
  Rankings:
     So consegue ver o geral;

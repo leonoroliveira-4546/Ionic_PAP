@@ -36,7 +36,12 @@ const Login: React.FC = () => {
       const apiResult = await login(idToken);
 
       if (apiResult.success) {
-        history.replace('/home');
+        const user = apiResult.user;
+        if (user.type === 'admin') {
+          history.replace('/admin');
+        } else {
+          history.replace('/home');
+        }
       } else {
         console.error(apiResult.error);
       }
