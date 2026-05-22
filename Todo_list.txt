@@ -1,5 +1,3 @@
-Corrigir o request dos conversations (ta a pegar apenas ele proprio )
-   
 Geral:
   Loja:
    adicionar o stripe para pagamentos;
@@ -8,7 +6,6 @@ Geral:
   Chat:
    tem que deletar mensagem e editar;
    ao entrar tem que ir a ultima mensagem;
-   receber notificação das mensagens;
    poder ver quando o outro estiver a escrever e ter visto 
   na mensagem;
    
