@@ -1,12 +1,5 @@
 Corrigir o request dos conversations (ta a pegar apenas ele proprio )
 
-Admin:
-    
- Painel De controlo:
-    mostrar a lista de users por tabela, so 20 por pag;3
-    poder remover, editar users;
-    reiniciar o ranking se for necessário ( quando acaba a época ou quando tem que ser reiniciado por algum motivo, pontos do dojo e geral reiniciados);
-
 Praticinador:
   
   Home: não tem;
@@ -14,7 +7,7 @@ Praticinador:
   Loja: 
     consegue ver sua loja e a geral a qual que os outros veem;
   
-  Products;
+  Products:
     aqui tem seus produtos, consegue adicionar e editar ou remover;
     não consegue mecher depois que foi permitido ou rejeitado por admin;
 

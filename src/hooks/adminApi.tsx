@@ -12,12 +12,17 @@ export const adminApi = () => {
     return data;
   }, []);
 
+  const deleteUser = useCallback(async (id: string) => {
+    const { data } = await api.delete(`/admin/users/${id}`);
+    return data;
+  }, []);
+
   const resetRanking = useCallback(async () => {
     const { data } = await api.post('/admin/reset-ranking');
     return data;
   }, []);
 
-  return { getUsers, updateUser, resetRanking };
+  return { getUsers, updateUser, deleteUser, resetRanking };
 };
 
 export default adminApi;
