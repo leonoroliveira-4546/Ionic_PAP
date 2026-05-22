@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { loadStripe } from '@stripe/stripe-js';
 import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
   IonSearchbar, IonChip, IonLabel, IonCard, IonCardContent, IonCardHeader,
@@ -171,6 +172,8 @@ const ProductCard: React.FC<{ product: ExtendedProduct; onAdd: (product: Extende
   </IonCard>
 );
 
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
+
 const Loja: React.FC = () => {
   const { user } = useAuth();
   const { getProducts, getAdminProducts, createProduct, updateProduct, deleteProduct, getAdminOrders, updateOrderStatus, createCheckoutSession } = shopApi();
@@ -184,7 +187,9 @@ const Loja: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [showCartPanel, setShowCartPanel] = useState(false);
   const [showProductModal, setShowProductModal] = useState(false);
+  const cartRef = useRef<HTMLDivElement | null>(null);
   const [editingProduct, setEditingProduct] = useState<ExtendedProduct | null>(null);
   const [showDeleteAlert, setShowDeleteAlert] = useState<string | null>(null);
   const [formData, setFormData] = useState<{
@@ -228,6 +233,12 @@ const Loja: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('shopCart', JSON.stringify(cart));
   }, [cart]);
+
+  useEffect(() => {
+    if (showCartPanel) {
+      cartRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [showCartPanel]);
 
   useEffect(() => {
     loadData();
@@ -387,11 +398,37 @@ const Loja: React.FC = () => {
       }));
 
       const data = await createCheckoutSession({ items });
-      if (data?.url) {
-        window.location.href = data.url;
-      } else {
+      if (!data) {
         setToastMessage('Não foi possível iniciar o pagamento.');
+        return;
       }
+
+      const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+      if (!stripePublicKey) {
+        setToastMessage('Stripe público não configurado no frontend.');
+        return;
+      }
+
+      const stripe = await stripePromise;
+      if (!stripe) {
+        setToastMessage('Erro ao carregar Stripe.');
+        return;
+      }
+
+      if (data.sessionId) {
+        const result = await stripe.redirectToCheckout({ sessionId: data.sessionId });
+        if (result?.error) {
+          setToastMessage(result.error.message || 'Erro ao redirecionar para Stripe.');
+        }
+        return;
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
+        return;
+      }
+
+      setToastMessage('Não foi possível iniciar o pagamento.');
     } catch (caughtError) {
       console.error('Erro ao iniciar checkout', caughtError);
       const err = caughtError as any;
@@ -425,6 +462,18 @@ const Loja: React.FC = () => {
           <IonText className="text-lg font-semibold">🛍️ Loja</IonText>
           <p className="mt-2 text-sm text-slate-600">Encontre equipamentos, kimonos e acessórios para treinar.</p>
         </div>
+
+        {!isAdmin && (
+          <div className="mx-4 mb-4">
+            <IonButton
+              expand="block"
+              color="tertiary"
+              onClick={() => setShowCartPanel(prev => !prev)}
+            >
+              {showCartPanel ? 'Ocultar Carrinho' : `Ver Carrinho (${cart.length} item${cart.length !== 1 ? 's' : ''})`}
+            </IonButton>
+          </div>
+        )}
 
         {isAdmin && (
           <IonSegment 
@@ -479,8 +528,8 @@ const Loja: React.FC = () => {
               </div>
             )}
 
-            {!isAdmin && (
-              <div className="mx-4 mb-4 rounded-3xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70">
+            {!isAdmin && showCartPanel && (
+              <div ref={cartRef} className="mx-4 mb-4 rounded-3xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70">
                 <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
                   <div>
                     <IonText className="font-semibold">Carrinho</IonText>

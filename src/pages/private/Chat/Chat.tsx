@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonList, IonItem, IonLabel, IonAvatar, IonInput, IonIcon } from '@ionic/react';
+import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonList, IonItem, IonLabel, IonAvatar, IonInput, IonIcon, IonButton } from '@ionic/react';
 import { send, arrowBackCircleOutline } from 'ionicons/icons';
 import { useAuth } from '../../../AuthContext';
 import Navbar from '../../../components/MainLayout';
@@ -156,7 +156,7 @@ const Chat: React.FC = () => {
   });
 
   const renderConversationList = () => (
-    <div className="page chat-page background">
+    <>
       <div style={{ padding: '0.75rem' }}>
         <IonInput
           placeholder="Pesquisar conversa"
@@ -185,7 +185,7 @@ const Chat: React.FC = () => {
                 </IonItem>
             ))}
         </IonList>
-    </div>
+    </>
   );
 
   const renderChatView = () => {
@@ -194,9 +194,19 @@ const Chat: React.FC = () => {
     if (!conv) return null;
 
     return (
-        <div className="chat-container">
-      <div className="chat-messages">
-        {messages.map(msg => {
+      <div className="chat-container">
+        <div className="chat-header">
+          <IonButton fill="clear" onClick={() => setSelectedConversation(null)}>
+            <IonIcon icon={arrowBackCircleOutline} />
+          </IonButton>
+          <div className="chat-header-title">
+            <h3>{conv.title}</h3>
+            <p>{conv.lastMessage}</p>
+          </div>
+        </div>
+
+        <div className="chat-messages">
+          {messages.map(msg => {
             const isMe = getSenderId(msg) === user._id;
             return (
               <div
@@ -211,23 +221,21 @@ const Chat: React.FC = () => {
                 </div>
               </div>
             );
-        })}
-      </div>
+          })}
+        </div>
 
-      {/* INPUT FIXO EM BAIXO */}
-      <div className="chat-input">
-        <IonInput
-          value={newMessage}
-          placeholder="Mensagem..."
-          onIonChange={(e) => setNewMessage(e.detail.value!)}
-        />
-
-        <div className="send-btn" onClick={() => handleSendMessage()}>
-          <IonIcon icon={send} />
+        <div className="chat-input">
+          <IonInput
+            value={newMessage}
+            placeholder="Mensagem..."
+            onIonChange={(e) => setNewMessage(e.detail.value!)}
+          />
+          <div className="send-btn" onClick={() => handleSendMessage()}>
+            <IonIcon icon={send} />
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
   };
 
   return (
@@ -238,10 +246,25 @@ const Chat: React.FC = () => {
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
-        <div className="page chat-page background">
-          {renderConversationList()}
-          {selectedConversation && renderChatView()}
-        </div>
+        {selectedConversation ? (
+          <div
+            className="page background"
+            style={{
+              width: '100%',
+              minHeight: '100%',
+              margin: 0,
+              padding: 0,
+              border: 'none',
+              boxShadow: 'none'
+            }}
+          >
+            {renderChatView()}
+          </div>
+        ) : (
+          <div className="page chat-page background">
+            {renderConversationList()}
+          </div>
+        )}
       </IonContent>
       <Navbar />
     </IonPage>
