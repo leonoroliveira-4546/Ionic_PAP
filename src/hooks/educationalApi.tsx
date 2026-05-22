@@ -47,6 +47,26 @@ export const educationalApi = () => {
     return data;
   }, []);
 
+  const createEducationalContent = useCallback(async (payload: any) => {
+    const { data } = await api.post('/educational', payload);
+    return data;
+  }, []);
+
+  const updateEducationalContent = useCallback(async (contentId: string, payload: any) => {
+    const { data } = await api.put(`/educational/${contentId}`, payload);
+    return data;
+  }, []);
+
+  const submitEducationalGameResponse = useCallback(async (contentId: string, answer: string) => {
+    const { data } = await api.post(`/educational/${contentId}/submit`, { answer });
+    return data;
+  }, []);
+
+  const deleteEducationalContent = useCallback(async (contentId: string) => {
+    const { data } = await api.delete(`/educational/${contentId}`);
+    return data;
+  }, []);
+
   return {
     getEducationalContent,
     createChallenge,
@@ -56,7 +76,11 @@ export const educationalApi = () => {
     getUserChallengeResponse,
     submitChallengeResponse,
     updateChallenge,
-    deleteChallenge
+    deleteChallenge,
+    createEducationalContent,
+    updateEducationalContent,
+    deleteEducationalContent,
+    submitEducationalGameResponse
   };
 };
 

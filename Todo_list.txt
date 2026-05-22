@@ -1,16 +1,13 @@
 Corrigir o request dos conversations (ta a pegar apenas ele proprio )
 
 Admin:
- 
- AreaEducativa:
-    poder adicionar jogos simples, vídeos e muito mais;
-
+    
  Predições:
     ele que adiciona, edita e remove;
 
  Painel De controlo:
     deve ter botões que levam as paginas e abrem já os modals para fazer criar cenas
-    mostrar a lista de users por tabela, so 20 por pag;
+    mostrar a lista de users por tabela, so 20 por pag;3
     poder remover, editar users;
     reiniciar o ranking se for necessário;
 
