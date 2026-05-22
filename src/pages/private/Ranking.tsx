@@ -8,10 +8,13 @@ import Navbar from '../../components/MainLayout';
 import RankingItem from '../../components/RankingItem';
 import userApi from '../../hooks/userApi';
 import { User } from '../../mockData/users';
+import { useAuth } from '../../AuthContext';
 
 type RankingUser = User;
 
 const Ranking: React.FC = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.type === 'admin';
   const [generalUsers, setGeneralUsers] = useState<RankingUser[]>([]);
   const [dojoUsers, setDojoUsers] = useState<RankingUser[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<RankingUser[]>([]);
@@ -72,6 +75,8 @@ const Ranking: React.FC = () => {
     setFilteredUsers(filtered);
   }, [search, generalUsers, dojoUsers, activeTab]);
 
+  if (!user) { return null; }
+
   if (loading) {
     return (
       <IonPage>
@@ -112,13 +117,16 @@ const Ranking: React.FC = () => {
           >
             Geral
           </IonButton>
-          <IonButton
-            fill={activeTab === 'dojo' ? 'solid' : 'outline'}
-            className="rounded-full"
-            onClick={() => setActiveTab('dojo')}
-          >
-            Dojô
-          </IonButton>
+
+          {!isAdmin && (
+            <IonButton
+              fill={activeTab === 'dojo' ? 'solid' : 'outline'}
+              className="rounded-full"
+              onClick={() => setActiveTab('dojo')}
+            >
+              Dojô
+            </IonButton>
+          )}
         </div>
 
         <IonSearchbar

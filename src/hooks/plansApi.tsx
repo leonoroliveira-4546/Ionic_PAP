@@ -12,7 +12,12 @@ export const plansApi = () => {
     return data;
   }, []);
 
-  return { getPlans, updatePlan };
+  const createPlan = useCallback(async (payload: any) => {
+    const { data } = await api.post('/plans', payload);
+    return data;
+  }, []);
+
+  return { getPlans, updatePlan, createPlan };
 };
 
 export default plansApi;
