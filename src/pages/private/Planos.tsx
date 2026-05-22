@@ -60,7 +60,12 @@ const Planos: React.FC = () => {
       setLoading(true);
       try {
         const data = await getPlans();
-        setPlans(data.plans || data || []);
+        const mappedPlans = (data.plans || data || []).map((p: any) => ({
+          ...p,
+          id: p._id
+        }));
+
+        setPlans(mappedPlans);
       } catch (err) {
         console.error('Failed to load plans', err);
       } finally {

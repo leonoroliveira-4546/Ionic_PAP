@@ -1,13 +1,9 @@
 Corrigir o request dos conversations (ta a pegar apenas ele proprio )
 
 Admin:
-
- Planos:
-    deve conseguir editar ou remover planos;
-    adicionar os planos;
  
  AreaEducativa:
-    poder adicionar jogos, vídeos e muito mais;
+    poder adicionar jogos simples, vídeos e muito mais;
 
  Predições:
     ele que adiciona, edita e remove;
