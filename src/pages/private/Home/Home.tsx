@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useHistory } from 'react-router-dom';
 import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonList, IonItem, IonLabel, IonButton, IonSelect, IonSelectOption, IonModal, IonInput, IonDatetime, IonIcon } from '@ionic/react';
 import { close, add, chevronBack, create, trash, eye, arrowUp } from 'ionicons/icons';
 import { useAuth } from '../../../AuthContext';
@@ -68,10 +69,18 @@ const Home: React.FC = () => {
   const { getDojos, getDojoMembers, removeMember, removeChildFromResponsible, addTrainingSchedule, updateTrainingSchedules, createTournament, getDojoTournaments, updateTournament, deleteTournament, inviteMemberByEmail, submitJoinRequest, acceptJoinRequest, rejectJoinRequest, getAthletesWithoutDojo } = dojosApi();
   const { getCurrentChallenge, getUserChallengeResponse } = educationalApi();
 
+  const history = useHistory();
   const isAthlete = (type: string) => type === 'athlete' || type === 'atleta';
   const isResponsavel = (type: string) => type === 'responsavel';
   const isSensei = (type: string) => type === 'sensei';
+  const isPraticinador = (type: string) => type === 'praticinador';
   const isUserSensei = user ? isSensei(user.type) : false;
+
+  useEffect(() => {
+    if (user && isPraticinador(user.type)) {
+      history.replace('/shop');
+    }
+  }, [user, history]);
 
   if (!user) return null;
 

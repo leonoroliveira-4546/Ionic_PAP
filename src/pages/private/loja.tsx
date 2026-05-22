@@ -6,13 +6,29 @@ import {
   IonSegment, IonSegmentButton, IonModal, IonInput, IonToggle, IonAlert, IonSelect, IonSelectOption, IonItem
 } from '@ionic/react';
 import { cartOutline, starSharp, starHalfOutline, starOutline, create, trash, close } from 'ionicons/icons';
-import { mockProducts, Product } from '../../mockData/shop';
 import Navbar from '../../components/MainLayout';
 import { shopApi } from '../../hooks/shopApi';
 import { useAuth } from '../../AuthContext';
 
 type Category = 'Todos' | 'Kimono' | 'Equipamento' | 'Faixa' | 'Acessório';
 type AdminTab = 'productos' | 'pedidos';
+
+interface Product {
+  _id?: string;
+  id?: string;
+  name: string;
+  description: string;
+  category: string;
+  price: number;
+  originalPrice?: number;
+  rating?: number;
+  reviewCount?: number;
+  inStock: boolean;
+  badge?: string;
+  image?: string;
+  published?: boolean;
+  availableForPraticinador?: boolean;
+}
 
 const CATEGORIES: Category[] = ['Todos', 'Kimono', 'Equipamento', 'Faixa', 'Acessório'];
 
@@ -64,7 +80,7 @@ const Stars: React.FC<{ rating: number }> = ({ rating }) => {
   );
 };
 
-const ProductCard: React.FC<{ product: ExtendedProduct; onAdd: (name: string) => void; isAdmin?: boolean }> = ({ product, onAdd, isAdmin }) => (
+const ProductCard: React.FC<{ product: ExtendedProduct; onAdd: (name: string) => void; isAdmin?: boolean; disableBuy?: boolean }> = ({ product, onAdd, isAdmin, disableBuy }) => (
   <IonCard
     style={{
       borderRadius: 16,
@@ -91,7 +107,7 @@ const ProductCard: React.FC<{ product: ExtendedProduct; onAdd: (name: string) =>
       }}
     >
       <img
-        src={product.image}
+        src={product.image || 'https://via.placeholder.com/400x300?text=Produto'}
         alt={product.name}
         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
       />
@@ -126,7 +142,7 @@ const ProductCard: React.FC<{ product: ExtendedProduct; onAdd: (name: string) =>
           </IonText>
         </div>
 
-        {!isAdmin && (
+        {!isAdmin && !disableBuy && (
           <IonButton
             size="small"
             fill="solid"
@@ -157,7 +173,7 @@ const Loja: React.FC = () => {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<Category>('Todos');
   const [toastMessage, setToastMessage] = useState('');
-  const [products, setProducts] = useState<ExtendedProduct[]>(mockProducts as ExtendedProduct[]);
+  const [products, setProducts] = useState<ExtendedProduct[]>([]);
   const [loading, setLoading] = useState(false);
   const [adminTab, setAdminTab] = useState<AdminTab>('productos');
   const [orders, setOrders] = useState<Order[]>([]);
@@ -189,10 +205,11 @@ const Loja: React.FC = () => {
   });
 
   const isAdmin = user?.type === 'admin';
+  const isPraticinador = user?.type === 'praticinador';
 
   useEffect(() => {
     loadData();
-  }, [adminTab]);
+  }, [adminTab, isPraticinador]);
 
   const loadData = async () => {
     setLoading(true);
@@ -205,12 +222,12 @@ const Loja: React.FC = () => {
         setOrders(data.orders || data || []);
       } else {
         const data = await getProducts();
-        setProducts((data.products || data || mockProducts) as ExtendedProduct[]);
+        setProducts((data.products || data || []) as ExtendedProduct[]);
       }
     } catch (err) {
       console.error('Failed to load data', err);
       if (!isAdmin || adminTab !== 'pedidos') {
-        setProducts(mockProducts as ExtendedProduct[]);
+        setProducts([]);
       }
     } finally {
       setLoading(false);
@@ -339,14 +356,17 @@ const Loja: React.FC = () => {
 
         {adminTab === 'productos' && (
           <>
-            {!isAdmin && (
-              <IonButton 
-                expand="block" 
-                className="mx-4 mb-4 rounded-full bg-blue-500 text-white hover:bg-blue-600 shadow-sm"
-                onClick={() => openProductModal()}
-              >
-                + Novo Produto
-              </IonButton>
+            {isPraticinador && (
+              <div className="mx-4 mb-4 rounded-3xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70">
+                <IonText className="font-semibold">Seus Produtos</IonText>
+                <p className="mt-2 text-sm text-slate-600">
+                  Para gerir os seus produtos, crie, edite e apague-os em uma página dedicada.
+                  Produtos aceites ou rejeitados não podem mais ser alterados.
+                </p>
+                <IonButton routerLink="/seus-produtos" expand="block" className="mt-4 rounded-full bg-blue-500 text-white hover:bg-blue-600 shadow-sm">
+                  Ir para Seus Produtos
+                </IonButton>
+              </div>
             )}
 
             <IonSearchbar
@@ -476,6 +496,7 @@ const Loja: React.FC = () => {
                         key={product.id}
                         product={product}
                         onAdd={name => setToastMessage(`"${name}" adicionado ao carrinho!`)}
+                        disableBuy={isPraticinador}
                       />
                     ))}
                   </div>

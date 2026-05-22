@@ -2,18 +2,14 @@ Corrigir o request dos conversations (ta a pegar apenas ele proprio )
 
 Praticinador:
   
-  Home: não tem;
+  SeusProdutos (NOVO):
+    aqui ele pode ver seus produtos, criando um novo produto, editando ou deletando os produtos que ele tem;
+    O praticionador para de poder mecher quando o produto for aceite ou rejeitado, ou seja, quando tiver um feedback do admin;
 
-  Loja: 
-    consegue ver sua loja e a geral a qual que os outros veem;
+  Profile: 
+   o praticinador pode ter esta pagina, mas nao tera estaticas para mostrar;
   
-  Products:
-    aqui tem seus produtos, consegue adicionar e editar ou remover;
-    não consegue mecher depois que foi permitido ou rejeitado por admin;
-
-  Profile: ele tem mas sem estáticas;
-  
-  O resto ele não tem;
+  O resto das paginas nao aparece para ele, como o chat, rankings, predições, area educativa e etc;
    
 Geral:
   Funcionar todo com sockets
@@ -79,7 +75,6 @@ Geral:
     notificações;
     Style de uma libray;
     Segurança;
-    Se der colocar a AI;
     Home ficara no meio do menu, loja na esquerda e chat na direita, profile no
    fim direita. rankings do dojo dentro da home, rankings no geral nas predições;
     planos dentro do profile, como opção;

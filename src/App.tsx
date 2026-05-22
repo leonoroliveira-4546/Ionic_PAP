@@ -18,6 +18,7 @@ import Ranking from './pages/private/Ranking';
 import Educacional from './pages/private/Educacional';
 import Predicoes from './pages/private/Predicoes';
 import Planos from './pages/private/Planos';
+import SeusProdutos from './pages/private/SeusProdutos';
 import Admin from './pages/private/Admin';
 
 /* Core CSS required for Ionic components to work properly */
@@ -72,13 +73,14 @@ const InnerApp: React.FC = () => {
 
           {/* Rotas privadas */}
           <PrivateRoute exact path='/home' component={Home}/>
-          <PrivateRoute exact path='/comunidade' component={Comunidade}/>
-          <PrivateRoute exact path='/chat' component={Chat}/>
+          <PrivateRoute exact path='/comunidade' component={Comunidade} requiredRole={['admin', 'athlete', 'atleta', 'responsavel', 'sensei']} />
+          <PrivateRoute exact path='/chat' component={Chat} requiredRole={['admin', 'athlete', 'atleta', 'responsavel', 'sensei']} />
           <PrivateRoute exact path='/perfil' component={ProfileSettings}/>
           <PrivateRoute exact path='/shop' component={Shop}/>
-          <PrivateRoute exact path='/ranking' component={Ranking}/>
-          <PrivateRoute exact path='/educacional' component={Educacional}/>
-          <PrivateRoute exact path='/predicoes' component={Predicoes}/>
+          <PrivateRoute exact path='/seus-produtos' component={SeusProdutos} requiredRole="praticinador" />
+          <PrivateRoute exact path='/ranking' component={Ranking} requiredRole={['admin', 'athlete', 'atleta', 'responsavel', 'sensei']} />
+          <PrivateRoute exact path='/educacional' component={Educacional} requiredRole={['admin', 'athlete', 'atleta', 'responsavel', 'sensei']} />
+          <PrivateRoute exact path='/predicoes' component={Predicoes} requiredRole={['admin', 'athlete', 'atleta', 'responsavel', 'sensei']} />
           <PrivateRoute exact path='/planos' component={Planos}/>
           <PrivateRoute exact path='/admin' component={Admin} requiredRole="admin" />
         </IonRouterOutlet>

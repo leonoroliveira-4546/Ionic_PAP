@@ -13,6 +13,11 @@ export const shopApi = () => {
     return data;
   }, []);
 
+  const getMyProducts = useCallback(async () => {
+    const { data } = await api.get('/shop/my/products');
+    return data;
+  }, []);
+
   const createProduct = useCallback(async (payload: any) => {
     const { data } = await api.post('/shop/products', payload);
     return data;
@@ -52,6 +57,7 @@ export const shopApi = () => {
   return { 
     getProducts, 
     getAdminProducts, 
+    getMyProducts,
     createProduct,
     updateProduct, 
     deleteProduct,

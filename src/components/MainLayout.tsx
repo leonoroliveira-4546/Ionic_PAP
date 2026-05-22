@@ -7,12 +7,13 @@ const Navbar: React.FC = () => {
   const location = useLocation();
   const { user } = useAuth();
   const isAdmin = user?.type === 'admin';
+  const isPraticinador = user?.type === 'praticinador';
 
   return (
     <IonFooter>
       <IonToolbar className="navbar-toolbar">
         
-        {!isAdmin && (
+        {!isAdmin && !isPraticinador && (
           <IonButton 
             routerLink="/home"
             fill={location.pathname === '/home' ? 'solid' : 'clear'}
@@ -22,13 +23,15 @@ const Navbar: React.FC = () => {
           </IonButton>
         )}
 
-        <IonButton 
-          routerLink="/comunidade"
-          fill={location.pathname === '/comunidade' ? 'solid' : 'clear'}
-          className='nav-button'
-        >
-          <IonIcon icon={people} />
-        </IonButton>
+        {!isPraticinador && (
+          <IonButton 
+            routerLink="/comunidade"
+            fill={location.pathname === '/comunidade' ? 'solid' : 'clear'}
+            className='nav-button'
+          >
+            <IonIcon icon={people} />
+          </IonButton>
+        )}
 
         <IonButton 
           routerLink="/shop"
@@ -38,7 +41,7 @@ const Navbar: React.FC = () => {
           <IonIcon icon={cartSharp} />
         </IonButton>
 
-        {!isAdmin && (
+        {!isAdmin && !isPraticinador && (
           <IonButton 
             routerLink="/chat"
             fill={location.pathname === '/chat' ? 'solid' : 'clear'}
@@ -56,15 +59,17 @@ const Navbar: React.FC = () => {
           <IonIcon icon={personCircleOutline} />
         </IonButton>
 
-        <IonButton 
-          routerLink="/ranking"
-          fill={location.pathname === '/ranking' ? 'solid' : 'clear'}
-          className='nav-button'
-        >
-          <IonIcon icon={trophyOutline} />
-        </IonButton>
+        {!isPraticinador && (
+          <IonButton 
+            routerLink="/ranking"
+            fill={location.pathname === '/ranking' ? 'solid' : 'clear'}
+            className='nav-button'
+          >
+            <IonIcon icon={trophyOutline} />
+          </IonButton>
+        )}
 
-        {!isAdmin && (
+        {!isAdmin && !isPraticinador && (
           <IonButton 
             routerLink="/predicoes"
             fill={location.pathname === '/predicoes' ? 'solid' : 'clear'}
@@ -82,13 +87,15 @@ const Navbar: React.FC = () => {
           <IonIcon icon={listOutline} />
         </IonButton>
 
-        <IonButton 
-          routerLink="/educacional"
-          fill={location.pathname === '/educacional' ? 'solid' : 'clear'}
-          className='nav-button'
-        >
-          <IonIcon icon={bookOutline} />
-        </IonButton>
+        {!isPraticinador && (
+          <IonButton 
+            routerLink="/educacional"
+            fill={location.pathname === '/educacional' ? 'solid' : 'clear'}
+            className='nav-button'
+          >
+            <IonIcon icon={bookOutline} />
+          </IonButton>
+        )}
 
         {isAdmin && (
           <IonButton 
