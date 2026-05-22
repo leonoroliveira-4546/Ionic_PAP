@@ -22,7 +22,7 @@ const ProfileSettings: React.FC = () => {
   const { getProfile, updateProfile, changePassword } = userApi();
   const { logout: apiLogout } = authApi(Login);
 
-  const [isEditing, setIsEditing] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [profileFile, setProfileFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
@@ -104,7 +104,7 @@ const ProfileSettings: React.FC = () => {
       const response = await updateProfile(formData);
       if (response.success) {
         Login(response.user);
-        setIsEditing(false);
+        setShowEditModal(false);
         setProfileFile(null);
         setSaveMessage('Perfil atualizado com sucesso.');
       } else {
@@ -162,13 +162,13 @@ const ProfileSettings: React.FC = () => {
 
           <div className="mt-5 flex justify-center">
             <IonButton
-              onClick={isEditing ? handleSave : () => setIsEditing(true)}
-              color={isEditing ? 'success' : 'primary'}
+              onClick={() => setShowEditModal(true)}
+              color="primary"
               disabled={saving}
               className="rounded-full px-8"
             >
-              <IonIcon icon={isEditing ? checkmarkOutline : createOutline} slot="start" />
-              {saving ? 'Guardando...' : isEditing ? 'Guardar' : 'Editar Perfil'}
+              <IonIcon icon={createOutline} slot="start" />
+              {saving ? 'Guardando...' : 'Editar Perfil'}
             </IonButton>
           </div>
 
@@ -190,9 +190,8 @@ const ProfileSettings: React.FC = () => {
                 <IonInput
                   label="Nome de usuário"
                   labelPlacement="stacked"
-                  value={isEditing ? editUsername : user.username}
-                  onIonChange={e => setEditUsername(e.detail.value!)}
-                  readonly={!isEditing}
+                  value={user.username}
+                  readonly
                 />
               </IonLabel>
             </IonItem>
@@ -203,9 +202,8 @@ const ProfileSettings: React.FC = () => {
                 <IonInput
                   label="Faixa"
                   labelPlacement="stacked"
-                  value={isEditing ? editBelt : (user.belt || 'Branca')}
-                  onIonChange={e => setEditBelt(e.detail.value!)}
-                  readonly={!isEditing}
+                  value={user.belt || 'Branca'}
+                  readonly
                 />
               </IonLabel>
             </IonItem>
@@ -228,92 +226,6 @@ const ProfileSettings: React.FC = () => {
             </IonItem>
           </IonList>
         </div>
-
-        <IonModal isOpen={showPasswordModal} onDidDismiss={() => {
-          setShowPasswordModal(false);
-          setNewPassword('');
-          setConfirmPassword('');
-          setPasswordMessage(null);
-        }}>
-          <IonHeader>
-            <IonToolbar>
-              <IonTitle>Alterar Senha</IonTitle>
-              <IonButton slot="end" fill="clear" onClick={() => setShowPasswordModal(false)}>
-                Fechar
-              </IonButton>
-            </IonToolbar>
-          </IonHeader>
-          <IonContent className="ion-padding background bg-slate-950/5 text-slate-950">
-            <div className="mx-4 space-y-4">
-              <IonItem className="rounded-3xl">
-                <IonLabel position="stacked">Nova senha</IonLabel>
-                <IonInput
-                  type="password"
-                  value={newPassword}
-                  autocomplete="new-password"
-                  autocorrect="off"
-                  autocapitalize="off"
-                  spellCheck={false}
-                  onIonInput={e => setNewPassword(e.detail.value || '')}
-                />
-              </IonItem>
-
-              <IonItem className="rounded-3xl">
-                <IonLabel position="stacked">Confirmar nova senha</IonLabel>
-                <IonInput
-                  type="password"
-                  value={confirmPassword}
-                  autocomplete="new-password"
-                  autocorrect="off"
-                  autocapitalize="off"
-                  spellCheck={false}
-                  onIonInput={e => setConfirmPassword(e.detail.value || '')}
-                />
-              </IonItem>
-
-              {passwordMessage && (
-                <IonText color="danger">{passwordMessage}</IonText>
-              )}
-
-              <IonButton
-                expand="block"
-                disabled={passwordLoading}
-                className="rounded-full"
-                onClick={async () => {
-                  setPasswordMessage(null);
-
-                  if (!newPassword || newPassword.length < 6) {
-                    setPasswordMessage('A senha deve ter pelo menos 6 caracteres.');
-                    return;
-                  }
-                  if (newPassword !== confirmPassword) {
-                    setPasswordMessage('As senhas não coincidem.');
-                    return;
-                  }
-
-                  setPasswordLoading(true);
-                  try {
-                    const response = await changePassword(newPassword);
-                    if (response.success) {
-                      setPasswordMessage('Senha alterada com sucesso.');
-                      setNewPassword('');
-                      setConfirmPassword('');
-                    } else {
-                      setPasswordMessage(response.message || 'Falha ao alterar senha.');
-                    }
-                  } catch (err) {
-                    console.error(err);
-                    setPasswordMessage('Erro ao alterar senha.');
-                  } finally {
-                    setPasswordLoading(false);
-                  }
-                }}
-              >
-                {passwordLoading ? 'Atualizando...' : 'Atualizar Senha'}
-              </IonButton>
-            </div>
-          </IonContent>
-        </IonModal>
 
       <IonText color="medium">
         <p style={{ paddingLeft: 16, marginBottom: 4, marginTop: 16, fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 }}>Estatísticas</p>
@@ -442,51 +354,6 @@ const ProfileSettings: React.FC = () => {
         </IonList>
       )}
 
-        {/* Preferences Section
-        <IonText color="medium">
-          <p style={{ paddingLeft: 16, marginBottom: 4, marginTop: 16, fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 }}>Preferências</p>
-        </IonText>
-        <IonList inset lines="inset">
-          <IonItem>
-            <IonIcon icon={moonOutline} slot="start" color="primary" />
-            <IonLabel>Modo Escuro</IonLabel>
-            <IonToggle
-              slot="end"
-              checked={darkMode}
-              onIonChange={e => setDarkMode(e.detail.checked)}
-            />
-          </IonItem>
-
-          <IonItem>
-            <IonIcon icon={notificationsOutline} slot="start" color="primary" />
-            <IonLabel>Notificações</IonLabel>
-            <IonToggle
-              slot="end"
-              checked={notifications}
-              onIonChange={e => setNotifications(e.detail.checked)}
-            />
-          </IonItem>
-
-          <IonItem>
-            <IonIcon icon={languageOutline} slot="start" color="primary" />
-            <IonLabel>Idioma</IonLabel>
-            <IonSelect value="pt" interface="popover" slot="end">
-              <IonSelectOption value="pt">Português</IonSelectOption>
-              <IonSelectOption value="en">English</IonSelectOption>
-            </IonSelect>
-          </IonItem>
-        </IonList>
-
-        <IonText color="medium">
-          <p style={{ paddingLeft: 16, marginBottom: 4, marginTop: 16, fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 }}>Segurança</p>
-        </IonText>
-        <IonList inset lines="inset">
-          <IonItem button detail detailIcon={chevronForwardOutline}>
-            <IonIcon icon={shieldOutline} slot="start" color="primary" />
-            <IonLabel>Autenticação em dois fatores</IonLabel>
-          </IonItem>
-        </IonList> */}
-
         {/* Logout */}
         <div className="mx-4 mt-6 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
           <IonButton
@@ -512,6 +379,159 @@ const ProfileSettings: React.FC = () => {
           onDidDismiss={() => setShowLogoutAlert(false)}
         />
       </IonContent>
+
+      <IonModal
+          isOpen={showEditModal}
+          className="profile-settings-modal"
+          onDidDismiss={() => {
+            setShowEditModal(false);
+            setPasswordMessage(null);
+            setSaveMessage(null);
+          }}
+        >
+          <IonHeader>
+            <IonToolbar>
+              <IonTitle>Editar Perfil</IonTitle>
+              <IonButton slot="end" fill="clear" onClick={() => setShowEditModal(false)}>
+                Fechar
+              </IonButton>
+            </IonToolbar>
+          </IonHeader>
+          <IonContent className="ion-padding background bg-slate-950/5 text-slate-950">
+            <div className="mx-4 space-y-4">
+              <IonItem className="rounded-3xl">
+                <IonLabel position="stacked">Nome de usuário</IonLabel>
+                <IonInput
+                  value={editUsername}
+                  onIonInput={e => setEditUsername(e.detail.value || '')}
+                />
+              </IonItem>
+
+              <IonItem className="rounded-3xl">
+                <IonLabel position="stacked">Faixa</IonLabel>
+                <IonInput
+                  value={editBelt}
+                  onIonInput={e => setEditBelt(e.detail.value || 'Branca')}
+                />
+              </IonItem>
+
+              <IonItem className="rounded-3xl">
+                <IonLabel position="stacked">Foto de perfil</IonLabel>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={e => setProfileFile(e.target.files?.[0] || null)}
+                />
+              </IonItem>
+
+              {saveMessage && (
+                <IonText color={saveMessage.includes('sucesso') ? 'success' : 'danger'}>
+                  {saveMessage}
+                </IonText>
+              )}
+
+              <IonButton
+                expand="block"
+                color="success"
+                disabled={saving}
+                className="rounded-full"
+                onClick={handleSave}
+              >
+                {saving ? 'Guardando...' : 'Guardar Alterações'}
+              </IonButton>
+            </div>
+          </IonContent>
+        </IonModal>
+
+      <IonModal
+        isOpen={showPasswordModal}
+        className="profile-settings-modal"
+        onDidDismiss={() => {
+          setShowPasswordModal(false);
+          setNewPassword('');
+          setConfirmPassword('');
+          setPasswordMessage(null);
+        }}
+      >
+        <IonHeader>
+          <IonToolbar>
+            <IonTitle>Alterar Senha</IonTitle>
+            <IonButton slot="end" fill="clear" onClick={() => setShowPasswordModal(false)}>
+              Fechar
+            </IonButton>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent className="ion-padding background bg-slate-950/5 text-slate-950">
+          <div className="mx-4 space-y-4">
+            <IonItem className="rounded-3xl">
+              <IonLabel position="stacked">Nova senha</IonLabel>
+              <IonInput
+                type="password"
+                value={newPassword}
+                autocomplete="new-password"
+                autocorrect="off"
+                autocapitalize="off"
+                spellCheck={false}
+                onIonInput={e => setNewPassword(e.detail.value || '')}
+              />
+            </IonItem>
+
+            <IonItem className="rounded-3xl">
+              <IonLabel position="stacked">Confirmar nova senha</IonLabel>
+              <IonInput
+                type="password"
+                value={confirmPassword}
+                autocomplete="new-password"
+                autocorrect="off"
+                autocapitalize="off"
+                spellCheck={false}
+                onIonInput={e => setConfirmPassword(e.detail.value || '')}
+              />
+            </IonItem>
+
+            {passwordMessage && (
+              <IonText color="danger">{passwordMessage}</IonText>
+            )}
+
+            <IonButton
+              expand="block"
+              disabled={passwordLoading}
+              className="rounded-full"
+              onClick={async () => {
+                setPasswordMessage(null);
+
+                if (!newPassword || newPassword.length < 6) {
+                  setPasswordMessage('A senha deve ter pelo menos 6 caracteres.');
+                  return;
+                }
+                if (newPassword !== confirmPassword) {
+                  setPasswordMessage('As senhas não coincidem.');
+                  return;
+                }
+
+                setPasswordLoading(true);
+                try {
+                  const response = await changePassword(newPassword);
+                  if (response.success) {
+                    setPasswordMessage('Senha alterada com sucesso.');
+                    setNewPassword('');
+                    setConfirmPassword('');
+                  } else {
+                    setPasswordMessage(response.message || 'Falha ao alterar senha.');
+                  }
+                } catch (err) {
+                  console.error(err);
+                  setPasswordMessage('Erro ao alterar senha.');
+                } finally {
+                  setPasswordLoading(false);
+                }
+              }}
+            >
+              {passwordLoading ? 'Atualizando...' : 'Atualizar Senha'}
+            </IonButton>
+          </div>
+        </IonContent>
+      </IonModal>
 
       <Navbar />
     </IonPage>
