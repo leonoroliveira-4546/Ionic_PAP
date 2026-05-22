@@ -1,15 +1,10 @@
 Corrigir o request dos conversations (ta a pegar apenas ele proprio )
    
 Geral:
-  Funcionar todo com sockets
-
   Comunidade:
-   anda mostrando o botão de criar News aos outros que não são admin (erro);
-   o botão dos posts do dojo tao a mostrar para quem não é sensei do dojo;
    poder responder aos comentários;
 
   Loja:
-   ta a mostrar os produtos de mockdata e não os da database;
    mostrar apenas produtos permitidos;
    tem que ter o carrinho;
    funcionar com o pagamentos;
@@ -61,6 +56,7 @@ Geral:
     funcionar se tiver segundas autenticações;
   
   Todos:
+    Funcionar todo com sockets
     notificações;
     Style de uma libray;
     Segurança;

@@ -17,6 +17,7 @@ type CommunityComment = {
   author?: CommunityAuthor;
   message: string;
   createdAt: string;
+  replies?: CommunityComment[];
 };
 
 type CommunityAttachment = {
@@ -72,7 +73,9 @@ const Comunidade: React.FC = () => {
   const [newDojoVideo, setNewDojoVideo] = useState('');
   const [newPollQuestion, setNewPollQuestion] = useState('');
   const [newPollOptions, setNewPollOptions] = useState<string[]>([]);
-  const [newComment, setNewComment] = useState('');
+  const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
+  const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
+  const [activeReplyComment, setActiveReplyComment] = useState<string | null>(null);
   const [newNewsImage, setNewNewsImage] = useState<File | null>(null);
   const [newDojoImage, setNewDojoImage] = useState<File | null>(null);
   const [editTitle, setEditTitle] = useState('');
@@ -216,10 +219,29 @@ const Comunidade: React.FC = () => {
   };
 
   // ---------------- COMMENTS ----------------
+  const setCommentDraft = (contentId: string, value: string) => {
+    setCommentDrafts(prev => ({ ...prev, [contentId]: value }));
+  };
+
+  const setReplyDraft = (commentId: string, value: string) => {
+    setReplyDrafts(prev => ({ ...prev, [commentId]: value }));
+  };
+
   const handleAddComment = async (id: string) => {
-    await addComment(id, newComment);
-    setNewComment('');
-    loadContents();
+    const message = (commentDrafts[id] || '').trim();
+    if (!message) return;
+    await addComment(id, message);
+    setCommentDrafts(prev => ({ ...prev, [id]: '' }));
+    await loadContents();
+  };
+
+  const handleAddReply = async (contentId: string, parentCommentId: string) => {
+    const message = (replyDrafts[parentCommentId] || '').trim();
+    if (!message) return;
+    await addComment(contentId, message, parentCommentId);
+    setReplyDrafts(prev => ({ ...prev, [parentCommentId]: '' }));
+    setActiveReplyComment(null);
+    await loadContents();
   };
 
   // ---------------- DOJO ACTIONS ----------------
@@ -233,9 +255,11 @@ const Comunidade: React.FC = () => {
   };
 
   const handleAddDojoComment = async (id: string) => {
-    await addComment(id, newComment);
-    setNewComment('');
-    loadContents();
+    const message = (commentDrafts[id] || '').trim();
+    if (!message) return;
+    await addComment(id, message);
+    setCommentDrafts(prev => ({ ...prev, [id]: '' }));
+    await loadContents();
   };
 
   const handleDeleteDojoComment = async (commentId: string) => {
@@ -460,11 +484,61 @@ const Comunidade: React.FC = () => {
                                 {comment.message}
                               </p>
 
-                              <small className="text-gray-400 text-xs">
-                                {new Date(comment.createdAt).toLocaleDateString('pt-BR')}
-                              </small>
+                              <div className="flex items-center gap-3 text-xs text-gray-400">
+                                <small>{new Date(comment.createdAt).toLocaleDateString('pt-BR')}</small>
+                                <button
+                                  type="button"
+                                  className="text-blue-500 hover:text-blue-700"
+                                  onClick={() => setActiveReplyComment(comment._id)}
+                                >
+                                  Responder
+                                </button>
+                              </div>
                             </div>
                           </div>
+
+                          {comment.replies?.length ? (
+                            <div className="mt-4 space-y-3 border-l border-slate-200 pl-4">
+                              {comment.replies.map(reply => (
+                                <div key={reply._id} className="rounded-2xl bg-white p-3">
+                                  <div className="flex gap-2.5">
+                                    <IonAvatar className="w-6 h-6 min-w-6">
+                                      <img
+                                        src={
+                                          reply.author?.profilePic ||
+                                          'https://ui-avatars.com/api/?name=' + (reply.author?.username || 'User')
+                                        }
+                                        alt={reply.author?.username || 'User'}
+                                      />
+                                    </IonAvatar>
+                                    <div className="flex-1">
+                                      <strong className="text-[11px] block">
+                                        {reply.author?.username}
+                                      </strong>
+                                      <p className="text-[12px] text-slate-600 mt-1">{reply.message}</p>
+                                      <small className="text-gray-400 text-[11px]">
+                                        {new Date(reply.createdAt).toLocaleDateString('pt-BR')}
+                                      </small>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : null}
+
+                          {activeReplyComment === comment._id && (
+                            <div className="mt-3 flex gap-2.5">
+                              <IonInput
+                                placeholder="Escrever resposta..."
+                                value={replyDrafts[comment._id] || ''}
+                                onIonChange={e => setReplyDraft(comment._id, e.detail.value || '')}
+                                className="flex-1"
+                              />
+                              <IonButton fill="solid" size="small" onClick={() => handleAddReply(item._id, comment._id)}>
+                                Responder
+                              </IonButton>
+                            </div>
+                          )}
                         </div>
                       ))
                     ) : (
@@ -478,8 +552,8 @@ const Comunidade: React.FC = () => {
                   <div className="flex gap-2.5">
                     <IonInput
                       placeholder="Adicionar comentário..."
-                      value={newComment}
-                      onIonChange={e => setNewComment(e.detail.value || '')}
+                      value={commentDrafts[item._id] || ''}
+                      onIonChange={e => setCommentDraft(item._id, e.detail.value || '')}
                       className="flex-1"
                     />
 
@@ -712,11 +786,61 @@ const Comunidade: React.FC = () => {
                           <strong className="text-xs block">{c.author?.username}</strong>
                           <p className="m-1 text-xs text-gray-800 leading-relaxed">{c.message}</p>
 
-                          <small className="text-gray-400 text-xs">
-                            {new Date(c.createdAt).toLocaleDateString('pt-BR')}
-                          </small>
+                          <div className="flex items-center gap-3 text-xs text-gray-400">
+                            <small>{new Date(c.createdAt).toLocaleDateString('pt-BR')}</small>
+                            <button
+                              type="button"
+                              className="text-blue-500 hover:text-blue-700"
+                              onClick={() => setActiveReplyComment(c._id)}
+                            >
+                              Responder
+                            </button>
+                          </div>
                         </div>
                       </div>
+
+                      {c.replies?.length ? (
+                        <div className="mt-4 space-y-3 border-l border-slate-200 pl-4">
+                          {c.replies.map(reply => (
+                            <div key={reply._id} className="rounded-2xl bg-white p-3">
+                              <div className="flex gap-2.5">
+                                <IonAvatar className="w-6 h-6 min-w-6">
+                                  <img
+                                    src={
+                                      reply.author?.profilePic ||
+                                      'https://ui-avatars.com/api/?name=' + (reply.author?.username || 'User')
+                                    }
+                                    alt={reply.author?.username || 'User'}
+                                  />
+                                </IonAvatar>
+                                <div className="flex-1">
+                                  <strong className="text-[11px] block">
+                                    {reply.author?.username}
+                                  </strong>
+                                  <p className="text-[12px] text-slate-600 mt-1">{reply.message}</p>
+                                  <small className="text-gray-400 text-[11px]">
+                                    {new Date(reply.createdAt).toLocaleDateString('pt-BR')}
+                                  </small>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
+
+                      {activeReplyComment === c._id && (
+                        <div className="mt-3 flex gap-2.5">
+                          <IonInput
+                            placeholder="Escrever resposta..."
+                            value={replyDrafts[c._id] || ''}
+                            onIonChange={e => setReplyDraft(c._id, e.detail.value || '')}
+                            className="flex-1"
+                          />
+                          <IonButton fill="solid" size="small" onClick={() => handleAddReply(post._id, c._id)}>
+                            Responder
+                          </IonButton>
+                        </div>
+                      )}
 
                       {user?._id === c.author?._id && (
                         <IonButton
@@ -735,8 +859,8 @@ const Comunidade: React.FC = () => {
                 <div className="flex gap-2.5">
                   <IonInput
                     placeholder="Adicionar comentário..."
-                    value={newComment}
-                    onIonChange={e => setNewComment(e.detail.value || '')}
+                    value={commentDrafts[post._id] || ''}
+                    onIonChange={e => setCommentDraft(post._id, e.detail.value || '')}
                     className="flex-1"
                   />
 

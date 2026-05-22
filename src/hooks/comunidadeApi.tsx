@@ -53,8 +53,10 @@ const { data } = await api.post("/contents", formData);
         return data;
     }, []);
 
-    const addComment = useCallback(async (contentId: string, message: string) => {
-        const { data } = await api.post(`/contents/${contentId}/comments`, { message });
+    const addComment = useCallback(async (contentId: string, message: string, parentCommentId?: string) => {
+        const body: any = { message };
+        if (parentCommentId) body.parentCommentId = parentCommentId;
+        const { data } = await api.post(`/contents/${contentId}/comments`, body);
         return data;
     }, []);
 
