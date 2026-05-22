@@ -2,14 +2,10 @@ Corrigir o request dos conversations (ta a pegar apenas ele proprio )
 
 Admin:
     
- Predições:
-    ele que adiciona, edita e remove;
-
  Painel De controlo:
-    deve ter botões que levam as paginas e abrem já os modals para fazer criar cenas
     mostrar a lista de users por tabela, so 20 por pag;3
     poder remover, editar users;
-    reiniciar o ranking se for necessário;
+    reiniciar o ranking se for necessário ( quando acaba a época ou quando tem que ser reiniciado por algum motivo, pontos do dojo e geral reiniciados);
 
 Praticinador:
   
@@ -28,9 +24,6 @@ Praticinador:
    
 Geral:
   Funcionar todo com sockets
- 
-  Home:
-   Notificações;
 
   Comunidade:
    anda mostrando o botão de criar News aos outros que não são admin (erro);
@@ -72,7 +65,6 @@ Geral:
    não podem mais mecher quando for o dia;
    quando acabar a prova, o admin coloca quem ganhou e depois ai quem acertou
   recebe points;
-   notificações;
 
   Planos:
    por a funcionar;
@@ -91,6 +83,7 @@ Geral:
     funcionar se tiver segundas autenticações;
   
   Todos:
+    notificações;
     Style de uma libray;
     Segurança;
     Se der colocar a AI;

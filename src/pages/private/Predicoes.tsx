@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
   IonText, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
-  IonButton, IonIcon, IonBadge, IonSpinner, IonList, IonItem, IonLabel
+  IonButton, IonIcon, IonBadge, IonSpinner, IonList, IonItem, IonLabel, IonModal, IonInput, IonSelect, IonSelectOption
 } from '@ionic/react';
-import { checkmarkCircle, closeCircle, timeOutline, trophyOutline } from 'ionicons/icons';
+import { checkmarkCircle, closeCircle, timeOutline, trophyOutline, add, create, trash, close } from 'ionicons/icons';
 import Navbar from '../../components/MainLayout';
 import { useAuth } from '../../AuthContext';
 import { predictionsApi } from '../../hooks/predictionsApi';
@@ -29,10 +29,14 @@ interface Prediction {
 const Predicoes: React.FC = () => {
   const { user } = useAuth();
   const isAdmin = user?.type === 'admin';
-  const { getTournaments, getMyPredictions, submitPrediction } = predictionsApi();
+  const { getTournaments, getMyPredictions, submitPrediction, createTournament, updateTournament, deleteTournament } = predictionsApi();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showTournamentModal, setShowTournamentModal] = useState(false);
+  const [editingTournament, setEditingTournament] = useState<any | null>(null);
+  const [tournamentForm, setTournamentForm] = useState<any>({ name: '', date: '', location: '', status: 'open', participants: [] });
+  const [savingTournament, setSavingTournament] = useState(false);
   const [selectedPredictions, setSelectedPredictions] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -136,6 +140,14 @@ const Predicoes: React.FC = () => {
           <p className="mt-2 text-sm text-slate-600">Acerte o vencedor e ganhe pontos!</p>
         </div>
 
+        {isAdmin && (
+          <div className="mx-4 mb-4">
+            <IonButton expand="block" className="rounded-full bg-primary text-white" onClick={() => { setEditingTournament(null); setTournamentForm({ name: '', date: '', location: '', status: 'open', participants: [] }); setShowTournamentModal(true); }}>
+              <IonIcon slot="start" icon={add} /> Criar Torneio
+            </IonButton>
+          </div>
+        )}
+
         <div className="mx-4 space-y-4 pb-24">
           {tournaments.map(tournament => {
           const userPrediction = predictions.find(p => p.tournamentId === tournament.id);
@@ -146,9 +158,25 @@ const Predicoes: React.FC = () => {
               <IonCardHeader className="space-y-3 p-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <IonCardTitle className="text-lg font-semibold text-slate-900">{tournament.name}</IonCardTitle>
-                  <IonBadge color={getStatusColor(tournament.status)} className="text-sm">
-                    {getStatusText(tournament.status)}
-                  </IonBadge>
+                  <div className="flex items-center gap-2">
+                    <IonBadge color={getStatusColor(tournament.status)} className="text-sm">
+                      {getStatusText(tournament.status)}
+                    </IonBadge>
+                    {isAdmin && (
+                      <div className="flex gap-2">
+                        <IonButton fill="clear" onClick={() => { setEditingTournament(tournament); setTournamentForm({ name: tournament.name || '', date: tournament.date || '', location: tournament.location || '', status: tournament.status || 'open', participants: tournament.participants || [] }); setShowTournamentModal(true); }}>
+                          <IonIcon icon={create} />
+                        </IonButton>
+                        <IonButton fill="clear" color="danger" onClick={async () => {
+                          const id = (tournament as any)._id || (tournament as any).id;
+                          if (!id) return; if (!confirm('Remover torneio?')) return;
+                          try { await deleteTournament(id); setTournaments(prev => prev.filter(x => ((x as any)._id || (x as any).id) !== id)); alert('Torneio removido'); } catch (err) { console.error(err); alert('Erro ao remover torneio'); }
+                        }}>
+                          <IonIcon icon={trash} />
+                        </IonButton>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="grid gap-1 text-sm text-slate-600">
                   <span>📅 {formatDate(tournament.date)}</span>
@@ -224,6 +252,60 @@ const Predicoes: React.FC = () => {
             <IonText color="medium">Nenhum torneio disponível no momento.</IonText>
           </div>
         )}
+
+        <IonModal isOpen={showTournamentModal} onDidDismiss={() => setShowTournamentModal(false)}>
+          <IonHeader>
+            <IonToolbar>
+              <IonTitle>{editingTournament ? 'Editar Torneio' : 'Novo Torneio'}</IonTitle>
+              <IonButton slot="end" fill="clear" onClick={() => setShowTournamentModal(false)}>
+                <IonIcon slot="icon-only" icon={close} />
+              </IonButton>
+            </IonToolbar>
+          </IonHeader>
+          <IonContent className="ion-padding">
+            <div className="space-y-3">
+              <IonItem>
+                <IonLabel position="stacked">Nome</IonLabel>
+                <IonInput value={tournamentForm.name} onIonChange={e => setTournamentForm({...tournamentForm, name: e.detail.value || ''})} />
+              </IonItem>
+              <IonItem>
+                <IonLabel position="stacked">Data</IonLabel>
+                <IonInput type="date" value={tournamentForm.date} onIonChange={e => setTournamentForm({...tournamentForm, date: e.detail.value || ''})} />
+              </IonItem>
+              <IonItem>
+                <IonLabel position="stacked">Local</IonLabel>
+                <IonInput value={tournamentForm.location} onIonChange={e => setTournamentForm({...tournamentForm, location: e.detail.value || ''})} />
+              </IonItem>
+              <IonItem>
+                <IonLabel position="stacked">Status</IonLabel>
+                <IonSelect value={tournamentForm.status} onIonChange={e => setTournamentForm({...tournamentForm, status: e.detail.value})}>
+                  <IonSelectOption value="open">Aberto</IonSelectOption>
+                  <IonSelectOption value="closed">Fechado</IonSelectOption>
+                  <IonSelectOption value="finished">Finalizado</IonSelectOption>
+                </IonSelect>
+              </IonItem>
+              <div className="flex gap-2">
+                <IonButton expand="block" onClick={async () => {
+                  if (!tournamentForm.name.trim()) { alert('Nome obrigatório'); return; }
+                  setSavingTournament(true);
+                  try {
+                    if (editingTournament && ((editingTournament as any)._id || (editingTournament as any).id)) {
+                      const id = (editingTournament as any)._id || (editingTournament as any).id;
+                      const res = await updateTournament(id, tournamentForm);
+                      if (res.success) setTournaments(prev => prev.map(x => ((x as any)._id || (x as any).id) === id ? res.tournament : x));
+                    } else {
+                      const res = await createTournament(tournamentForm);
+                      if (res.success) setTournaments(prev => [res.tournament, ...prev]);
+                    }
+                    setShowTournamentModal(false);
+                  } catch (err) { console.error(err); alert('Erro ao salvar torneio'); }
+                  finally { setSavingTournament(false); }
+                }} disabled={savingTournament}>{savingTournament ? 'A guardar...' : (editingTournament ? 'Guardar' : 'Criar')}</IonButton>
+                <IonButton expand="block" fill="clear" onClick={() => setShowTournamentModal(false)}>Cancelar</IonButton>
+              </div>
+            </div>
+          </IonContent>
+        </IonModal>
       </div>
 
         <div className="mx-4 rounded-3xl bg-slate-100 p-6 shadow-sm ring-1 ring-slate-200/70 mt-6">

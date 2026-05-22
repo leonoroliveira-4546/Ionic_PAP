@@ -80,9 +80,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         localStorage.setItem("user",JSON.stringify(userData));
     };
 
+    const persistToken = async () => {
+        try {
+            const firebaseUser = auth.currentUser;
+            if (firebaseUser) {
+                const token = await firebaseUser.getIdToken();
+                localStorage.setItem('token', token);
+            }
+        } catch (err) {
+            console.error('Erro ao persistir token', err);
+        }
+    }
+
+    useEffect(() => {
+        if (user) {
+            persistToken();
+        }
+    }, [user]);
+
     const logout = async () => {
         setUser(null);
         localStorage.removeItem('user');
+        localStorage.removeItem('token');
         await auth.signOut();
     };
 

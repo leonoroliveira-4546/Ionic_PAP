@@ -17,7 +17,22 @@ export const predictionsApi = () => {
     return data;
   }, []);
 
-  return { getTournaments, getMyPredictions, submitPrediction };
+  const createTournament = useCallback(async (payload: any) => {
+    const { data } = await api.post('/predictions/tournaments', payload);
+    return data;
+  }, []);
+
+  const updateTournament = useCallback(async (tournamentId: string, payload: any) => {
+    const { data } = await api.put(`/predictions/tournaments/${tournamentId}`, payload);
+    return data;
+  }, []);
+
+  const deleteTournament = useCallback(async (tournamentId: string) => {
+    const { data } = await api.delete(`/predictions/tournaments/${tournamentId}`);
+    return data;
+  }, []);
+
+  return { getTournaments, getMyPredictions, submitPrediction, createTournament, updateTournament, deleteTournament };
 };
 
 export default predictionsApi;
