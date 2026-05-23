@@ -1,55 +1,55 @@
-import React from 'react';
-import { IonCardContent, IonText, IonIcon } from '@ionic/react';
-import { play, timeOutline } from 'ionicons/icons';
+import React from 'react'
+import { IonCardContent, IonText, IonIcon } from '@ionic/react'
+import { play, timeOutline } from 'ionicons/icons'
 
 interface VideoCardProps {
-  video: any;
-  onClick?: () => void;
-  isSelected?: boolean;
+  video: any
+  onClick?: () => void
+  isSelected?: boolean
 }
 
 const VideoCardMobile: React.FC<VideoCardProps> = ({ video, onClick, isSelected = false }) => {
   const formatDuration = (duration: string) => {
-    if (!duration) return '00:00';
-    const matches = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
-    if (!matches) return duration;
-    const hours = Number(matches[1] || 0);
-    const minutes = Number(matches[2] || 0);
-    const seconds = Number(matches[3] || 0);
-    const parts = [];
-    if (hours > 0) parts.push(hours.toString());
-    parts.push(hours > 0 ? minutes.toString().padStart(2, '0') : minutes.toString());
-    parts.push(seconds.toString().padStart(2, '0'));
-    return parts.join(':');
-  };
+    if (!duration) return '00:00'
+    const matches = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/)
+    if (!matches) return duration
+    const hours = Number(matches[1] || 0)
+    const minutes = Number(matches[2] || 0)
+    const seconds = Number(matches[3] || 0)
+    const parts = []
+    if (hours > 0) parts.push(hours.toString())
+    parts.push(hours > 0 ? minutes.toString().padStart(2, '0') : minutes.toString())
+    parts.push(seconds.toString().padStart(2, '0'))
+    return parts.join(':')
+  }
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffTime = Math.abs(now.getTime() - date.getTime())
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
-    if (diffDays === 1) return 'há 1 dia';
-    if (diffDays < 7) return `há ${diffDays} dias`;
-    if (diffDays < 30) return `há ${Math.floor(diffDays / 7)} semanas`;
-    return date.toLocaleDateString('pt-BR');
-  };
+    if (diffDays === 1) return 'há 1 dia'
+    if (diffDays < 7) return `há ${diffDays} dias`
+    if (diffDays < 30) return `há ${Math.floor(diffDays / 7)} semanas`
+    return date.toLocaleDateString('pt-BR')
+  }
 
-  const durationText = formatDuration(video.duration || 'PT0S');
+  const durationText = formatDuration(video.duration || 'PT0S')
 
   const handleCardClick = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+    e.preventDefault()
+    e.stopPropagation()
     if (!isSelected) {
-      onClick?.();
+      onClick?.()
     }
-  };
+  }
 
   const handleCloseClick = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onClick?.();
-  };
+    e.preventDefault()
+    e.stopPropagation()
+    onClick?.()
+  }
 
   return (
     <div
@@ -225,11 +225,11 @@ const VideoCardMobile: React.FC<VideoCardProps> = ({ video, onClick, isSelected 
           50% { opacity: 0.5; }
         }
         button:active {
-          transform: scale(0.95);
+          transform: scale(0.95)
         }
       `}</style>
     </div>
-  );
-};
+  )
+}
 
-export default VideoCardMobile;
+export default VideoCardMobile

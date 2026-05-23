@@ -1,51 +1,51 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react'
 import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
   IonButton, IonIcon, IonText, IonCard, IonCardContent, IonCardHeader,
   IonBadge, IonItem, IonLabel, IonInput, IonSelect, IonSelectOption,
   IonToggle, IonModal, IonAlert, IonToast, IonSpinner
-} from '@ionic/react';
-import { add, create, trash, close } from 'ionicons/icons';
-import { useHistory } from 'react-router-dom';
-import Navbar from '../../components/MainLayout';
-import { shopApi } from '../../hooks/shopApi';
-import { useAuth } from '../../AuthContext';
+} from '@ionic/react'
+import { add, create, trash, close } from 'ionicons/icons'
+import { useHistory } from 'react-router-dom'
+import Navbar from '../../components/MainLayout'
+import { shopApi } from '../../hooks/shopApi'
+import { useAuth } from '../../AuthContext'
 
 interface ExtendedProduct {
-  _id?: string;
-  name: string;
-  description: string;
-  category: string;
-  price: number;
-  originalPrice?: number;
-  quantity: number;
-  inStock: boolean;
-  badge?: string;
-  image?: string;
-  published?: boolean;
-  status?: 'pendente' | 'aprovado' | 'rejeitado';
-  availableForPraticinador?: boolean;
+  _id?: string
+  name: string
+  description: string
+  category: string
+  price: number
+  originalPrice?: number
+  quantity: number
+  inStock: boolean
+  badge?: string
+  image?: string
+  published?: boolean
+  status?: 'pendente' | 'aprovado' | 'rejeitado'
+  availableForPraticinador?: boolean
 }
 
 const productStatusColor: Record<string, string> = {
   pendente: 'warning',
   aprovado: 'success',
   rejeitado: 'danger',
-};
+}
 
 const SeusProdutos: React.FC = () => {
-  const history = useHistory();
-  const { user } = useAuth();
-  const { getMyProducts, createProduct, updateProduct, deleteProduct } = shopApi();
+  const history = useHistory()
+  const { user } = useAuth()
+  const { getMyProducts, createProduct, updateProduct, deleteProduct } = shopApi()
 
-  const [products, setProducts] = useState<ExtendedProduct[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [showProductModal, setShowProductModal] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<ExtendedProduct | null>(null);
-  const [showDeleteAlert, setShowDeleteAlert] = useState<string | null>(null);
-  const [toastMessage, setToastMessage] = useState('');
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState('');
+  const [products, setProducts] = useState<ExtendedProduct[]>([])
+  const [loading, setLoading] = useState(false)
+  const [showProductModal, setShowProductModal] = useState(false)
+  const [editingProduct, setEditingProduct] = useState<ExtendedProduct | null>(null)
+  const [showDeleteAlert, setShowDeleteAlert] = useState<string | null>(null)
+  const [toastMessage, setToastMessage] = useState('')
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState('')
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -55,35 +55,35 @@ const SeusProdutos: React.FC = () => {
     quantity: 1,
     availableForPraticinador: true,
     image: '',
-  });
+  })
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) return
     if (user.type !== 'praticinador') {
-      history.replace('/shop');
-      return;
+      history.replace('/shop')
+      return
     }
-    loadProducts();
-  }, [user]);
+    loadProducts()
+  }, [user])
 
   const loadProducts = async () => {
-    setLoading(true);
+    setLoading(true)
     try {
-      const data = await getMyProducts();
-      setProducts((data.products || data || []) as ExtendedProduct[]);
+      const data = await getMyProducts()
+      setProducts((data.products || data || []) as ExtendedProduct[])
     } catch (error) {
-      console.error('Failed to load products', error);
-      setProducts([]);
+
+      setProducts([])
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const openProductModal = (product?: ExtendedProduct) => {
     if (product) {
-      setEditingProduct(product);
-      setImageFile(null);
-      setImagePreview(product.image || '');
+      setEditingProduct(product)
+      setImageFile(null)
+      setImagePreview(product.image || '')
       setFormData({
         name: product.name,
         description: product.description,
@@ -93,11 +93,11 @@ const SeusProdutos: React.FC = () => {
         quantity: product.quantity ?? 1,
         availableForPraticinador: product.availableForPraticinador ?? true,
         image: product.image || '',
-      });
+      })
     } else {
-      setEditingProduct(null);
-      setImageFile(null);
-      setImagePreview('');
+      setEditingProduct(null)
+      setImageFile(null)
+      setImagePreview('')
       setFormData({
         name: '',
         description: '',
@@ -107,27 +107,27 @@ const SeusProdutos: React.FC = () => {
         quantity: 1,
         availableForPraticinador: true,
         image: '',
-      });
+      })
     }
-    setShowProductModal(true);
-  };
+    setShowProductModal(true)
+  }
 
   const handleSaveProduct = async () => {
     try {
-      let payload: any;
+      let payload: any
       if (imageFile) {
-        const form = new FormData();
-        form.append('name', formData.name);
-        form.append('description', formData.description);
-        form.append('category', formData.category);
-        form.append('price', String(formData.price));
+        const form = new FormData()
+        form.append('name', formData.name)
+        form.append('description', formData.description)
+        form.append('category', formData.category)
+        form.append('price', String(formData.price))
         if (formData.originalPrice !== undefined) {
-          form.append('originalPrice', String(formData.originalPrice));
+          form.append('originalPrice', String(formData.originalPrice))
         }
-        form.append('quantity', String(formData.quantity));
-        form.append('availableForPraticinador', String(formData.availableForPraticinador));
-        form.append('file', imageFile);
-        payload = form;
+        form.append('quantity', String(formData.quantity))
+        form.append('availableForPraticinador', String(formData.availableForPraticinador))
+        form.append('file', imageFile)
+        payload = form
       } else {
         payload = {
           name: formData.name,
@@ -136,43 +136,43 @@ const SeusProdutos: React.FC = () => {
           price: formData.price,
           quantity: formData.quantity,
           availableForPraticinador: formData.availableForPraticinador,
-        };
+        }
         if (formData.originalPrice !== undefined) {
-          payload.originalPrice = formData.originalPrice;
+          payload.originalPrice = formData.originalPrice
         }
         if (formData.image) {
-          payload.image = formData.image;
+          payload.image = formData.image
         }
       }
 
       if (editingProduct?._id) {
-        const updated = await updateProduct(editingProduct._id, payload);
-        setProducts(prev => prev.map(p => p._id === editingProduct._id ? { ...p, ...updated.product } : p));
+        const updated = await updateProduct(editingProduct._id, payload)
+        setProducts(prev => prev.map(p => p._id === editingProduct._id ? { ...p, ...updated.product } : p))
       } else {
-        const created = await createProduct(payload);
-        setProducts(prev => [created.product as ExtendedProduct, ...prev]);
+        const created = await createProduct(payload)
+        setProducts(prev => [created.product as ExtendedProduct, ...prev])
       }
-      setShowProductModal(false);
-      setToastMessage('Produto guardado com sucesso!');
+      setShowProductModal(false)
+      setToastMessage('Produto guardado com sucesso!')
     } catch (error) {
-      console.error('Failed to save product', error);
-      setToastMessage('Erro ao guardar produto.');
+
+      setToastMessage('Erro ao guardar produto.')
     }
-  };
+  }
 
   const handleDeleteProduct = async (id: string) => {
     try {
-      await deleteProduct(id);
-      setProducts(prev => prev.filter(p => p._id !== id));
-      setShowDeleteAlert(null);
-      setToastMessage('Produto removido com sucesso!');
+      await deleteProduct(id)
+      setProducts(prev => prev.filter(p => p._id !== id))
+      setShowDeleteAlert(null)
+      setToastMessage('Produto removido com sucesso!')
     } catch (error) {
-      console.error('Failed to delete product', error);
-      setToastMessage('Erro ao remover produto.');
-    }
-  };
 
-  const canEdit = (product: ExtendedProduct) => product.status === 'pendente';
+      setToastMessage('Erro ao remover produto.')
+    }
+  }
+
+  const canEdit = (product: ExtendedProduct) => product.status === 'pendente'
 
   return (
     <IonPage>
@@ -310,12 +310,12 @@ const SeusProdutos: React.FC = () => {
                   type="file"
                   accept="image/*"
                   onChange={e => {
-                    const file = e.target.files?.[0] || null;
-                    setImageFile(file);
+                    const file = e.target.files?.[0] || null
+                    setImageFile(file)
                     if (file) {
-                      setImagePreview(URL.createObjectURL(file));
+                      setImagePreview(URL.createObjectURL(file))
                     } else {
-                      setImagePreview(formData.image || '');
+                      setImagePreview(formData.image || '')
                     }
                   }}
                   className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200"
@@ -361,7 +361,7 @@ const SeusProdutos: React.FC = () => {
 
       <Navbar />
     </IonPage>
-  );
-};
+  )
+}
 
-export default SeusProdutos;
+export default SeusProdutos

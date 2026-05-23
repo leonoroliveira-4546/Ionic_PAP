@@ -1,97 +1,97 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonList, IonModal, IonButton, IonInput, IonTextarea, IonIcon, IonLabel, IonAvatar } from '@ionic/react';
-import { heart, heartOutline, chatbubbleOutline, trash, pencil, close } from 'ionicons/icons';
-import Navbar from '../../../components/MainLayout';
-import YouTubeFeed from '../../../components/YouTubeFeed';
-import comunidadeApi from '../../../hooks/comunidadeApi';
-import { useAuth } from '../../../AuthContext';
+import React, { useState, useEffect, useCallback } from 'react'
+import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonList, IonModal, IonButton, IonInput, IonTextarea, IonIcon, IonLabel, IonAvatar } from '@ionic/react'
+import { heart, heartOutline, chatbubbleOutline, trash, pencil, close } from 'ionicons/icons'
+import Navbar from '../../../components/MainLayout'
+import YouTubeFeed from '../../../components/YouTubeFeed'
+import comunidadeApi from '../../../hooks/comunidadeApi'
+import { useAuth } from '../../../AuthContext'
 
 type CommunityAuthor = {
-  _id?: string;
-  username?: string;
-  profilePic?: string;
-};
+  _id?: string
+  username?: string
+  profilePic?: string
+}
 
 type CommunityComment = {
-  _id: string;
-  author?: CommunityAuthor;
-  message: string;
-  createdAt: string;
-  replies?: CommunityComment[];
-};
+  _id: string
+  author?: CommunityAuthor
+  message: string
+  createdAt: string
+  replies?: CommunityComment[]
+}
 
 type CommunityAttachment = {
-  type: 'image' | 'video' | 'link';
-  url: string;
-  title?: string;
-};
+  type: 'image' | 'video' | 'link'
+  url: string
+  title?: string
+}
 
 type CommunityPollOption = {
-  text: string;
-  votes: string[];
-};
+  text: string
+  votes: string[]
+}
 
 type CommunityPoll = {
-  _id: string;
-  question: string;
-  options: CommunityPollOption[];
-};
+  _id: string
+  question: string
+  options: CommunityPollOption[]
+}
 
 type CommunityContent = {
-  _id: string;
-  author?: CommunityAuthor;
-  community?: 'geral' | 'dojo';
-  type?: 'news' | 'post' | 'tournament';
-  title: string;
-  message?: string;
-  content?: string;
-  link?: string;
-  createdAt: string;
-  imagens?: string[];
-  likes?: string[];
-  comments?: CommunityComment[];
-  attachments?: CommunityAttachment[];
-  poll?: CommunityPoll | null;
-};
+  _id: string
+  author?: CommunityAuthor
+  community?: 'geral' | 'dojo'
+  type?: 'news' | 'post' | 'tournament'
+  title: string
+  message?: string
+  content?: string
+  link?: string
+  createdAt: string
+  imagens?: string[]
+  likes?: string[]
+  comments?: CommunityComment[]
+  attachments?: CommunityAttachment[]
+  poll?: CommunityPoll | null
+}
 
 const Comunidade: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'geral' | 'dojo'>('geral');
-  const [contents, setContents] = useState<CommunityContent[]>([]);
-  const [selectedNewsForComments, setSelectedNewsForComments] = useState<string | null>(null);
-  const [selectedDojoPostForComments, setSelectedDojoPostForComments] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'geral' | 'dojo'>('geral')
+  const [contents, setContents] = useState<CommunityContent[]>([])
+  const [selectedNewsForComments, setSelectedNewsForComments] = useState<string | null>(null)
+  const [selectedDojoPostForComments, setSelectedDojoPostForComments] = useState<string | null>(null)
 
-  const [showNewsModal, setShowNewsModal] = useState(false);
-  const [showDojoModal, setShowDojoModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editingPostId, setEditingPostId] = useState<string | null>(null);
-  const [newNewsTitle, setNewNewsTitle] = useState('');
-  const [newNewsContent, setNewNewsContent] = useState('');
-  const [newNewsLink, setNewNewsLink] = useState('');
-  const [newDojoTitle, setNewDojoTitle] = useState('');
-  const [newDojoContent, setNewDojoContent] = useState('');
-  const [newDojoLink, setNewDojoLink] = useState('');
-  const [newDojoVideo, setNewDojoVideo] = useState('');
-  const [newPollQuestion, setNewPollQuestion] = useState('');
-  const [newPollOptions, setNewPollOptions] = useState<string[]>([]);
-  const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
-  const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
-  const [activeReplyComment, setActiveReplyComment] = useState<string | null>(null);
-  const [newNewsImage, setNewNewsImage] = useState<File | null>(null);
-  const [newDojoImage, setNewDojoImage] = useState<File | null>(null);
-  const [editTitle, setEditTitle] = useState('');
-  const [editContent, setEditContent] = useState('');
-  const [editLink, setEditLink] = useState('');
-  const [editVideo, setEditVideo] = useState('');
-  const [editPollQuestion, setEditPollQuestion] = useState('');
-  const [editPollOptions, setEditPollOptions] = useState<string[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showNewsModal, setShowNewsModal] = useState(false)
+  const [showDojoModal, setShowDojoModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingPostId, setEditingPostId] = useState<string | null>(null)
+  const [newNewsTitle, setNewNewsTitle] = useState('')
+  const [newNewsContent, setNewNewsContent] = useState('')
+  const [newNewsLink, setNewNewsLink] = useState('')
+  const [newDojoTitle, setNewDojoTitle] = useState('')
+  const [newDojoContent, setNewDojoContent] = useState('')
+  const [newDojoLink, setNewDojoLink] = useState('')
+  const [newDojoVideo, setNewDojoVideo] = useState('')
+  const [newPollQuestion, setNewPollQuestion] = useState('')
+  const [newPollOptions, setNewPollOptions] = useState<string[]>([])
+  const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({})
+  const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({})
+  const [activeReplyComment, setActiveReplyComment] = useState<string | null>(null)
+  const [newNewsImage, setNewNewsImage] = useState<File | null>(null)
+  const [newDojoImage, setNewDojoImage] = useState<File | null>(null)
+  const [editTitle, setEditTitle] = useState('')
+  const [editContent, setEditContent] = useState('')
+  const [editLink, setEditLink] = useState('')
+  const [editVideo, setEditVideo] = useState('')
+  const [editPollQuestion, setEditPollQuestion] = useState('')
+  const [editPollOptions, setEditPollOptions] = useState<string[]>([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const [, setLivesCount] = useState<number>(0);
-  const [, setVideosCount] = useState<number>(0);
+  const [, setLivesCount] = useState<number>(0)
+  const [, setVideosCount] = useState<number>(0)
 
-  const { user } = useAuth();
-  const isAdmin = user?.type === 'admin';
-  const isSensei = user?.type === 'sensei';
+  const { user } = useAuth()
+  const isAdmin = user?.type === 'admin'
+  const isSensei = user?.type === 'sensei'
 
   const {
     getContents,
@@ -102,7 +102,7 @@ const Comunidade: React.FC = () => {
     votePoll,
     addComment,
     deleteComment
-  } = comunidadeApi();
+  } = comunidadeApi()
 
   // ---------------- LOAD ----------------
   const loadContents = useCallback(async () => {
@@ -110,237 +110,237 @@ const Comunidade: React.FC = () => {
       const res = await getContents(
         activeTab === 'geral' ? 'news' : 'post',
         activeTab
-      );
-      setContents(res.data || []);
+      )
+      setContents(res.data || [])
     } catch (err) {
-      console.error(err);
+
     }
-  }, [activeTab, getContents]);
+  }, [activeTab, getContents])
 
   useEffect(() => {
-    loadContents();
-  }, [loadContents]);
+    loadContents()
+  }, [loadContents])
 
   useEffect(() => {
     if (isAdmin && activeTab === 'dojo') {
-      setActiveTab('geral');
+      setActiveTab('geral')
     }
-  }, [activeTab, isAdmin]);
+  }, [activeTab, isAdmin])
 
   // ---------------- FILTERS ----------------
-  const news = contents.filter(c => c.type === 'news');
-  const dojoPosts = contents.filter(c => c.community === 'dojo');
+  const news = contents.filter(c => c.type === 'news')
+  const dojoPosts = contents.filter(c => c.community === 'dojo')
 
   const resetNewsForm = () => {
-    setNewNewsTitle('');
-    setNewNewsContent('');
-    setNewNewsLink('');
-    setNewNewsImage(null);
-  };
+    setNewNewsTitle('')
+    setNewNewsContent('')
+    setNewNewsLink('')
+    setNewNewsImage(null)
+  }
 
   const resetDojoForm = () => {
-    setNewDojoTitle('');
-    setNewDojoContent('');
-    setNewDojoLink('');
-    setNewDojoVideo('');
-    setNewPollQuestion('');
-    setNewPollOptions([]);
-    setNewDojoImage(null);
-  };
+    setNewDojoTitle('')
+    setNewDojoContent('')
+    setNewDojoLink('')
+    setNewDojoVideo('')
+    setNewPollQuestion('')
+    setNewPollOptions([])
+    setNewDojoImage(null)
+  }
 
   // ---------------- NEWS ----------------
   const handleCreateNews = async () => {
-    if (!newNewsTitle.trim() || !newNewsContent.trim() || isSubmitting) return;
+    if (!newNewsTitle.trim() || !newNewsContent.trim() || isSubmitting) return
 
     try {
-      setIsSubmitting(true);
-      const form = new FormData();
-      form.append('title', newNewsTitle.trim());
-      form.append('content', newNewsContent.trim());
-      form.append('message', newNewsContent.trim());
-      if (newNewsLink.trim()) form.append('link', newNewsLink.trim());
-      if (newNewsImage) form.append('file', newNewsImage, newNewsImage.name);
+      setIsSubmitting(true)
+      const form = new FormData()
+      form.append('title', newNewsTitle.trim())
+      form.append('content', newNewsContent.trim())
+      form.append('message', newNewsContent.trim())
+      if (newNewsLink.trim()) form.append('link', newNewsLink.trim())
+      if (newNewsImage) form.append('file', newNewsImage, newNewsImage.name)
 
-      await createContent(form, 'news', 'geral');
+      await createContent(form, 'news', 'geral')
 
-      setShowNewsModal(false);
-      resetNewsForm();
-      await loadContents();
+      setShowNewsModal(false)
+      resetNewsForm()
+      await loadContents()
     } catch (err) {
-      console.error(err);
+
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   const handleCreateDojoPost = async () => {
-    if (!newDojoTitle.trim() || !newDojoContent.trim() || isSubmitting) return;
+    if (!newDojoTitle.trim() || !newDojoContent.trim() || isSubmitting) return
 
     try {
-      setIsSubmitting(true);
-      const form = new FormData();
-      form.append('title', newDojoTitle.trim());
-      form.append('message', newDojoContent.trim());
-      form.append('content', newDojoContent.trim());
-      if (newDojoLink.trim()) form.append('link', newDojoLink.trim());
+      setIsSubmitting(true)
+      const form = new FormData()
+      form.append('title', newDojoTitle.trim())
+      form.append('message', newDojoContent.trim())
+      form.append('content', newDojoContent.trim())
+      if (newDojoLink.trim()) form.append('link', newDojoLink.trim())
       if (newDojoVideo.trim()) {
         // Adicionar vídeo como attachment
-        form.append('attachments', JSON.stringify([{ type: 'video', url: newDojoVideo.trim() }]));
+        form.append('attachments', JSON.stringify([{ type: 'video', url: newDojoVideo.trim() }]))
       }
       if (newPollQuestion.trim() && newPollOptions.filter(o => o.trim()).length > 0) {
         const pollData = {
           question: newPollQuestion.trim(),
           options: newPollOptions.filter(option => option.trim()).map(option => ({ text: option.trim(), votes: [] }))
-        };
-        form.append('poll', JSON.stringify(pollData));
+        }
+        form.append('poll', JSON.stringify(pollData))
       }
-      if (newDojoImage) form.append('file', newDojoImage, newDojoImage.name);
+      if (newDojoImage) form.append('file', newDojoImage, newDojoImage.name)
 
-      await createContent(form, 'post', 'dojo');
+      await createContent(form, 'post', 'dojo')
 
-      setShowDojoModal(false);
-      resetDojoForm();
-      await loadContents();
+      setShowDojoModal(false)
+      resetDojoForm()
+      await loadContents()
     } catch (err) {
-      console.error(err);
+
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   // ---------------- LIKE ----------------
   const handleLike = async (id: string) => {
     try {
-      await likeContent(id);
-      await loadContents();
+      await likeContent(id)
+      await loadContents()
     } catch (err) {
-      console.error(err);
+
     }
-  };
+  }
 
   // ---------------- COMMENTS ----------------
   const setCommentDraft = (contentId: string, value: string) => {
-    setCommentDrafts(prev => ({ ...prev, [contentId]: value }));
-  };
+    setCommentDrafts(prev => ({ ...prev, [contentId]: value }))
+  }
 
   const setReplyDraft = (commentId: string, value: string) => {
-    setReplyDrafts(prev => ({ ...prev, [commentId]: value }));
-  };
+    setReplyDrafts(prev => ({ ...prev, [commentId]: value }))
+  }
 
   const handleAddComment = async (id: string) => {
-    const message = (commentDrafts[id] || '').trim();
-    if (!message) return;
-    await addComment(id, message);
-    setCommentDrafts(prev => ({ ...prev, [id]: '' }));
-    await loadContents();
-  };
+    const message = (commentDrafts[id] || '').trim()
+    if (!message) return
+    await addComment(id, message)
+    setCommentDrafts(prev => ({ ...prev, [id]: '' }))
+    await loadContents()
+  }
 
   const handleAddReply = async (contentId: string, parentCommentId: string) => {
-    const message = (replyDrafts[parentCommentId] || '').trim();
-    if (!message) return;
-    await addComment(contentId, message, parentCommentId);
-    setReplyDrafts(prev => ({ ...prev, [parentCommentId]: '' }));
-    setActiveReplyComment(null);
-    await loadContents();
-  };
+    const message = (replyDrafts[parentCommentId] || '').trim()
+    if (!message) return
+    await addComment(contentId, message, parentCommentId)
+    setReplyDrafts(prev => ({ ...prev, [parentCommentId]: '' }))
+    setActiveReplyComment(null)
+    await loadContents()
+  }
 
   // ---------------- DOJO ACTIONS ----------------
   const handleLikeDojoPost = async (id: string) => {
     try {
-      await likeContent(id);
-      await loadContents();
+      await likeContent(id)
+      await loadContents()
     } catch (err) {
-      console.error(err);
+
     }
-  };
+  }
 
   const handleAddDojoComment = async (id: string) => {
-    const message = (commentDrafts[id] || '').trim();
-    if (!message) return;
-    await addComment(id, message);
-    setCommentDrafts(prev => ({ ...prev, [id]: '' }));
-    await loadContents();
-  };
+    const message = (commentDrafts[id] || '').trim()
+    if (!message) return
+    await addComment(id, message)
+    setCommentDrafts(prev => ({ ...prev, [id]: '' }))
+    await loadContents()
+  }
 
   const handleDeleteDojoComment = async (commentId: string) => {
-    await deleteComment(commentId);
-    loadContents();
-  };
+    await deleteComment(commentId)
+    loadContents()
+  }
 
   const handleVotePoll = async (contentId: string, index: number) => {
     try {
-      await votePoll(contentId, index);
-      await loadContents();
+      await votePoll(contentId, index)
+      await loadContents()
     } catch (err) {
-      console.error(err);
+
     }
-  };
+  }
 
   // ---------- EDIT POST ----------
   const handleOpenEdit = (post: CommunityContent) => {
-    setEditingPostId(post._id);
-    setEditTitle(post.title);
-    setEditContent(post.content || post.message || '');
-    setEditLink(post.link || '');
-    setEditVideo(post.attachments?.find(a => a.type === 'video')?.url || '');
-    setEditPollQuestion(post.poll?.question || '');
-    setEditPollOptions(post.poll?.options.map(o => o.text) || []);
-    setShowEditModal(true);
-  };
+    setEditingPostId(post._id)
+    setEditTitle(post.title)
+    setEditContent(post.content || post.message || '')
+    setEditLink(post.link || '')
+    setEditVideo(post.attachments?.find(a => a.type === 'video')?.url || '')
+    setEditPollQuestion(post.poll?.question || '')
+    setEditPollOptions(post.poll?.options.map(o => o.text) || [])
+    setShowEditModal(true)
+  }
 
   const handleSaveEdit = async () => {
-    if (!editingPostId || !editTitle.trim() || !editContent.trim()) return;
+    if (!editingPostId || !editTitle.trim() || !editContent.trim()) return
     try {
-      setIsSubmitting(true);
-      const form = new FormData();
-      form.append('title', editTitle.trim());
-      form.append('message', editContent.trim());
-      form.append('content', editContent.trim());
-      if (editLink.trim()) form.append('link', editLink.trim());
+      setIsSubmitting(true)
+      const form = new FormData()
+      form.append('title', editTitle.trim())
+      form.append('message', editContent.trim())
+      form.append('content', editContent.trim())
+      if (editLink.trim()) form.append('link', editLink.trim())
       if (editVideo.trim()) {
-        form.append('attachments', JSON.stringify([{ type: 'video', url: editVideo.trim() }]));
+        form.append('attachments', JSON.stringify([{ type: 'video', url: editVideo.trim() }]))
       }
       if (editPollQuestion.trim() && editPollOptions.filter(o => o.trim()).length > 0) {
         const pollData = {
           question: editPollQuestion.trim(),
           options: editPollOptions.filter(o => o.trim()).map(o => ({ text: o.trim(), votes: [] }))
-        };
-        form.append('poll', JSON.stringify(pollData));
+        }
+        form.append('poll', JSON.stringify(pollData))
       }
       
-      await updateContent(editingPostId, form);
-      alert('Post editado com sucesso!');
-      setShowEditModal(false);
-      setEditingPostId(null);
-      setEditTitle('');
-      setEditContent('');
-      setEditLink('');
-      setEditVideo('');
-      setEditPollQuestion('');
-      setEditPollOptions([]);
-      await loadContents();
+      await updateContent(editingPostId, form)
+      alert('Post editado com sucesso!')
+      setShowEditModal(false)
+      setEditingPostId(null)
+      setEditTitle('')
+      setEditContent('')
+      setEditLink('')
+      setEditVideo('')
+      setEditPollQuestion('')
+      setEditPollOptions([])
+      await loadContents()
     } catch (err) {
-      console.error(err);
-      alert('Erro ao editar post');
+
+      alert('Erro ao editar post')
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   const handleDeletePost = async (postId: string) => {
-    if (!confirm('Tem certeza que quer remover este post?')) return;
+    if (!confirm('Tem certeza que quer remover este post?')) return
     try {
-      setIsSubmitting(true);
-      await deleteContent(postId);
-      alert('Post removido com sucesso!');
-      await loadContents();
+      setIsSubmitting(true)
+      await deleteContent(postId)
+      alert('Post removido com sucesso!')
+      await loadContents()
     } catch (err) {
-      console.error(err);
-      alert('Erro ao remover post');
+
+      alert('Erro ao remover post')
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   const renderGeralTab = () => (
   <div>
@@ -590,7 +590,7 @@ const Comunidade: React.FC = () => {
       />
     </div>
   </div>
-);
+)
 
   const renderDojoTab = () => (
     <div>
@@ -715,8 +715,8 @@ const Comunidade: React.FC = () => {
               <div className="mt-3 p-4 bg-gray-50 rounded-xl mb-4">
                 <strong className="block mb-3 text-sm">📊 {post.poll?.question}</strong>
                 {post.poll?.options.map((o: CommunityPollOption, i: number) => {
-                  const totalVotes = post.poll?.options.reduce((acc, opt) => acc + opt.votes.length, 0) || 0;
-                  const percentage = totalVotes > 0 ? Math.round((o.votes.length / totalVotes) * 100) : 0;
+                  const totalVotes = post.poll?.options.reduce((acc, opt) => acc + opt.votes.length, 0) || 0
+                  const percentage = totalVotes > 0 ? Math.round((o.votes.length / totalVotes) * 100) : 0
                   
                   return (
                     <div key={i} className="mb-3">
@@ -735,7 +735,7 @@ const Comunidade: React.FC = () => {
                       </div>
                       <div className="text-xs text-gray-400 ml-7 mt-1">{o.votes.length} voto{o.votes.length !== 1 ? 's' : ''}</div>
                     </div>
-                  );
+                  )
                 })}
               </div>
             )}
@@ -875,7 +875,7 @@ const Comunidade: React.FC = () => {
       ))}
       </div>
     </div>
-  );
+  )
 
   return (
     <IonPage>
@@ -905,8 +905,8 @@ const Comunidade: React.FC = () => {
 
       {/* News Creation Modal */}
       <IonModal isOpen={showNewsModal} onDidDismiss={() => {
-        setShowNewsModal(false);
-        resetNewsForm();
+        setShowNewsModal(false)
+        resetNewsForm()
       }}>
         <IonHeader>
           <IonToolbar>
@@ -965,8 +965,8 @@ const Comunidade: React.FC = () => {
                 Publicar Notícia
               </IonButton>
               <IonButton expand="block" fill="clear" onClick={() => {
-                setShowNewsModal(false);
-                resetNewsForm();
+                setShowNewsModal(false)
+                resetNewsForm()
               }}>
                 Cancelar
               </IonButton>
@@ -976,15 +976,15 @@ const Comunidade: React.FC = () => {
       </IonModal>
 
       <IonModal isOpen={showDojoModal} onDidDismiss={() => {
-        setShowDojoModal(false);
-        resetDojoForm();
+        setShowDojoModal(false)
+        resetDojoForm()
       }}>
         <IonHeader>
           <IonToolbar>
             <IonTitle>Adicionar Post do Dojo</IonTitle>
             <IonButton slot="end" fill="clear" onClick={() => {
-              setShowDojoModal(false);
-              resetDojoForm();
+              setShowDojoModal(false)
+              resetDojoForm()
             }}>
               Fechar
             </IonButton>
@@ -1048,9 +1048,9 @@ const Comunidade: React.FC = () => {
                     placeholder={`Opção ${i + 1}`}
                     value={option}
                     onIonChange={e => {
-                      const newOptions = [...newPollOptions];
-                      newOptions[i] = e.detail.value || '';
-                      setNewPollOptions(newOptions);
+                      const newOptions = [...newPollOptions]
+                      newOptions[i] = e.detail.value || ''
+                      setNewPollOptions(newOptions)
                     }}
                     className="flex-1 border border-slate-200 rounded-lg px-3 py-2"
                   />
@@ -1090,8 +1090,8 @@ const Comunidade: React.FC = () => {
                 Publicar Post
               </IonButton>
               <IonButton expand="block" fill="clear" onClick={() => {
-                setShowDojoModal(false);
-                resetDojoForm();
+                setShowDojoModal(false)
+                resetDojoForm()
               }}>
                 Cancelar
               </IonButton>
@@ -1168,9 +1168,9 @@ const Comunidade: React.FC = () => {
                     placeholder={`Opção ${i + 1}`}
                     value={option}
                     onIonChange={e => {
-                      const newOptions = [...editPollOptions];
-                      newOptions[i] = e.detail.value || '';
-                      setEditPollOptions(newOptions);
+                      const newOptions = [...editPollOptions]
+                      newOptions[i] = e.detail.value || ''
+                      setEditPollOptions(newOptions)
                     }}
                     className="flex-1 border border-slate-200 rounded-lg px-3 py-2"
                   />
@@ -1208,7 +1208,7 @@ const Comunidade: React.FC = () => {
       
       <Navbar />
     </IonPage>
-  );
-};
+  )
+}
 
-export default Comunidade;
+export default Comunidade

@@ -1,129 +1,129 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'
 import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
   IonAvatar, IonButton, IonIcon, IonList, IonItem, IonLabel,
   IonInput, IonAlert, IonText, IonChip, IonModal, IonSelect, IonSelectOption
-} from '@ionic/react';
+} from '@ionic/react'
 import {
   personOutline, mailOutline, lockClosedOutline,
   logOutOutline, chevronForwardOutline,
   createOutline, checkmarkOutline,
   ribbonOutline, trophyOutline
-} from 'ionicons/icons';
-import { useAuth } from '../../AuthContext';
-import { useHistory } from 'react-router-dom';
-import Navbar from '../../components/MainLayout';
-import userApi from '../../hooks/userApi';
-import authApi from '../../hooks/authApi';
+} from 'ionicons/icons'
+import { useAuth } from '../../AuthContext'
+import { useHistory } from 'react-router-dom'
+import Navbar from '../../components/MainLayout'
+import userApi from '../../hooks/userApi'
+import authApi from '../../hooks/authApi'
 
 const ProfileSettings: React.FC = () => {
-  const { user, logout, Login } = useAuth();
-  const history = useHistory();
-  const { getProfile, updateProfile, changePassword } = userApi();
-  const { logout: apiLogout } = authApi(Login);
+  const { user, logout, Login } = useAuth()
+  const history = useHistory()
+  const { getProfile, updateProfile, changePassword } = userApi()
+  const { logout: apiLogout } = authApi(Login)
 
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [profileFile, setProfileFile] = useState<File | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState<string | null>(null);
-  const [showLogoutAlert, setShowLogoutAlert] = useState(false);
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [profileFile, setProfileFile] = useState<File | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [saveMessage, setSaveMessage] = useState<string | null>(null)
+  const [showLogoutAlert, setShowLogoutAlert] = useState(false)
+  const [showPasswordModal, setShowPasswordModal] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordMessage, setPasswordMessage] = useState<string | null>(null)
 
-  const [editUsername, setEditUsername] = useState('');
-  const [editBelt, setEditBelt] = useState('Branca');
-  const [selectedChildId, setSelectedChildId] = useState('');
-  const [isProfileLoaded, setIsProfileLoaded] = useState(false);
-  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [editUsername, setEditUsername] = useState('')
+  const [editBelt, setEditBelt] = useState('Branca')
+  const [selectedChildId, setSelectedChildId] = useState('')
+  const [isProfileLoaded, setIsProfileLoaded] = useState(false)
+  const [passwordLoading, setPasswordLoading] = useState(false)
 
   type ResponsavelChild = {
-    _id?: string;
-    username?: string;
-    name?: string;
-    profilePic?: string;
-    belt?: string;
-    points?: number;
-    ranking?: number;
-  } | string;
+    _id?: string
+    username?: string
+    name?: string
+    profilePic?: string
+    belt?: string
+    points?: number
+    ranking?: number
+  } | string
 
-  const getChildId = (child: ResponsavelChild) => typeof child === 'string' ? child : String(child._id || child.username || '');
-  const getChildLabel = (child: ResponsavelChild) => typeof child === 'string' ? child : child.name || child.username || String(child._id || 'Filho');
+  const getChildId = (child: ResponsavelChild) => typeof child === 'string' ? child : String(child._id || child.username || '')
+  const getChildLabel = (child: ResponsavelChild) => typeof child === 'string' ? child : child.name || child.username || String(child._id || 'Filho')
 
-  const isAthlete = (type: string) => type?.toLowerCase() === 'athlete' || type?.toLowerCase() === 'atleta';
-  const isResponsavel = (type: string) => type?.toLowerCase() === 'responsavel';
-  const isSensei = (type: string) => type?.toLowerCase() === 'sensei';
-  const isPraticinador = (type: string) => type?.toLowerCase() === 'praticinador';
-
-  useEffect(() => {
-    if (!user) return;
-    setEditUsername(user.username);
-    setEditBelt(user.belt || 'Branca');
-  }, [user]);
-
-  const responsavelChildren = (user ? (user.childrenStats?.length ? user.childrenStats : user.childrens || []) : []) as ResponsavelChild[];
+  const isAthlete = (type: string) => type?.toLowerCase() === 'athlete' || type?.toLowerCase() === 'atleta'
+  const isResponsavel = (type: string) => type?.toLowerCase() === 'responsavel'
+  const isSensei = (type: string) => type?.toLowerCase() === 'sensei'
+  const isPraticinador = (type: string) => type?.toLowerCase() === 'praticinador'
 
   useEffect(() => {
-    if (!user?.authUid || isProfileLoaded) return;
+    if (!user) return
+    setEditUsername(user.username)
+    setEditBelt(user.belt || 'Branca')
+  }, [user])
+
+  const responsavelChildren = (user ? (user.childrenStats?.length ? user.childrenStats : user.childrens || []) : []) as ResponsavelChild[]
+
+  useEffect(() => {
+    if (!user?.authUid || isProfileLoaded) return
 
     const refreshProfile = async () => {
       try {
-        const response = await getProfile();
+        const response = await getProfile()
         if (response.success) {
-          Login(response.user);
-          setIsProfileLoaded(true);
+          Login(response.user)
+          setIsProfileLoaded(true)
         }
       } catch (err) {
-        console.error('Erro ao atualizar perfil:', err);
-      }
-    };
 
-    refreshProfile();
-  }, [user?.authUid, getProfile, Login, isProfileLoaded]);
+      }
+    }
+
+    refreshProfile()
+  }, [user?.authUid, getProfile, Login, isProfileLoaded])
 
   useEffect(() => {
     if (!selectedChildId && responsavelChildren?.length > 0) {
-      setSelectedChildId(getChildId(responsavelChildren[0]));
+      setSelectedChildId(getChildId(responsavelChildren[0]))
     }
-  }, [selectedChildId, responsavelChildren]);
+  }, [selectedChildId, responsavelChildren])
 
   const handleSave = async () => {
-    if (!user) return;
-    setSaving(true);
-    setSaveMessage(null);
+    if (!user) return
+    setSaving(true)
+    setSaveMessage(null)
 
     try {
-      const formData = new FormData();
-      formData.append('username', editUsername.trim());
-      formData.append('belt', editBelt);
+      const formData = new FormData()
+      formData.append('username', editUsername.trim())
+      formData.append('belt', editBelt)
       if (profileFile) {
-        formData.append('file', profileFile, profileFile.name);
+        formData.append('file', profileFile, profileFile.name)
       }
 
-      const response = await updateProfile(formData);
+      const response = await updateProfile(formData)
       if (response.success) {
-        Login(response.user);
-        setShowEditModal(false);
-        setProfileFile(null);
-        setSaveMessage('Perfil atualizado com sucesso.');
+        Login(response.user)
+        setShowEditModal(false)
+        setProfileFile(null)
+        setSaveMessage('Perfil atualizado com sucesso.')
       } else {
-        setSaveMessage('Falha ao atualizar perfil.');
+        setSaveMessage('Falha ao atualizar perfil.')
       }
     } catch (err) {
-      console.error(err);
-      setSaveMessage('Erro ao atualizar perfil.');
+
+      setSaveMessage('Erro ao atualizar perfil.')
     } finally {
-      setSaving(false);
+      setSaving(false)
     }
-  };
+  }
 
   const handleLogout = async () => {
-    await apiLogout();
-    await logout();
-    history.replace('/');
-    window.location.reload();
-  };
+    await apiLogout()
+    await logout()
+    history.replace('/')
+    window.location.reload()
+  }
 
   const typeLabel: Record<string, string> = {
     atleta: 'Atleta',
@@ -132,9 +132,9 @@ const ProfileSettings: React.FC = () => {
     sensei: 'Sensei',
     admin: 'Admin',
     praticinador: 'Praticinador'
-  };
+  }
 
-  if (!user) return null;
+  if (!user) return null
 
   return (
     <IonPage>
@@ -291,10 +291,10 @@ const ProfileSettings: React.FC = () => {
                 )}
 
                 {(() => {
-                  const selectedChild = responsavelChildren.find(child => getChildId(child) === selectedChildId) || responsavelChildren[0];
+                  const selectedChild = responsavelChildren.find(child => getChildId(child) === selectedChildId) || responsavelChildren[0]
                   const displayName = typeof selectedChild === 'string'
                     ? selectedChild
-                    : selectedChild.name || selectedChild.username || 'Filho';
+                    : selectedChild.name || selectedChild.username || 'Filho'
                   return (
                     <IonList inset lines="inset">
                       <IonItem style={{ marginBottom: 4 }}>
@@ -304,7 +304,7 @@ const ProfileSettings: React.FC = () => {
                         </IonLabel>
                       </IonItem>
                     </IonList>
-                  );
+                  )
                 })()}
               </>
             ) : (
@@ -384,9 +384,9 @@ const ProfileSettings: React.FC = () => {
           isOpen={showEditModal}
           className="profile-settings-modal"
           onDidDismiss={() => {
-            setShowEditModal(false);
-            setPasswordMessage(null);
-            setSaveMessage(null);
+            setShowEditModal(false)
+            setPasswordMessage(null)
+            setSaveMessage(null)
           }}
         >
           <IonHeader>
@@ -447,10 +447,10 @@ const ProfileSettings: React.FC = () => {
         isOpen={showPasswordModal}
         className="profile-settings-modal"
         onDidDismiss={() => {
-          setShowPasswordModal(false);
-          setNewPassword('');
-          setConfirmPassword('');
-          setPasswordMessage(null);
+          setShowPasswordModal(false)
+          setNewPassword('')
+          setConfirmPassword('')
+          setPasswordMessage(null)
         }}
       >
         <IonHeader>
@@ -498,32 +498,32 @@ const ProfileSettings: React.FC = () => {
               disabled={passwordLoading}
               className="rounded-full"
               onClick={async () => {
-                setPasswordMessage(null);
+                setPasswordMessage(null)
 
                 if (!newPassword || newPassword.length < 6) {
-                  setPasswordMessage('A senha deve ter pelo menos 6 caracteres.');
-                  return;
+                  setPasswordMessage('A senha deve ter pelo menos 6 caracteres.')
+                  return
                 }
                 if (newPassword !== confirmPassword) {
-                  setPasswordMessage('As senhas não coincidem.');
-                  return;
+                  setPasswordMessage('As senhas não coincidem.')
+                  return
                 }
 
-                setPasswordLoading(true);
+                setPasswordLoading(true)
                 try {
-                  const response = await changePassword(newPassword);
+                  const response = await changePassword(newPassword)
                   if (response.success) {
-                    setPasswordMessage('Senha alterada com sucesso.');
-                    setNewPassword('');
-                    setConfirmPassword('');
+                    setPasswordMessage('Senha alterada com sucesso.')
+                    setNewPassword('')
+                    setConfirmPassword('')
                   } else {
-                    setPasswordMessage(response.message || 'Falha ao alterar senha.');
+                    setPasswordMessage(response.message || 'Falha ao alterar senha.')
                   }
                 } catch (err) {
-                  console.error(err);
-                  setPasswordMessage('Erro ao alterar senha.');
+
+                  setPasswordMessage('Erro ao alterar senha.')
                 } finally {
-                  setPasswordLoading(false);
+                  setPasswordLoading(false)
                 }
               }}
             >
@@ -535,7 +535,7 @@ const ProfileSettings: React.FC = () => {
 
       <Navbar />
     </IonPage>
-  );
-};
+  )
+}
 
-export default ProfileSettings;
+export default ProfileSettings

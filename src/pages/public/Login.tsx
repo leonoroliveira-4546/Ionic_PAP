@@ -1,28 +1,28 @@
-import React, { useState } from "react";
-import { IonPage, IonContent, IonInput, IonButton, IonItem} from "@ionic/react";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { useHistory } from "react-router-dom";
-import { auth } from "../../firebaseConfig";
-import { useAuth } from "../../AuthContext";
-import authApi from "../../hooks/authApi";
-import '../StylesPages.css';
+import React, { useState } from "react"
+import { IonPage, IonContent, IonInput, IonButton, IonItem} from "@ionic/react"
+import { signInWithEmailAndPassword } from "firebase/auth"
+import { useHistory } from "react-router-dom"
+import { auth } from "../../firebaseConfig"
+import { useAuth } from "../../AuthContext"
+import authApi from "../../hooks/authApi"
+import '../StylesPages.css'
 
 const Login: React.FC = () => {
-  const { Login } = useAuth();
-  const { login } = authApi(Login);
-  const history = useHistory();
+  const { Login } = useAuth()
+  const { login } = authApi(Login)
+  const history = useHistory()
 
   const [credentials, setCredentials] = useState({
     email: "",
     password: ""
-  });
+  })
 
   const handleChange = (field: "email" | "password", value: string | null | undefined) => {
     setCredentials(prev => ({
       ...prev,
       [field]: value || "",
-    }));
-  };
+    }))
+  }
 
   const handleLogin = async () => {
     try {
@@ -30,26 +30,26 @@ const Login: React.FC = () => {
         auth,
         credentials.email,
         credentials.password
-      );
+      )
 
-      const idToken = await result.user.getIdToken();
-      const apiResult = await login(idToken);
+      const idToken = await result.user.getIdToken()
+      const apiResult = await login(idToken)
 
       if (apiResult.success) {
-        const user = apiResult.user;
+        const user = apiResult.user
         if (user.type === 'admin') {
-          history.replace('/admin');
+          history.replace('/admin')
         } else {
-          history.replace('/home');
+          history.replace('/home')
         }
       } else {
-        console.error(apiResult.error);
+
       }
 
     } catch (error: any) {
-      console.error('Erro no login: ', error.message);
+
     }
-  };
+  }
 
   return (
     <IonPage>
@@ -97,7 +97,7 @@ const Login: React.FC = () => {
         </div>
       </IonContent>
     </IonPage>
-  );
-};
+  )
+}
 
-export default Login;
+export default Login

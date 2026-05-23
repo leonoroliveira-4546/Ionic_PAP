@@ -1,26 +1,26 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonList, IonItem, IonLabel, IonAvatar, IonInput, IonIcon, IonButton } from '@ionic/react';
-import { send, arrowBackCircleOutline } from 'ionicons/icons';
-import { useAuth } from '../../../AuthContext';
-import Navbar from '../../../components/MainLayout';
+import React, { useState, useEffect, useRef } from 'react'
+import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonList, IonItem, IonLabel, IonAvatar, IonInput, IonIcon, IonButton } from '@ionic/react'
+import { send, arrowBackCircleOutline } from 'ionicons/icons'
+import { useAuth } from '../../../AuthContext'
+import Navbar from '../../../components/MainLayout'
 import api from "../../../components/AxiosInstance"
-import { io, Socket } from 'socket.io-client';
-import '../../../pages/StylesPages.css';
+import { io, Socket } from 'socket.io-client'
+import '../../../pages/StylesPages.css'
 
 const Chat: React.FC = () => {
-  const { user } = useAuth();
-  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
-  const [newMessage, setNewMessage] = useState('');
-  const [conversationSearch, setConversationSearch] = useState('');
-  const [conversations, setConversations] = useState<any[]>([]);
-  const [messages, setMessages] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const socketRef = useRef<Socket | null>(null);
-  const selectedConversationRef = useRef<string | null>(null);
+  const { user } = useAuth()
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(null)
+  const [newMessage, setNewMessage] = useState('')
+  const [conversationSearch, setConversationSearch] = useState('')
+  const [conversations, setConversations] = useState<any[]>([])
+  const [messages, setMessages] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+  const socketRef = useRef<Socket | null>(null)
+  const selectedConversationRef = useRef<string | null>(null)
 
   useEffect(() => {
-    selectedConversationRef.current = selectedConversation;
-  }, [selectedConversation]);
+    selectedConversationRef.current = selectedConversation
+  }, [selectedConversation])
 
   useEffect(() => {
     if (user) {
@@ -30,22 +30,22 @@ const Chat: React.FC = () => {
         reconnectionDelay: 1000,
         reconnectionDelayMax: 5000,
         reconnectionAttempts: 5
-      });
+      })
 
       // Emit join event with userId
-      socketRef.current.emit('join', user._id);
+      socketRef.current.emit('join', user._id)
 
       // Listen for incoming messages
       socketRef.current.on('receive_message', (data: any) => {
-        console.log('Received message:', data);
-        const incomingMessage = data.message;
+
+        const incomingMessage = data.message
 
         // If message is from current conversation, add to messages
         if (data.conversationId === selectedConversationRef.current) {
           setMessages((prev) => {
-            const alreadyExists = prev.some((message) => message._id === incomingMessage._id);
-            return alreadyExists ? prev : [...prev, incomingMessage];
-          });
+            const alreadyExists = prev.some((message) => message._id === incomingMessage._id)
+            return alreadyExists ? prev : [...prev, incomingMessage]
+          })
         }
 
         // Update last message in conversations
@@ -55,78 +55,78 @@ const Chat: React.FC = () => {
               ? { ...conv, lastMessage: incomingMessage.content, timestamp: incomingMessage.timestamp }
               : conv
           )
-        );
-      });
+        )
+      })
 
       socketRef.current.on('message_sent', (data: any) => {
-        console.log('Message sent confirmation:', data);
-      });
+
+      })
 
       socketRef.current.on('error', (data: any) => {
-        console.error('Socket error:', data);
-      });
 
-      fetchConversations();
+      })
+
+      fetchConversations()
 
       return () => {
         if (socketRef.current) {
-          socketRef.current.disconnect();
+          socketRef.current.disconnect()
         }
-      };
+      }
     }
-  }, [user]);
+  }, [user])
 
   useEffect(() => {
     if (selectedConversation) {
-      fetchMessages(selectedConversation);
+      fetchMessages(selectedConversation)
     }
-  }, [selectedConversation]);
+  }, [selectedConversation])
 
   useEffect(() => {
     if (selectedConversation && socketRef.current) {
-      socketRef.current.emit('join_room', selectedConversation);
+      socketRef.current.emit('join_room', selectedConversation)
     }
-  }, [selectedConversation]);
+  }, [selectedConversation])
 
   const fetchConversations = async () => {
     try {
-      const response = await api.get('/conversations');
+      const response = await api.get('/conversations')
       const sortedConversations = (response.data || []).slice().sort((a: any, b: any) => {
-        const aTime = new Date(a.timestamp || a.lastMessage?.timestamp || 0).getTime();
-        const bTime = new Date(b.timestamp || b.lastMessage?.timestamp || 0).getTime();
-        return bTime - aTime;
-      });
-      setConversations(sortedConversations);
+        const aTime = new Date(a.timestamp || a.lastMessage?.timestamp || 0).getTime()
+        const bTime = new Date(b.timestamp || b.lastMessage?.timestamp || 0).getTime()
+        return bTime - aTime
+      })
+      setConversations(sortedConversations)
     } catch (error) {
-      console.error('Error fetching conversations:', error);
+
     }
-  };
+  }
 
   const fetchMessages = async (conversationId: string) => {
     try {
-      setLoading(true);
-      const response = await api.get(`/conversations/${conversationId}/messages`);
-      setMessages(response.data);
+      setLoading(true)
+      const response = await api.get(`/conversations/${conversationId}/messages`)
+      setMessages(response.data)
     } catch (error) {
-      console.error('Error fetching messages:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  if (!user) return null;
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (!user) return null
 
   const getSenderId = (message: any) => {
-    if (!message?.senderId) return null;
-    return typeof message.senderId === 'string' ? message.senderId : message.senderId._id;
-  };
+    if (!message?.senderId) return null
+    return typeof message.senderId === 'string' ? message.senderId : message.senderId._id
+  }
 
   const handleSendMessage = () => {
-    if (!newMessage.trim() || !selectedConversation) return;
-    const conv = conversations.find(c => c._id === selectedConversation);
-    if (!conv) return;
+    if (!newMessage.trim() || !selectedConversation) return
+    const conv = conversations.find(c => c._id === selectedConversation)
+    if (!conv) return
 
-    const messageContent = newMessage.trim();
+    const messageContent = newMessage.trim()
 
     if (socketRef.current) {
       // Emit message via socket
@@ -134,7 +134,7 @@ const Chat: React.FC = () => {
         conversationId: selectedConversation,
         recipientId: conv.otherUser._id,
         content: messageContent
-      });
+      })
 
       setConversations((prev) =>
         prev.map((conversation) =>
@@ -142,18 +142,18 @@ const Chat: React.FC = () => {
             ? { ...conversation, lastMessage: messageContent, timestamp: new Date().toISOString() }
             : conversation
         )
-      );
+      )
 
-      setNewMessage('');
+      setNewMessage('')
     }
-  };
+  }
 
   const filteredConversations = conversations.filter(conv => {
-    const title = conv.title || '';
-    const otherUsername = conv.otherUser?.username || '';
-    const text = `${title} ${otherUsername}`.toLowerCase();
-    return text.includes(conversationSearch.toLowerCase());
-  });
+    const title = conv.title || ''
+    const otherUsername = conv.otherUser?.username || ''
+    const text = `${title} ${otherUsername}`.toLowerCase()
+    return text.includes(conversationSearch.toLowerCase())
+  })
 
   const renderConversationList = () => (
     <>
@@ -186,12 +186,12 @@ const Chat: React.FC = () => {
             ))}
         </IonList>
     </>
-  );
+  )
 
   const renderChatView = () => {
-    if (!selectedConversation) return null;
-    const conv = conversations.find(c => c._id === selectedConversation);
-    if (!conv) return null;
+    if (!selectedConversation) return null
+    const conv = conversations.find(c => c._id === selectedConversation)
+    if (!conv) return null
 
     return (
       <div className="chat-container">
@@ -207,7 +207,7 @@ const Chat: React.FC = () => {
 
         <div className="chat-messages">
           {messages.map(msg => {
-            const isMe = getSenderId(msg) === user._id;
+            const isMe = getSenderId(msg) === user._id
             return (
               <div
                 key={msg._id}
@@ -220,7 +220,7 @@ const Chat: React.FC = () => {
                   </span>
                 </div>
               </div>
-            );
+            )
           })}
         </div>
 
@@ -235,8 +235,8 @@ const Chat: React.FC = () => {
           </div>
         </div>
       </div>
-    );
-  };
+    )
+  }
 
   return (
     <IonPage>
@@ -268,7 +268,7 @@ const Chat: React.FC = () => {
       </IonContent>
       <Navbar />
     </IonPage>
-  );
-};
+  )
+}
 
-export default Chat;
+export default Chat

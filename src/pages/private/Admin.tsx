@@ -1,85 +1,85 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react'
 import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
   IonText, IonCard, IonCardContent, IonCardHeader, IonButton,
   IonList, IonItem, IonLabel, IonBadge, IonSpinner, IonSelect,
   IonSelectOption, IonModal, IonInput
-} from '@ionic/react';
-import Navbar from '../../components/MainLayout';
-import { adminApi } from '../../hooks/adminApi';
+} from '@ionic/react'
+import Navbar from '../../components/MainLayout'
+import { adminApi } from '../../hooks/adminApi'
 
 interface AdminUser {
-  _id: string;
-  name: string;
-  username: string;
-  email: string;
-  type: string;
-  status?: string;
-  isAdmin?: boolean;
-  verified?: boolean;
+  _id: string
+  name: string
+  username: string
+  email: string
+  type: string
+  status?: string
+  isAdmin?: boolean
+  verified?: boolean
 }
 
 const Admin: React.FC = () => {
-  const { getUsers, updateUser, deleteUser, resetRanking } = adminApi();
-  const [users, setUsers] = useState<AdminUser[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [savingId, setSavingId] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editUser, setEditUser] = useState<AdminUser | null>(null);
-  const pageSize = 20;
-  const [manageModalOpen, setManageModalOpen] = useState(false);
+  const { getUsers, updateUser, deleteUser, resetRanking } = adminApi()
+  const [users, setUsers] = useState<AdminUser[]>([])
+  const [loading, setLoading] = useState(true)
+  const [savingId, setSavingId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [editUser, setEditUser] = useState<AdminUser | null>(null)
+  const pageSize = 20
+  const [manageModalOpen, setManageModalOpen] = useState(false)
 
   useEffect(() => {
     const loadUsers = async () => {
-      setLoading(true);
+      setLoading(true)
       try {
-        const data = await getUsers();
-        setUsers(data.users || data);
+        const data = await getUsers()
+        setUsers(data.users || data)
       } catch (error) {
-        console.error('Failed to load users', error);
+
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    loadUsers();
-  }, [getUsers]);
+    loadUsers()
+  }, [getUsers])
 
-  const pagedUsers = users.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-  const totalPages = Math.max(1, Math.ceil(users.length / pageSize));
+  const pagedUsers = users.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  const totalPages = Math.max(1, Math.ceil(users.length / pageSize))
 
   const handleTypeChange = async (userId: string, newType: string) => {
-    setSavingId(userId);
+    setSavingId(userId)
     try {
-      const updated = await updateUser(userId, { type: newType });
-      const userData = updated.user || updated;
-      setUsers(prev => prev.map(user => user._id === userId ? { ...user, type: userData.type || newType } : user));
+      const updated = await updateUser(userId, { type: newType })
+      const userData = updated.user || updated
+      setUsers(prev => prev.map(user => user._id === userId ? { ...user, type: userData.type || newType } : user))
     } catch (error) {
-      console.error('Failed to update user type', error);
+
     } finally {
-      setSavingId(null);
+      setSavingId(null)
     }
-  };
+  }
 
   const handleOpenEdit = (user: AdminUser) => {
-    setEditUser(user);
-    setEditModalOpen(true);
-  };
+    setEditUser(user)
+    setEditModalOpen(true)
+  }
 
   const handleCloseEdit = () => {
-    setEditModalOpen(false);
-    setEditUser(null);
-  };
+    setEditModalOpen(false)
+    setEditUser(null)
+  }
 
   const handleEditField = (field: keyof AdminUser, value: any) => {
-    setEditUser(prev => prev ? { ...prev, [field]: value } : prev);
-  };
+    setEditUser(prev => prev ? { ...prev, [field]: value } : prev)
+  }
 
   const handleSaveUser = async () => {
-    if (!editUser) return;
-    setSavingId(editUser._id);
+    if (!editUser) return
+    setSavingId(editUser._id)
     try {
       const payload = {
         name: editUser.name,
@@ -87,46 +87,46 @@ const Admin: React.FC = () => {
         email: editUser.email,
         type: editUser.type,
         status: editUser.status
-      };
-      const updated = await updateUser(editUser._id, payload);
-      const userData = updated.user || updated;
-      setUsers(prev => prev.map(user => user._id === editUser._id ? { ...user, ...userData } : user));
-      handleCloseEdit();
+      }
+      const updated = await updateUser(editUser._id, payload)
+      const userData = updated.user || updated
+      setUsers(prev => prev.map(user => user._id === editUser._id ? { ...user, ...userData } : user))
+      handleCloseEdit()
     } catch (error) {
-      console.error('Failed to save user', error);
-      alert('Erro ao salvar usuário.');
+
+      alert('Erro ao salvar usuário.')
     } finally {
-      setSavingId(null);
+      setSavingId(null)
     }
-  };
+  }
 
   const handleDeleteUser = async (userId: string) => {
-    if (!window.confirm('Remover este usuário? Esta ação não pode ser desfeita.')) return;
-    setDeletingId(userId);
+    if (!window.confirm('Remover este usuário? Esta ação não pode ser desfeita.')) return
+    setDeletingId(userId)
     try {
-      await deleteUser(userId);
-      const updatedUsers = users.filter(user => user._id !== userId);
-      setUsers(updatedUsers);
+      await deleteUser(userId)
+      const updatedUsers = users.filter(user => user._id !== userId)
+      setUsers(updatedUsers)
       if ((currentPage - 1) * pageSize >= updatedUsers.length && currentPage > 1) {
-        setCurrentPage(currentPage - 1);
+        setCurrentPage(currentPage - 1)
       }
     } catch (error) {
-      console.error('Failed to delete user', error);
-      alert('Erro ao remover usuário.');
+
+      alert('Erro ao remover usuário.')
     } finally {
-      setDeletingId(null);
+      setDeletingId(null)
     }
-  };
+  }
 
   const handleResetRanking = async () => {
     try {
-      await resetRanking();
-      alert('Ranking reiniciado com sucesso.');
+      await resetRanking()
+      alert('Ranking reiniciado com sucesso.')
     } catch (error) {
-      console.error('Failed to reset ranking', error);
-      alert('Erro ao reiniciar ranking.');
+
+      alert('Erro ao reiniciar ranking.')
     }
-  };
+  }
 
   return (
     <IonPage>
@@ -308,7 +308,7 @@ const Admin: React.FC = () => {
       </IonContent>
       <Navbar />
     </IonPage>
-  );
-};
+  )
+}
 
-export default Admin;
+export default Admin

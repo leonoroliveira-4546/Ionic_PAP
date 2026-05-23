@@ -1,602 +1,599 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { useHistory } from 'react-router-dom';
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonList, IonItem, IonLabel, IonButton, IonSelect, IonSelectOption, IonModal, IonInput, IonDatetime, IonIcon } from '@ionic/react';
-import { close, add, chevronBack, create, trash, eye, arrowUp } from 'ionicons/icons';
-import { useAuth } from '../../../AuthContext';
-import Navbar from '../../../components/MainLayout';
-import authApi from '../../../hooks/authApi';
-import dojosApi from '../../../hooks/dojosApi';
-import educationalApi from '../../../hooks/educationalApi';
+import React, { useEffect, useRef, useState } from 'react'
+import { useHistory } from 'react-router-dom'
+import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonList, IonItem, IonLabel, IonButton, IonSelect, IonSelectOption, IonModal, IonInput, IonDatetime, IonIcon } from '@ionic/react'
+import { close, add, chevronBack, create, trash, eye, arrowUp } from 'ionicons/icons'
+import { useAuth } from '../../../AuthContext'
+import Navbar from '../../../components/MainLayout'
+import authApi from '../../../hooks/authApi'
+import dojosApi from '../../../hooks/dojosApi'
+import educationalApi from '../../../hooks/educationalApi'
 
 const Home: React.FC = () => {
-  const { user } = useAuth();
-  const [selectedChild, setSelectedChild] = useState<string>('');
-  const [performance, setPerformance] = useState<any>(null);
-  const [absences, setAbsences] = useState<number>(0);
-  const [trainingSchedule, setTrainingSchedule] = useState<any[]>([]);
-  const [upcomingTournaments, setUpcomingTournaments] = useState<any[]>([]);
-  const [dailyChallenge, setDailyChallenge] = useState<any | null>(null);
+  const { user } = useAuth()
+  const [selectedChild, setSelectedChild] = useState<string>('')
+  const [performance, setPerformance] = useState<any>(null)
+  const [absences, setAbsences] = useState<number>(0)
+  const [trainingSchedule, setTrainingSchedule] = useState<any[]>([])
+  const [upcomingTournaments, setUpcomingTournaments] = useState<any[]>([])
+  const [dailyChallenge, setDailyChallenge] = useState<any | null>(null)
 
-  const [dojoMembers, setDojoMembers] = useState<any[]>([]);
-  const [athletesWithoutDojo, setAthletesWithoutDojo] = useState<any[]>([]);
-  const [memberSearchQuery, setMemberSearchQuery] = useState<string>('');
-  const [athleteSearchQuery, setAthleteSearchQuery] = useState<string>('');
-  const [inviteEmail, setInviteEmail] = useState<string>('');
-  const [pendingRequests, setPendingRequests] = useState<any[]>([]);
-  const [tournaments, setTournaments] = useState<any[]>([]);
-  const [showInviteModal, setShowInviteModal] = useState(false);
-  const [showManageMembersModal, setShowManageMembersModal] = useState(false);
-  const [showScrollTopButton, setShowScrollTopButton] = useState(false);
-  const [inviteTab, setInviteTab] = useState<'invite' | 'requests'>('invite');
-  const [attendanceToday, setAttendanceToday] = useState<string[]>([]);
-  const contentRef = useRef<HTMLIonContentElement>(null);
-  const [absencesMarkedToday, setAbsencesMarkedToday] = useState<string[]>([]);
+  const [dojoMembers, setDojoMembers] = useState<any[]>([])
+  const [athletesWithoutDojo, setAthletesWithoutDojo] = useState<any[]>([])
+  const [memberSearchQuery, setMemberSearchQuery] = useState<string>('')
+  const [athleteSearchQuery, setAthleteSearchQuery] = useState<string>('')
+  const [inviteEmail, setInviteEmail] = useState<string>('')
+  const [pendingRequests, setPendingRequests] = useState<any[]>([])
+  const [tournaments, setTournaments] = useState<any[]>([])
+  const [showInviteModal, setShowInviteModal] = useState(false)
+  const [showManageMembersModal, setShowManageMembersModal] = useState(false)
+  const [showScrollTopButton, setShowScrollTopButton] = useState(false)
+  const [inviteTab, setInviteTab] = useState<'invite' | 'requests'>('invite')
+  const [attendanceToday, setAttendanceToday] = useState<string[]>([])
+  const contentRef = useRef<HTMLIonContentElement>(null)
+  const [absencesMarkedToday, setAbsencesMarkedToday] = useState<string[]>([])
   const [newPerformance, setNewPerformance] = useState({
     rating: 0,
     improvements: '',
     needsImprovement: ''
-  });
+  })
   const [newSchedule, setNewSchedule] = useState({
     day: '',
     time: '',
     location: ''
-  });
-  const [attendanceStatus, setAttendanceStatus] = useState<'present' | 'absent' | null>(null);
-  const [absenceReason, setAbsenceReason] = useState<'disease' | 'other' | null>(null);
-  const [absenceReasons, setAbsenceReasons] = useState<Record<string, 'disease' | 'other'>>({});
-  const [memberAbsences, setMemberAbsences] = useState<number>(0);
-  const [performanceAction, setPerformanceAction] = useState<'add' | 'edit' | null>(null);
+  })
+  const [attendanceStatus, setAttendanceStatus] = useState<'present' | 'absent' | null>(null)
+  const [absenceReason, setAbsenceReason] = useState<'disease' | 'other' | null>(null)
+  const [absenceReasons, setAbsenceReasons] = useState<Record<string, 'disease' | 'other'>>({})
+  const [memberAbsences, setMemberAbsences] = useState<number>(0)
+  const [performanceAction, setPerformanceAction] = useState<'add' | 'edit' | null>(null)
 
   // Modais
-  const [showScheduleModal, setShowScheduleModal] = useState(false);
-  const [showMemberDetailsModal, setShowMemberDetailsModal] = useState(false);
-  const [showTournamentModal, setShowTournamentModal] = useState(false);
-  const [participantsOpenIndex, setParticipantsOpenIndex] = useState<number | null>(null);
-  const [showPerformanceModal, setShowPerformanceModal] = useState(false);
-  const [selectedMemberDetails, setSelectedMemberDetails] = useState<any>(null);
-  const [editingSchedules, setEditingSchedules] = useState<any[]>([]);
-  const [editingTournaments, setEditingTournaments] = useState<any[]>([]);
+  const [showScheduleModal, setShowScheduleModal] = useState(false)
+  const [showMemberDetailsModal, setShowMemberDetailsModal] = useState(false)
+  const [showTournamentModal, setShowTournamentModal] = useState(false)
+  const [participantsOpenIndex, setParticipantsOpenIndex] = useState<number | null>(null)
+  const [showPerformanceModal, setShowPerformanceModal] = useState(false)
+  const [selectedMemberDetails, setSelectedMemberDetails] = useState<any>(null)
+  const [editingSchedules, setEditingSchedules] = useState<any[]>([])
+  const [editingTournaments, setEditingTournaments] = useState<any[]>([])
   const [newTournamentData, setNewTournamentData] = useState({
     name: '',
     date: '',
     location: ''
-  });
-  const [dojos, setDojos] = useState<any[]>([]);
-  const [dojoSearchQuery, setDojoSearchQuery] = useState<string>('');
-  const [showDojosModal, setShowDojosModal] = useState(false);
+  })
+  const [dojos, setDojos] = useState<any[]>([])
+  const [dojoSearchQuery, setDojoSearchQuery] = useState<string>('')
+  const [showDojosModal, setShowDojosModal] = useState(false)
 
-  const { addPerformance, getPerformance, getAbsencesByMonth, addAbsence } = authApi(() => {});
-  const { getDojos, getDojoMembers, removeMember, removeChildFromResponsible, addTrainingSchedule, updateTrainingSchedules, createTournament, getDojoTournaments, updateTournament, deleteTournament, inviteMemberByEmail, submitJoinRequest, acceptJoinRequest, rejectJoinRequest, getAthletesWithoutDojo } = dojosApi();
-  const { getCurrentChallenge, getUserChallengeResponse } = educationalApi();
+  const { addPerformance, getPerformance, getAbsencesByMonth, addAbsence } = authApi(() => {})
+  const { getDojos, getDojoMembers, removeMember, removeChildFromResponsible, addTrainingSchedule, updateTrainingSchedules, createTournament, getDojoTournaments, updateTournament, deleteTournament, inviteMemberByEmail, submitJoinRequest, acceptJoinRequest, rejectJoinRequest, getAthletesWithoutDojo } = dojosApi()
+  const { getCurrentChallenge, getUserChallengeResponse } = educationalApi()
 
-  const history = useHistory();
-  const isAthlete = (type: string) => type === 'athlete' || type === 'atleta';
-  const isResponsavel = (type: string) => type === 'responsavel';
-  const isSensei = (type: string) => type === 'sensei';
-  const isPraticinador = (type: string) => type === 'praticinador';
-  const isUserSensei = user ? isSensei(user.type) : false;
+  const history = useHistory()
+  const isAthlete = (type: string) => type === 'athlete' || type === 'atleta'
+  const isResponsavel = (type: string) => type === 'responsavel'
+  const isSensei = (type: string) => type === 'sensei'
+  const isPraticinador = (type: string) => type === 'praticinador'
+  const isUserSensei = user ? isSensei(user.type) : false
 
   useEffect(() => {
     if (user && isPraticinador(user.type)) {
-      history.replace('/shop');
+      history.replace('/shop')
     }
-  }, [user, history]);
+  }, [user, history])
 
-  if (!user) return null;
+  if (!user) return null
 
   const fetchAthleteData = async (athleteId: string, isChild: boolean = false) => {
     try {
-      const perfParams = isChild ? { athleteId: user._id, childId: athleteId } : { athleteId };
-      const perfData = await getPerformance(perfParams);
+      const perfParams = isChild ? { athleteId: user._id, childId: athleteId } : { athleteId }
+      const perfData = await getPerformance(perfParams)
       if (!perfData.success) {
-        alert(perfData.error);
-        setPerformance(null);
+        alert(perfData.error)
+        setPerformance(null)
       } else {
-        setPerformance(perfData.performance || null);
+        setPerformance(perfData.performance || null)
       }
 
-      const month = new Date().toISOString().slice(0, 7);
+      const month = new Date().toISOString().slice(0, 7)
       if (isChild) {
-        const child = user.childrens?.find((c: any) => c._id === athleteId);
-        const abs = child?.absences?.find((a: any) => a.month === month)?.count || 0;
-        setAbsences(abs);
+        const child = user.childrens?.find((c: any) => c._id === athleteId)
+        const abs = child?.absences?.find((a: any) => a.month === month)?.count || 0
+        setAbsences(abs)
       } else {
-        const absData = await getAbsencesByMonth(athleteId, month);
+        const absData = await getAbsencesByMonth(athleteId, month)
         if (!absData.success) {
-          alert(absData.error);
-          setAbsences(0);
+          alert(absData.error)
+          setAbsences(0)
         } else {
-          setAbsences(absData.count || 0);
+          setAbsences(absData.count || 0)
         }
       }
 
       if (user.dojoId) {
-        const dojoData = await getDojoMembers(user.dojoId);
+        const dojoData = await getDojoMembers(user.dojoId)
         if (!dojoData.success) {
-          alert(dojoData.error);
+          alert(dojoData.error)
         } else {
-          setTrainingSchedule(dojoData.dojo.trainingSchedule);
+          setTrainingSchedule(dojoData.dojo.trainingSchedule)
         }
 
-        const tournaments = await getDojoTournaments(user.dojoId);
+        const tournaments = await getDojoTournaments(user.dojoId)
         if (!tournaments.success) {
-          alert(tournaments.error);
+          alert(tournaments.error)
         } else {
-          setUpcomingTournaments(tournaments.tournaments || []);
+          setUpcomingTournaments(tournaments.tournaments || [])
         }
       }
     } catch (err) {
-      alert('Erro ao buscar dados do atleta: ' + err);
+      alert('Erro ao buscar dados do atleta: ' + err)
     }
-  };
+  }
 
   const fetchDojoData = async () => {
-    if (!user.dojoId) return;
+    if (!user.dojoId) return
 
     try {
-      const membersData = await getDojoMembers(user.dojoId);
+      const membersData = await getDojoMembers(user.dojoId)
       if (!membersData.success) {
-        alert(membersData.error);
+        alert(membersData.error)
       } else {
-        setDojoMembers(membersData.members);
-        setTrainingSchedule(membersData.dojo.trainingSchedule);
-        setPendingRequests(membersData.dojo.joinRequests || []);
+        setDojoMembers(membersData.members)
+        setTrainingSchedule(membersData.dojo.trainingSchedule)
+        setPendingRequests(membersData.dojo.joinRequests || [])
       }
 
-      const tournamentsData = await getDojoTournaments(user.dojoId);
-      console.log('fetchDojoData - tournamentsData:', tournamentsData);
+      const tournamentsData = await getDojoTournaments(user.dojoId)
+
       if (!tournamentsData.success) {
-        alert(tournamentsData.error);
+        alert(tournamentsData.error)
       } else {
-        setTournaments(tournamentsData.tournaments || []);
+        setTournaments(tournamentsData.tournaments || [])
       }
 
       // Fetch athletes without dojo
-      const athletesData = await getAthletesWithoutDojo();
+      const athletesData = await getAthletesWithoutDojo()
       if (athletesData.success) {
-        setAthletesWithoutDojo(athletesData.athletes || []);
+        setAthletesWithoutDojo(athletesData.athletes || [])
       }
     } catch (err) {
-      alert("Erro ao buscar dados do dojo: " + err);
+      alert("Erro ao buscar dados do dojo: " + err)
     }
-  };
+  }
 
   const fetchDojos = async () => {
     try {
-      const data = await getDojos();
+      const data = await getDojos()
       if (!data.success) {
-        alert(data.error || 'Erro ao buscar dojos');
-        return;
+        alert(data.error || 'Erro ao buscar dojos')
+        return
       }
-      setDojos(data.dojos || []);
+      setDojos(data.dojos || [])
     } catch (err) {
-      alert('Erro ao buscar dojos: ' + err);
+      alert('Erro ao buscar dojos: ' + err)
     }
-  };
+  }
 
   const handleOpenDojosModal = async () => {
-    await fetchDojos();
-    setShowDojosModal(true);
-  };
+    await fetchDojos()
+    setShowDojosModal(true)
+  }
 
   const handleRequestJoinDojo = async (dojoId: string) => {
     if (user.dojoId) {
-      alert('Você já está em um dojo.');
-      return;
+      alert('Você já está em um dojo.')
+      return
     }
 
     try {
-      const result = await submitJoinRequest(dojoId);
+      const result = await submitJoinRequest(dojoId)
       if (!result.success) {
-        alert(result.error || 'Erro ao enviar pedido');
-        return;
+        alert(result.error || 'Erro ao enviar pedido')
+        return
       }
-      alert('Pedido de entrada enviado com sucesso!');
-      await fetchDojos();
+      alert('Pedido de entrada enviado com sucesso!')
+      await fetchDojos()
     } catch (err) {
-      alert('Erro ao enviar pedido de entrada: ' + err);
+      alert('Erro ao enviar pedido de entrada: ' + err)
     }
-  };
+  }
 
   const hasRequestedJoin = (dojo: any) => {
     return dojo.joinRequests?.some((request: any) => {
-      if (!request) return false;
+      if (!request) return false
       if (typeof request.user === 'string') {
-        return request.user === user._id;
+        return request.user === user._id
       }
-      return request.user?._id === user._id;
-    }) || false;
-  };
+      return request.user?._id === user._id
+    }) || false
+  }
 
   const loadDailyChallenge = async () => {
     if (!user?.dojoId) {
-      setDailyChallenge(null);
-      return;
+      setDailyChallenge(null)
+      return
     }
 
     try {
-      const { challenge } = await getCurrentChallenge(user.dojoId);
+      const { challenge } = await getCurrentChallenge(user.dojoId)
       if (!challenge) {
-        setDailyChallenge(null);
-        return;
+        setDailyChallenge(null)
+        return
       }
 
-      const responseData = await getUserChallengeResponse(challenge._id);
+      const responseData = await getUserChallengeResponse(challenge._id)
       if (responseData.answered) {
-        setDailyChallenge(null);
+        setDailyChallenge(null)
       } else {
-        setDailyChallenge(challenge);
+        setDailyChallenge(challenge)
       }
     } catch (err) {
-      console.error('Erro ao carregar desafio diário', err);
-      setDailyChallenge(null);
+
+      setDailyChallenge(null)
     }
-  };
+  }
 
   useEffect(() => {
-    loadDailyChallenge();
-  }, [user?.dojoId]);
+    loadDailyChallenge()
+  }, [user?.dojoId])
 
   // Listen for challenge responses saved elsewhere (Educacional) and update Home
   useEffect(() => {
     const handler = async (e: any) => {
-      if (!user?.dojoId) return;
-      const detail = e?.detail || {};
+      if (!user?.dojoId) return
+      const detail = e?.detail || {}
       if (detail.dojoId && detail.dojoId === user.dojoId) {
-        await loadDailyChallenge();
+        await loadDailyChallenge()
       }
-    };
+    }
 
-    window.addEventListener('challengeResponseSaved', handler as EventListener);
-    return () => window.removeEventListener('challengeResponseSaved', handler as EventListener);
-  }, [user?.dojoId]);
+    window.addEventListener('challengeResponseSaved', handler as EventListener)
+    return () => window.removeEventListener('challengeResponseSaved', handler as EventListener)
+  }, [user?.dojoId])
 
   const handleRemoveMember = async (member: any) => {
-    if (!user.dojoId) return;
+    if (!user.dojoId) return
     try {
       if (member.parentId) {
         // Se for um filho, remover da lista de filhos do responsável
-        const result = await removeChildFromResponsible(member.parentId, member._id);
+        const result = await removeChildFromResponsible(member.parentId, member._id)
         if (!result.success) {
-          alert(result.error);
-          return;
+          alert(result.error)
+          return
         }
-        alert('Filho removido com sucesso!');
+        alert('Filho removido com sucesso!')
       } else {
         // Se for um usuário direto, remover do dojo
-        const data = await removeMember(user.dojoId, member._id);
+        const data = await removeMember(user.dojoId, member._id)
         if (!data.success) {
-          alert(data.error);
+          alert(data.error)
         } else {
-          alert('Membro removido com sucesso!');
+          alert('Membro removido com sucesso!')
         }
       }
-      fetchDojoData();
+      fetchDojoData()
     } catch (err) {
-      alert('Erro ao remover membro: ' + err);
+      alert('Erro ao remover membro: ' + err)
     }
-  };
+  }
 
   const handleMarkAttendance = (memberId: string) => {
     if (!attendanceToday.includes(memberId)) {
-      setAttendanceToday([...attendanceToday, memberId]);
+      setAttendanceToday([...attendanceToday, memberId])
     }
-  };
+  }
 
   const handleMarkAbsence = async (member: any) => {
-    if (!user) return;
+    if (!user) return
 
     try {
-      const date = new Date().toISOString();
-      const payload: any = { userId: user._id, date };
+      const date = new Date().toISOString()
+      const payload: any = { userId: user._id, date }
 
       if (member.parentId) {
-        payload.userId = member.parentId;
-        payload.childId = member._id;
+        payload.userId = member.parentId
+        payload.childId = member._id
       } else {
-        payload.userId = member._id;
+        payload.userId = member._id
       }
 
-      const result = await addAbsence(payload);
+      const result = await addAbsence(payload)
       if (!result.success) {
-        alert(result.error);
-        return;
+        alert(result.error)
+        return
       }
 
       if (!absencesMarkedToday.includes(member._id)) {
-        setAbsencesMarkedToday([...absencesMarkedToday, member._id]);
+        setAbsencesMarkedToday([...absencesMarkedToday, member._id])
       }
-      alert('Falta registrada com sucesso!');
+      alert('Falta registrada com sucesso!')
     } catch (err) {
-      alert('Erro ao registrar falta: ' + err);
+      alert('Erro ao registrar falta: ' + err)
     }
-  };
+  }
 
   const handleAddTrainingSchedule = async () => {
-    if (!user.dojoId) return;
+    if (!user.dojoId) return
 
     try {
-      const data = await addTrainingSchedule(user.dojoId, newSchedule);
+      const data = await addTrainingSchedule(user.dojoId, newSchedule)
       if (!data.success) {
-        alert(data.error);
+        alert(data.error)
       } else {
-        alert('Horário adicionado com sucesso!');
-        setNewSchedule({ day: '', time: '', location: '' });
-        fetchDojoData();
+        alert('Horário adicionado com sucesso!')
+        setNewSchedule({ day: '', time: '', location: '' })
+        fetchDojoData()
       }
     } catch (err) {
-      alert('Erro ao adicionar horário: ' + err);
+      alert('Erro ao adicionar horário: ' + err)
     }
-  };
+  }
 
   const handleSaveScheduleChanges = async () => {
-    if (!user.dojoId) return;
+    if (!user.dojoId) return
     try {
-      const data = await updateTrainingSchedules(user.dojoId, editingSchedules);
+      const data = await updateTrainingSchedules(user.dojoId, editingSchedules)
       if (!data.success) {
-        alert(data.error);
+        alert(data.error)
       } else {
-        alert('Alterações aos horários salvas com sucesso!');
-        setShowScheduleModal(false);
-        setTrainingSchedule(editingSchedules);
+        alert('Alterações aos horários salvas com sucesso!')
+        setShowScheduleModal(false)
+        setTrainingSchedule(editingSchedules)
       }
     } catch (err) {
-      alert('Erro ao salvar horários: ' + err);
+      alert('Erro ao salvar horários: ' + err)
     }
-  };
+  }
 
   const handleAddScheduleInModal = () => {
     if (newSchedule.day && newSchedule.time && newSchedule.location) {
-      setEditingSchedules([...editingSchedules, { ...newSchedule }]);
-      setNewSchedule({ day: '', time: '', location: '' });
+      setEditingSchedules([...editingSchedules, { ...newSchedule }])
+      setNewSchedule({ day: '', time: '', location: '' })
     }
-  };
+  }
 
   const handleRemoveSchedule = (index: number) => {
-    setEditingSchedules(editingSchedules.filter((_, i) => i !== index));
-  };
+    setEditingSchedules(editingSchedules.filter((_, i) => i !== index))
+  }
 
   const handleViewMemberDetails = async (member: any) => {
-    setSelectedMemberDetails(member);
+    setSelectedMemberDetails(member)
     // Reset attendance status - será definido baseado nos dados atuais
-    setAttendanceStatus(null);
-    setAbsenceReason(null);
+    setAttendanceStatus(null)
+    setAbsenceReason(null)
 
     try {
       if (member.parentId) {
         // Se for um filho, buscar performance com childId
-        const perfData = await getPerformance({ athleteId: member.parentId, childId: member._id });
+        const perfData = await getPerformance({ athleteId: member.parentId, childId: member._id })
         if (!perfData.success) {
-          alert(perfData.error);
-          setPerformance(null);
+          alert(perfData.error)
+          setPerformance(null)
         } else {
-          setPerformance(perfData.performance || null);
+          setPerformance(perfData.performance || null)
         }
 
         // Buscar faltas do filho
-        const month = new Date().toISOString().slice(0, 7);
-        const child = user.childrens?.find((c: any) => c._id === member._id);
-        const abs = child?.absences?.find((a: any) => a.month === month)?.count || 0;
-        setMemberAbsences(abs);
+        const month = new Date().toISOString().slice(0, 7)
+        const child = user.childrens?.find((c: any) => c._id === member._id)
+        const abs = child?.absences?.find((a: any) => a.month === month)?.count || 0
+        setMemberAbsences(abs)
       } else {
         // Se for um usuário direto, buscar performance normal
-        const perfData = await getPerformance({ athleteId: member._id });
+        const perfData = await getPerformance({ athleteId: member._id })
         if (!perfData.success) {
-          alert(perfData.error);
-          setPerformance(null);
+          alert(perfData.error)
+          setPerformance(null)
         } else {
-          setPerformance(perfData.performance || null);
+          setPerformance(perfData.performance || null)
         }
 
         // Buscar faltas do usuário
-        const month = new Date().toISOString().slice(0, 7);
-        const absData = await getAbsencesByMonth(member._id, month);
+        const month = new Date().toISOString().slice(0, 7)
+        const absData = await getAbsencesByMonth(member._id, month)
         if (!absData.success) {
-          alert(absData.error);
-          setMemberAbsences(0);
+          alert(absData.error)
+          setMemberAbsences(0)
         } else {
-          setMemberAbsences(absData.count || 0);
+          setMemberAbsences(absData.count || 0)
         }
       }
 
       // Verificar se já houve marcação de presença hoje
-      const today = new Date().toDateString();
+      const today = new Date().toDateString()
       if (attendanceToday.includes(member._id)) {
-        setAttendanceStatus('present');
+        setAttendanceStatus('present')
       } else if (absencesMarkedToday.includes(member._id)) {
-        setAttendanceStatus('absent');
-        setAbsenceReason(absenceReasons[member._id] || null);
+        setAttendanceStatus('absent')
+        setAbsenceReason(absenceReasons[member._id] || null)
       }
 
     } catch (err) {
-      alert('Erro ao buscar dados: ' + err);
+      alert('Erro ao buscar dados: ' + err)
     }
-    setShowMemberDetailsModal(true);
-  };
+    setShowMemberDetailsModal(true)
+  }
 
   const handleAddPerformanceToMember = async () => {
-    if (!selectedMemberDetails) return;
+    if (!selectedMemberDetails) return
 
     try {
       // Filtrar e validar os arrays de feedback
       const improvements = newPerformance.improvements
         .split(',')
         .map(i => i.trim())
-        .filter(i => i.length > 0);
+        .filter(i => i.length > 0)
 
       const needsImprovement = newPerformance.needsImprovement
         .split(',')
         .map(i => i.trim())
-        .filter(i => i.length > 0);
+        .filter(i => i.length > 0)
 
       // Validar se pelo menos um campo de feedback foi preenchido
       if (improvements.length === 0 && needsImprovement.length === 0) {
-        alert('Por favor, preencha pelo menos um campo de feedback (melhorias ou pontos a melhorar).');
-        return;
+        alert('Por favor, preencha pelo menos um campo de feedback (melhorias ou pontos a melhorar).')
+        return
       }
 
       // Dedupe arrays
-      const uniqueImprovements = Array.from(new Set(improvements));
-      const uniqueNeeds = Array.from(new Set(needsImprovement));
+      const uniqueImprovements = Array.from(new Set(improvements))
+      const uniqueNeeds = Array.from(new Set(needsImprovement))
 
       let performanceData: any = {
         rating: newPerformance.rating,
         improvements: uniqueImprovements,
         needsImprovement: uniqueNeeds
-      };
-
-      console.log('Enviando performance data:', performanceData); // Debug log
+      }
 
       if (selectedMemberDetails.parentId) {
         // Se for um filho, adicionar performance com childId
-        performanceData.athleteId = selectedMemberDetails.parentId;
-        performanceData.childId = selectedMemberDetails._id;
+        performanceData.athleteId = selectedMemberDetails.parentId
+        performanceData.childId = selectedMemberDetails._id
       } else {
         // Se for um usuário direto
-        performanceData.athleteId = selectedMemberDetails._id;
+        performanceData.athleteId = selectedMemberDetails._id
       }
 
       // Se já existe performance, o backend vai atualizar a do mês atual
       // Se não existe, vai criar uma nova
-      const data = await addPerformance(performanceData);
-      console.log('Resposta da API:', data); // Debug log
+      const data = await addPerformance(performanceData)
 
       if (!data.success) {
-        alert(data.error);
+        alert(data.error)
       } else {
-        alert(performance ? 'Performance atualizada com sucesso!' : 'Performance adicionada com sucesso!');
-        setNewPerformance({ rating: 0, improvements: '', needsImprovement: '' });
+        alert(performance ? 'Performance atualizada com sucesso!' : 'Performance adicionada com sucesso!')
+        setNewPerformance({ rating: 0, improvements: '', needsImprovement: '' })
         // Recarregar dados do membro para atualizar a performance exibida
         if (selectedMemberDetails.parentId) {
-          const perfData = await getPerformance({ athleteId: selectedMemberDetails.parentId, childId: selectedMemberDetails._id });
+          const perfData = await getPerformance({ athleteId: selectedMemberDetails.parentId, childId: selectedMemberDetails._id })
           if (perfData.success) {
-            setPerformance(perfData.performance || null);
+            setPerformance(perfData.performance || null)
           }
         } else {
-          const perfData = await getPerformance({ athleteId: selectedMemberDetails._id });
+          const perfData = await getPerformance({ athleteId: selectedMemberDetails._id })
           if (perfData.success) {
-            setPerformance(perfData.performance || null);
+            setPerformance(perfData.performance || null)
           }
         }
       }
     } catch (err) {
-      console.error('Erro ao adicionar performance:', err); // Debug log
-      alert('Erro ao adicionar/atualizar performance: ' + err);
+
+      alert('Erro ao adicionar/atualizar performance: ' + err)
     }
-  };
+  }
 
   const handleMarkAttendanceInDetails = async (member: any) => {
-    if (!user || !attendanceStatus) return;
+    if (!user || !attendanceStatus) return
 
     try {
       if (attendanceStatus === 'absent') {
         // Marcar como falta
-        const date = new Date().toISOString();
-        const payload: any = { userId: user._id, date };
+        const date = new Date().toISOString()
+        const payload: any = { userId: user._id, date }
 
         if (member.parentId) {
-          payload.userId = member.parentId;
-          payload.childId = member._id;
+          payload.userId = member.parentId
+          payload.childId = member._id
         } else {
-          payload.userId = member._id;
+          payload.userId = member._id
         }
 
         // Incluir o motivo da falta se foi selecionado
         if (absenceReason) {
-          payload.reason = absenceReason;
+          payload.reason = absenceReason
         }
 
-        const result = await addAbsence(payload);
+        const result = await addAbsence(payload)
         if (!result.success) {
-          alert(result.error);
-          return;
+          alert(result.error)
+          return
         }
 
         // Adicionar à lista de faltas do dia
         if (!absencesMarkedToday.includes(member._id)) {
-          setAbsencesMarkedToday([...absencesMarkedToday, member._id]);
+          setAbsencesMarkedToday([...absencesMarkedToday, member._id])
         }
         // Armazenar motivo para mostrar ao reabrir
         if (absenceReason) {
-          setAbsenceReasons({ ...absenceReasons, [member._id]: absenceReason });
+          setAbsenceReasons({ ...absenceReasons, [member._id]: absenceReason })
         }
         // Remover da lista de presenças se estava lá
         if (attendanceToday.includes(member._id)) {
-          setAttendanceToday(attendanceToday.filter(id => id !== member._id));
+          setAttendanceToday(attendanceToday.filter(id => id !== member._id))
         }
 
       } else if (attendanceStatus === 'present') {
         // Marcar como presente
         if (!attendanceToday.includes(member._id)) {
-          setAttendanceToday([...attendanceToday, member._id]);
+          setAttendanceToday([...attendanceToday, member._id])
         }
         // Remover da lista de faltas se estava lá
         if (absencesMarkedToday.includes(member._id)) {
-          setAbsencesMarkedToday(absencesMarkedToday.filter(id => id !== member._id));
+          setAbsencesMarkedToday(absencesMarkedToday.filter(id => id !== member._id))
         }
         if (absenceReasons[member._id]) {
-          const updated = { ...absenceReasons };
-          delete updated[member._id];
-          setAbsenceReasons(updated);
+          const updated = { ...absenceReasons }
+          delete updated[member._id]
+          setAbsenceReasons(updated)
         }
       }
     } catch (err) {
-      alert('Erro ao registrar presença: ' + err);
+      alert('Erro ao registrar presença: ' + err)
     }
-  };
+  }
 
   const handleSaveMemberDetailsChanges = async () => {
-    if (!selectedMemberDetails) return;
+    if (!selectedMemberDetails) return
 
     try {
       // Salvar presença se foi selecionada
       if (attendanceStatus) {
-        await handleMarkAttendanceInDetails(selectedMemberDetails);
+        await handleMarkAttendanceInDetails(selectedMemberDetails)
       }
 
-      alert('Alterações salvas com sucesso!');
-      setShowMemberDetailsModal(false);
-      setAttendanceStatus(null);
-      setAbsenceReason(null);
+      alert('Alterações salvas com sucesso!')
+      setShowMemberDetailsModal(false)
+      setAttendanceStatus(null)
+      setAbsenceReason(null)
 
       // Recarregar dados do dojo para atualizar faltas e presenças
-      fetchDojoData();
+      fetchDojoData()
 
       // Se foi marcada uma falta, recarregar também os dados de performance/absences do membro
       if (attendanceStatus === 'absent' && selectedMemberDetails) {
-        const month = new Date().toISOString().slice(0, 7);
+        const month = new Date().toISOString().slice(0, 7)
         if (selectedMemberDetails.parentId) {
           // Para filhos, buscar do parent
-          const child = user.childrens?.find((c: any) => c._id === selectedMemberDetails._id);
+          const child = user.childrens?.find((c: any) => c._id === selectedMemberDetails._id)
           if (child) {
-            const abs = child.absences?.find((a: any) => a.month === month)?.count || 0;
-            setAbsences(abs);
+            const abs = child.absences?.find((a: any) => a.month === month)?.count || 0
+            setAbsences(abs)
           }
         } else {
           // Para usuários diretos
-          const absData = await getAbsencesByMonth(selectedMemberDetails._id, month);
+          const absData = await getAbsencesByMonth(selectedMemberDetails._id, month)
           if (absData.success) {
-            setAbsences(absData.count || 0);
+            setAbsences(absData.count || 0)
           }
         }
       }
 
     } catch (err) {
-      alert('Erro ao salvar alterações: ' + err);
+      alert('Erro ao salvar alterações: ' + err)
     }
-  };
+  }
 
   const handleSaveTournamentChanges = async () => {
     if (!user.dojoId) {
-      alert('Dojo ID não encontrado');
-      return;
+      alert('Dojo ID não encontrado')
+      return
     }
     try {
       // Remove deleted tournaments
       for (let i = 0; i < tournaments.length; i++) {
-        const existingTournament = editingTournaments.find((t: any) => t._id === tournaments[i]._id);
+        const existingTournament = editingTournaments.find((t: any) => t._id === tournaments[i]._id)
         if (!existingTournament) {
-          await deleteTournament(tournaments[i]._id);
+          await deleteTournament(tournaments[i]._id)
         }
       }
 
@@ -608,7 +605,7 @@ const Home: React.FC = () => {
             date: tournament.date,
             location: tournament.location,
             participants: tournament.participants || []
-          });
+          })
         } else {
           const newTournamentData = {
             name: tournament.name,
@@ -616,75 +613,75 @@ const Home: React.FC = () => {
             location: tournament.location,
             userId: user._id,
             participants: tournament.participants || []
-          };
-          const created = await createTournament(user.dojoId, newTournamentData);
-          console.log('createTournament response for', newTournamentData, created);
+          }
+          const created = await createTournament(user.dojoId, newTournamentData)
+
         }
       }
 
-      alert('Alterações aos torneios salvas com sucesso!');
-      setShowTournamentModal(false);
-      fetchDojoData();
+      alert('Alterações aos torneios salvas com sucesso!')
+      setShowTournamentModal(false)
+      fetchDojoData()
     } catch (err) {
-      alert('Erro ao salvar torneios: ' + err);
+      alert('Erro ao salvar torneios: ' + err)
     }
-  };
+  }
 
   const handleAddTournamentInModal = () => {
     if (newTournamentData.name && newTournamentData.date && newTournamentData.location) {
       // Validar que a data não é anterior ao dia atual
-      const selectedDate = new Date(newTournamentData.date);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      selectedDate.setHours(0, 0, 0, 0);
+      const selectedDate = new Date(newTournamentData.date)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      selectedDate.setHours(0, 0, 0, 0)
       if (isNaN(selectedDate.getTime())) {
-        alert('Data inválida para o torneio.');
-        return;
+        alert('Data inválida para o torneio.')
+        return
       }
       if (selectedDate < today) {
-        alert('A data do torneio não pode ser anterior à data de hoje.');
-        return;
+        alert('A data do torneio não pode ser anterior à data de hoje.')
+        return
       }
 
-      setEditingTournaments([...editingTournaments, { ...newTournamentData }]);
-      setNewTournamentData({ name: '', date: '', location: '' });
+      setEditingTournaments([...editingTournaments, { ...newTournamentData }])
+      setNewTournamentData({ name: '', date: '', location: '' })
     }
-  };
+  }
 
   const handleRemoveTournament = (index: number) => {
-    setEditingTournaments(editingTournaments.filter((_, i) => i !== index));
-  };
+    setEditingTournaments(editingTournaments.filter((_, i) => i !== index))
+  }
 
   useEffect(() => {
     if (isSensei(user.type)) {
-      fetchDojoData();
+      fetchDojoData()
     }
-  }, [user]);
+  }, [user])
 
   // Limpar estados de presença/falta quando muda de dia
   useEffect(() => {
-    const today = new Date().toDateString();
-    const lastCheckedDate = localStorage.getItem('lastAttendanceDate');
+    const today = new Date().toDateString()
+    const lastCheckedDate = localStorage.getItem('lastAttendanceDate')
 
     if (lastCheckedDate !== today) {
       // É um novo dia, limpar os estados de presença/falta
-      setAttendanceToday([]);
-      setAbsencesMarkedToday([]);
-      localStorage.setItem('lastAttendanceDate', today);
+      setAttendanceToday([])
+      setAbsencesMarkedToday([])
+      localStorage.setItem('lastAttendanceDate', today)
     }
-  }, []);
+  }, [])
 
   const handleContentScroll = (e: any) => {
-    const scrollTop = e.detail?.scrollTop ?? 0;
-    setShowScrollTopButton(scrollTop > 150);
-  };
+    const scrollTop = e.detail?.scrollTop ?? 0
+    setShowScrollTopButton(scrollTop > 150)
+  }
 
   const handleScrollToTop = async () => {
     if (contentRef.current) {
-      await contentRef.current.scrollToTop(300);
+      await contentRef.current.scrollToTop(300)
     }
-    setShowScrollTopButton(false);
-  };
+    setShowScrollTopButton(false)
+  }
 
   const renderAthleteDashboard = (athleteId: string) => {
     if (!user?.dojoId) {
@@ -758,14 +755,14 @@ const Home: React.FC = () => {
           </IonContent>
         </IonModal>
         </div>
-      );
+      )
     }
 
-    const athleteTraining = trainingSchedule.length ? trainingSchedule : [];
+    const athleteTraining = trainingSchedule.length ? trainingSchedule : []
     const athletePerformance = performance || {
       rating: 0,
       feedback: { improvements: [], needsImprovement: [] }
-    };
+    }
 
     return (
       <div className="space-y-8 text-slate-900">
@@ -888,28 +885,28 @@ const Home: React.FC = () => {
           </section>
         )}
       </div>
-    );
-  };
+    )
+  }
 
   const renderSenseiDashboard = () => {
     // Separar torneios por data para melhor visualização
-    const sortedTournaments = [...tournaments].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const sortedTournaments = [...tournaments].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     
     const upcomingTournaments = sortedTournaments.filter((t: any) => {
-      const tourDate = new Date(t.date);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      tourDate.setHours(0, 0, 0, 0);
-      return tourDate >= today;
-    });
+      const tourDate = new Date(t.date)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      tourDate.setHours(0, 0, 0, 0)
+      return tourDate >= today
+    })
 
     const pastTournaments = sortedTournaments.filter((t: any) => {
-      const tourDate = new Date(t.date);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      tourDate.setHours(0, 0, 0, 0);
-      return tourDate < today;
-    });
+      const tourDate = new Date(t.date)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      tourDate.setHours(0, 0, 0, 0)
+      return tourDate < today
+    })
 
     return (
       <div className="space-y-8 text-slate-900">
@@ -931,8 +928,8 @@ const Home: React.FC = () => {
                 </button>
                 <button className="rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50"
                   onClick={() => {
-                    setEditingSchedules(trainingSchedule);
-                    setShowScheduleModal(true);
+                    setEditingSchedules(trainingSchedule)
+                    setShowScheduleModal(true)
                   }}>
                   Editar Horários
                 </button>
@@ -1026,8 +1023,8 @@ const Home: React.FC = () => {
 
             <div className="mt-5 flex flex-wrap gap-3">
               <button className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800" onClick={() => {
-                setEditingTournaments(tournaments.map((t: any) => ({ ...t, participants: (t.participants || []).map((p: any) => p._id?.toString() || p.userId?.toString() || p) })));
-                setShowTournamentModal(true);
+                setEditingTournaments(tournaments.map((t: any) => ({ ...t, participants: (t.participants || []).map((p: any) => p._id?.toString() || p.userId?.toString() || p) })))
+                setShowTournamentModal(true)
               }}>
                 Gerir Torneios
               </button>
@@ -1081,11 +1078,11 @@ const Home: React.FC = () => {
                           </div>
                           <button className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800" onClick={async () => {
                             if (!user.dojoId) { alert('Dojo ID não encontrado'); return; }
-                            const res = await inviteMemberByEmail(user.dojoId, athlete.email);
-                            if (!res.success) alert(res.error || 'Erro ao enviar convite');
+                            const res = await inviteMemberByEmail(user.dojoId, athlete.email)
+                            if (!res.success) alert(res.error || 'Erro ao enviar convite')
                             else { 
-                              alert('Convite enviado com sucesso!'); 
-                              fetchDojoData(); 
+                              alert('Convite enviado com sucesso!')
+                              fetchDojoData()
                             }
                           }}>
                             Convidar
@@ -1118,22 +1115,22 @@ const Home: React.FC = () => {
                           <div className="flex flex-wrap gap-2">
                             <button className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800" onClick={async () => {
                               if (!user.dojoId) { alert('Dojo ID não encontrado'); return; }
-                              const res = await acceptJoinRequest(user.dojoId, r.user._id);
-                              if (!res.success) alert(res.error || 'Erro');
+                              const res = await acceptJoinRequest(user.dojoId, r.user._id)
+                              if (!res.success) alert(res.error || 'Erro')
                               else { 
-                                alert('Pedido aceite!'); 
-                                fetchDojoData(); 
+                                alert('Pedido aceite!')
+                                fetchDojoData()
                               }
                             }}>
                               Aceitar
                             </button>
                             <button className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800" onClick={async () => {
                               if (!user.dojoId) { alert('Dojo ID não encontrado'); return; }
-                              const res = await rejectJoinRequest(user.dojoId, r.user._id);
-                              if (!res.success) alert(res.error || 'Erro');
+                              const res = await rejectJoinRequest(user.dojoId, r.user._id)
+                              if (!res.success) alert(res.error || 'Erro')
                               else { 
-                                alert('Pedido rejeitado'); 
-                                fetchDojoData(); 
+                                alert('Pedido rejeitado')
+                                fetchDojoData()
                               }
                             }}>
                               Rejeitar
@@ -1315,9 +1312,9 @@ const Home: React.FC = () => {
                     </IonCardHeader>
                     <IonCardContent className="space-y-4">
                       <IonSelect className="rounded-3xl bg-slate-100 p-3 text-sm text-slate-900" placeholder="Selecione o status" value={attendanceStatus} onIonChange={e => {
-                        setAttendanceStatus(e.detail.value);
+                        setAttendanceStatus(e.detail.value)
                         if (e.detail.value === 'present') {
-                          setAbsenceReason(null);
+                          setAbsenceReason(null)
                         }
                       }}>
                         <IonSelectOption value="present">Presente</IonSelectOption>
@@ -1381,11 +1378,11 @@ const Home: React.FC = () => {
                             rating: performance.rating || 0,
                             improvements: performance.feedback?.improvements?.join(', ') || '',
                             needsImprovement: performance.feedback?.needsImprovement?.join(', ') || ''
-                          });
+                          })
                         } else {
-                          setNewPerformance({ rating: 0, improvements: '', needsImprovement: '' });
+                          setNewPerformance({ rating: 0, improvements: '', needsImprovement: '' })
                         }
-                        setShowPerformanceModal(true);
+                        setShowPerformanceModal(true)
                       }}>
                         {performance ? 'Editar Performance' : 'Adicionar Performance'}
                       </button>
@@ -1394,13 +1391,13 @@ const Home: React.FC = () => {
 
                   <div className="flex flex-col gap-3">
                     <button className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800" onClick={() => {
-                      handleRemoveMember(selectedMemberDetails);
-                      setShowMemberDetailsModal(false);
+                      handleRemoveMember(selectedMemberDetails)
+                      setShowMemberDetailsModal(false)
                     }}>
                       Remover Atleta
                     </button>
                     <button className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800" onClick={() => {
-                      handleSaveMemberDetailsChanges();
+                      handleSaveMemberDetailsChanges()
                     }}>
                       Guardar Alterações
                     </button>
@@ -1436,8 +1433,8 @@ const Home: React.FC = () => {
 
                   <div className="flex flex-col gap-3">
                     <button className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800" onClick={() => {
-                      handleAddPerformanceToMember();
-                      setShowPerformanceModal(false);
+                      handleAddPerformanceToMember()
+                      setShowPerformanceModal(false)
                     }}>
                       Guardar Alterações
                     </button>
@@ -1491,18 +1488,18 @@ const Home: React.FC = () => {
                 </IonCardHeader>
                 <IonCardContent className="space-y-3">
                   {editingTournaments.filter(t => {
-                    const tourDate = new Date(t.date);
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    tourDate.setHours(0, 0, 0, 0);
-                    return tourDate >= today;
+                    const tourDate = new Date(t.date)
+                    const today = new Date()
+                    today.setHours(0, 0, 0, 0)
+                    tourDate.setHours(0, 0, 0, 0)
+                    return tourDate >= today
                   }).length > 0 ? (
                     editingTournaments.map((tournament, index) => {
-                      const tourDate = new Date(tournament.date);
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      tourDate.setHours(0, 0, 0, 0);
-                      if (tourDate < today) return null;
+                      const tourDate = new Date(tournament.date)
+                      const today = new Date()
+                      today.setHours(0, 0, 0, 0)
+                      tourDate.setHours(0, 0, 0, 0)
+                      if (tourDate < today) return null
                       return (
                         <div key={index} className="rounded-3xl border border-slate-200/80 bg-slate-50 p-4 flex items-center justify-between shadow-sm">
                           <div>
@@ -1513,7 +1510,7 @@ const Home: React.FC = () => {
                             <IonIcon slot="icon-only" icon={trash}></IonIcon>
                           </button>
                         </div>
-                      );
+                      )
                     })
                   ) : (
                     <div className="rounded-3xl border border-slate-200/80 bg-slate-50 p-5 text-sm text-slate-600">
@@ -1529,18 +1526,18 @@ const Home: React.FC = () => {
                 </IonCardHeader>
                 <IonCardContent className="space-y-4">
                   {editingTournaments.filter(t => {
-                    const tourDate = new Date(t.date);
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    tourDate.setHours(0, 0, 0, 0);
-                    return tourDate < today;
+                    const tourDate = new Date(t.date)
+                    const today = new Date()
+                    today.setHours(0, 0, 0, 0)
+                    tourDate.setHours(0, 0, 0, 0)
+                    return tourDate < today
                   }).length > 0 ? (
                     editingTournaments.map((tournament, index) => {
-                      const tourDate = new Date(tournament.date);
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      tourDate.setHours(0, 0, 0, 0);
-                      if (tourDate >= today) return null;
+                      const tourDate = new Date(tournament.date)
+                      const today = new Date()
+                      today.setHours(0, 0, 0, 0)
+                      tourDate.setHours(0, 0, 0, 0)
+                      if (tourDate >= today) return null
                       return (
                         <div key={index} className="rounded-3xl border border-slate-200/80 bg-slate-50 p-4 shadow-sm">
                           <IonItem className="border-b border-slate-200/80 pb-3">
@@ -1563,16 +1560,16 @@ const Home: React.FC = () => {
                                   <div key={m._id} className="flex items-center justify-between rounded-3xl bg-white p-3 border border-slate-200/80">
                                     <span className="text-sm text-slate-700">{m.username}</span>
                                     <input type="checkbox" checked={(editingTournaments[index].participants || []).includes(m._id)} onChange={(e) => {
-                                      const updated = [...(editingTournaments[index].participants || [])];
+                                      const updated = [...(editingTournaments[index].participants || [])]
                                       if (e.target.checked) {
-                                        if (!updated.includes(m._id)) updated.push(m._id);
+                                        if (!updated.includes(m._id)) updated.push(m._id)
                                       } else {
-                                        const i = updated.indexOf(m._id);
-                                        if (i > -1) updated.splice(i, 1);
+                                        const i = updated.indexOf(m._id)
+                                        if (i > -1) updated.splice(i, 1)
                                       }
-                                      const copy = [...editingTournaments];
-                                      copy[index].participants = updated;
-                                      setEditingTournaments(copy);
+                                      const copy = [...editingTournaments]
+                                      copy[index].participants = updated
+                                      setEditingTournaments(copy)
                                     }} />
                                   </div>
                                 ))}
@@ -1580,7 +1577,7 @@ const Home: React.FC = () => {
                             </div>
                           )}
                         </div>
-                      );
+                      )
                     })
                   ) : (
                     <div className="rounded-3xl border border-slate-200/80 bg-slate-50 p-5 text-sm text-slate-600">
@@ -1602,11 +1599,11 @@ const Home: React.FC = () => {
           </IonContent>
         </IonModal>
       </div>
-    );
-  };
+    )
+  }
 
   const renderResponsavelDashboard = () => {
-    const children = user.childrens || [];
+    const children = user.childrens || []
     if (children.length > 1 && !selectedChild) {
       return (
         <div className="rounded-3xl bg-white/90 p-6 shadow-lg ring-1 ring-slate-200/70 text-slate-900">
@@ -1620,20 +1617,20 @@ const Home: React.FC = () => {
                 onIonChange={(e) => setSelectedChild(String(e.detail.value || ''))}
               >
                 {children.map((child, idx) => {
-                  const childId = typeof child === 'string' ? child : String(child._id);
-                  const childName = typeof child === 'string' ? child : child.username;
+                  const childId = typeof child === 'string' ? child : String(child._id)
+                  const childName = typeof child === 'string' ? child : child.username
 
                   return (
                     <IonSelectOption key={childId} value={childId}>
                       {childName}
                     </IonSelectOption>
-                  );
+                  )
                 })}
               </IonSelect>
             </IonCardContent>
           </IonCard>
         </div>
-      );
+      )
     }
 
     if (!children.length) {
@@ -1642,11 +1639,11 @@ const Home: React.FC = () => {
           <h2 className="text-xl font-semibold">Responsável</h2>
           <p className="mt-2 text-sm text-slate-600">Não há atletas associados.</p>
         </div>
-      );
+      )
     }
 
-    const athleteId = selectedChild || String(children[0]._id || children[0].username);
-    const currentChild = children.find((c: any) => String(c._id) === athleteId);
+    const athleteId = selectedChild || String(children[0]._id || children[0].username)
+    const currentChild = children.find((c: any) => String(c._id) === athleteId)
     
     return (
       <>
@@ -1661,29 +1658,29 @@ const Home: React.FC = () => {
           {renderAthleteDashboard(athleteId)}
         </div>
       </>
-    );
-  };
+    )
+  }
 
   useEffect(() => {
     if (isAthlete(user.type)) {
-      fetchAthleteData(user._id);
+      fetchAthleteData(user._id)
     } else if (isResponsavel(user.type) && (selectedChild || (user.childrens && user.childrens.length === 1))) {
-      const childId = selectedChild || user.childrens?.[0]?._id;
+      const childId = selectedChild || user.childrens?.[0]?._id
       if (childId) {
-        fetchAthleteData(childId, true);
+        fetchAthleteData(childId, true)
       }
     }
-  }, [user, selectedChild]);
+  }, [user, selectedChild])
 
-  let dashboard;
+  let dashboard
   if (isAthlete(user.type)) {
-    dashboard = renderAthleteDashboard(user._id);
+    dashboard = renderAthleteDashboard(user._id)
   } else if (isSensei(user.type)) {
-    dashboard = renderSenseiDashboard();
+    dashboard = renderSenseiDashboard()
   } else if (isResponsavel(user.type)) {
-    dashboard = renderResponsavelDashboard();
+    dashboard = renderResponsavelDashboard()
   } else {
-    dashboard = <p>Tipo de usuário não reconhecido.</p>;
+    dashboard = <p>Tipo de usuário não reconhecido.</p>
   }
 
   return (
@@ -1706,7 +1703,7 @@ const Home: React.FC = () => {
       )}
       <Navbar />
     </IonPage>
-  );
-};
+  )
+}
 
-export default Home;
+export default Home

@@ -1,71 +1,71 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { loadStripe } from '@stripe/stripe-js';
+import React, { useState, useEffect, useRef } from 'react'
+import { loadStripe } from '@stripe/stripe-js'
 import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
   IonSearchbar, IonChip, IonLabel, IonCard, IonCardContent, IonCardHeader,
   IonBadge, IonButton, IonIcon, IonText, IonToast, IonRippleEffect, IonSpinner,
   IonSegment, IonSegmentButton, IonModal, IonInput, IonToggle, IonAlert, IonSelect, IonSelectOption, IonItem
-} from '@ionic/react';
-import { cartOutline, starSharp, starHalfOutline, starOutline, create, trash, close } from 'ionicons/icons';
-import Navbar from '../../components/MainLayout';
-import { shopApi } from '../../hooks/shopApi';
-import { useAuth } from '../../AuthContext';
+} from '@ionic/react'
+import { cartOutline, starSharp, starHalfOutline, starOutline, create, trash, close } from 'ionicons/icons'
+import Navbar from '../../components/MainLayout'
+import { shopApi } from '../../hooks/shopApi'
+import { useAuth } from '../../AuthContext'
 
-type Category = 'Todos' | 'Kimono' | 'Equipamento' | 'Faixa' | 'Acessório';
-type AdminTab = 'productos' | 'pedidos';
+type Category = 'Todos' | 'Kimono' | 'Equipamento' | 'Faixa' | 'Acessório'
+type AdminTab = 'productos' | 'pedidos'
 
 interface Product {
-  _id?: string;
-  id?: string;
-  name: string;
-  description: string;
-  category: string;
-  price: number;
-  originalPrice?: number;
-  rating?: number;
-  reviewCount?: number;
-  inStock: boolean;
-  badge?: string;
-  image?: string;
-  published?: boolean;
-  availableForPraticinador?: boolean;
+  _id?: string
+  id?: string
+  name: string
+  description: string
+  category: string
+  price: number
+  originalPrice?: number
+  rating?: number
+  reviewCount?: number
+  inStock: boolean
+  badge?: string
+  image?: string
+  published?: boolean
+  availableForPraticinador?: boolean
 }
 
-const CATEGORIES: Category[] = ['Todos', 'Kimono', 'Equipamento', 'Faixa', 'Acessório'];
+const CATEGORIES: Category[] = ['Todos', 'Kimono', 'Equipamento', 'Faixa', 'Acessório']
 
 interface Order {
-  _id: string;
-  userId: { _id: string; name: string; email: string; username: string };
-  products: Array<{ productId: any; name: string; price: number; quantity: number }>;
-  totalPrice: number;
-  status: 'pendente' | 'aprovado' | 'rejeitado' | 'enviado' | 'entregue';
-  createdAt: string;
+  _id: string
+  userId: { _id: string; name: string; email: string; username: string }
+  products: Array<{ productId: any; name: string; price: number; quantity: number }>
+  totalPrice: number
+  status: 'pendente' | 'aprovado' | 'rejeitado' | 'enviado' | 'entregue'
+  createdAt: string
 }
 
 interface CartItem {
-  product: ExtendedProduct;
-  quantity: number;
+  product: ExtendedProduct
+  quantity: number
 }
 
 interface ExtendedProduct extends Product {
-  _id?: string;
-  published?: boolean;
-  availableForPraticinador?: boolean;
-  status?: 'pendente' | 'aprovado' | 'rejeitado';
-  createdBy?: { _id?: string; name?: string; username?: string; email?: string };
+  _id?: string
+  published?: boolean
+  availableForPraticinador?: boolean
+  status?: 'pendente' | 'aprovado' | 'rejeitado'
+  createdBy?: { _id?: string; name?: string; username?: string; email?: string }
 }
 
 const badgeColor: Record<string, string> = {
   'Novo': 'primary',
   'Mais Vendido': 'warning',
   'Promoção': 'danger',
-};
+}
 
 const productStatusColor: Record<string, string> = {
   'pendente': 'warning',
   'aprovado': 'success',
   'rejeitado': 'danger',
-};
+}
 
 const statusColor: Record<string, string> = {
   'pendente': 'warning',
@@ -73,18 +73,18 @@ const statusColor: Record<string, string> = {
   'rejeitado': 'danger',
   'enviado': 'primary',
   'entregue': 'secondary',
-};
+}
 
 const Stars: React.FC<{ rating: number }> = ({ rating }) => {
   return (
     <span style={{ display: 'flex', alignItems: 'center', gap: 1 }}>
       {[1, 2, 3, 4, 5].map(i => {
-        const icon = i <= Math.floor(rating) ? starSharp : (i - 0.5 <= rating ? starHalfOutline : starOutline);
-        return <IonIcon key={i} icon={icon} style={{ fontSize: 13, color: '#f4a400' }} />;
+        const icon = i <= Math.floor(rating) ? starSharp : (i - 0.5 <= rating ? starHalfOutline : starOutline)
+        return <IonIcon key={i} icon={icon} style={{ fontSize: 13, color: '#f4a400' }} />
       })}
     </span>
-  );
-};
+  )
+}
 
 const ProductCard: React.FC<{ product: ExtendedProduct; onAdd: (product: ExtendedProduct) => void; isAdmin?: boolean; disableBuy?: boolean }> = ({ product, onAdd, isAdmin, disableBuy }) => (
   <IonCard
@@ -170,39 +170,39 @@ const ProductCard: React.FC<{ product: ExtendedProduct; onAdd: (product: Extende
       )}
     </IonCardContent>
   </IonCard>
-);
+)
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '')
 
 const Loja: React.FC = () => {
-  const { user } = useAuth();
-  const { getProducts, getAdminProducts, createProduct, updateProduct, deleteProduct, getAdminOrders, updateOrderStatus, createCheckoutSession } = shopApi();
+  const { user } = useAuth()
+  const { getProducts, getAdminProducts, createProduct, updateProduct, deleteProduct, getAdminOrders, updateOrderStatus, createCheckoutSession } = shopApi()
   
-  const [search, setSearch] = useState('');
-  const [activeCategory, setActiveCategory] = useState<Category>('Todos');
-  const [toastMessage, setToastMessage] = useState('');
-  const [products, setProducts] = useState<ExtendedProduct[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [adminTab, setAdminTab] = useState<AdminTab>('productos');
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
-  const [showCartPanel, setShowCartPanel] = useState(false);
-  const [showProductModal, setShowProductModal] = useState(false);
-  const cartRef = useRef<HTMLDivElement | null>(null);
-  const [editingProduct, setEditingProduct] = useState<ExtendedProduct | null>(null);
-  const [showDeleteAlert, setShowDeleteAlert] = useState<string | null>(null);
+  const [search, setSearch] = useState('')
+  const [activeCategory, setActiveCategory] = useState<Category>('Todos')
+  const [toastMessage, setToastMessage] = useState('')
+  const [products, setProducts] = useState<ExtendedProduct[]>([])
+  const [loading, setLoading] = useState(false)
+  const [adminTab, setAdminTab] = useState<AdminTab>('productos')
+  const [orders, setOrders] = useState<Order[]>([])
+  const [cart, setCart] = useState<CartItem[]>([])
+  const [checkoutLoading, setCheckoutLoading] = useState(false)
+  const [showCartPanel, setShowCartPanel] = useState(false)
+  const [showProductModal, setShowProductModal] = useState(false)
+  const cartRef = useRef<HTMLDivElement | null>(null)
+  const [editingProduct, setEditingProduct] = useState<ExtendedProduct | null>(null)
+  const [showDeleteAlert, setShowDeleteAlert] = useState<string | null>(null)
   const [formData, setFormData] = useState<{
-    name: string;
-    description: string;
-    category: string;
-    price: number;
-    originalPrice?: number;
-    inStock: boolean;
-    published: boolean;
-    availableForPraticinador: boolean;
-    badge: string;
-    status: 'pendente' | 'aprovado' | 'rejeitado';
+    name: string
+    description: string
+    category: string
+    price: number
+    originalPrice?: number
+    inStock: boolean
+    published: boolean
+    availableForPraticinador: boolean
+    badge: string
+    status: 'pendente' | 'aprovado' | 'rejeitado'
   }>({
     name: '',
     description: '',
@@ -214,62 +214,62 @@ const Loja: React.FC = () => {
     availableForPraticinador: true,
     badge: '',
     status: 'aprovado'
-  });
+  })
 
-  const isAdmin = user?.type === 'admin';
-  const isPraticinador = user?.type === 'praticinador';
+  const isAdmin = user?.type === 'admin'
+  const isPraticinador = user?.type === 'praticinador'
 
   useEffect(() => {
-    const storedCart = localStorage.getItem('shopCart');
+    const storedCart = localStorage.getItem('shopCart')
     if (storedCart) {
       try {
-        setCart(JSON.parse(storedCart));
+        setCart(JSON.parse(storedCart))
       } catch (err) {
-        console.error('Falha ao carregar carrinho', err);
+
       }
     }
-  }, []);
+  }, [])
 
   useEffect(() => {
-    localStorage.setItem('shopCart', JSON.stringify(cart));
-  }, [cart]);
+    localStorage.setItem('shopCart', JSON.stringify(cart))
+  }, [cart])
 
   useEffect(() => {
     if (showCartPanel) {
-      cartRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      cartRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
-  }, [showCartPanel]);
+  }, [showCartPanel])
 
   useEffect(() => {
-    loadData();
-  }, [adminTab, isPraticinador]);
+    loadData()
+  }, [adminTab, isPraticinador])
 
   const loadData = async () => {
-    setLoading(true);
+    setLoading(true)
     try {
       if (isAdmin && adminTab === 'productos') {
-        const data = await getAdminProducts();
-        setProducts((data.products || data || []) as ExtendedProduct[]);
+        const data = await getAdminProducts()
+        setProducts((data.products || data || []) as ExtendedProduct[])
       } else if (isAdmin && adminTab === 'pedidos') {
-        const data = await getAdminOrders();
-        setOrders(data.orders || data || []);
+        const data = await getAdminOrders()
+        setOrders(data.orders || data || [])
       } else {
-        const data = await getProducts();
-        setProducts((data.products || data || []) as ExtendedProduct[]);
+        const data = await getProducts()
+        setProducts((data.products || data || []) as ExtendedProduct[])
       }
     } catch (err) {
-      console.error('Failed to load data', err);
+
       if (!isAdmin || adminTab !== 'pedidos') {
-        setProducts([]);
+        setProducts([])
       }
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const openProductModal = (product?: ExtendedProduct) => {
     if (product) {
-      setEditingProduct(product);
+      setEditingProduct(product)
       setFormData({
         name: product.name,
         description: product.description,
@@ -281,9 +281,9 @@ const Loja: React.FC = () => {
         availableForPraticinador: product.availableForPraticinador || true,
         badge: product.badge || '',
         status: product.status || 'pendente'
-      });
+      })
     } else {
-      setEditingProduct(null);
+      setEditingProduct(null)
       setFormData({
         name: '',
         description: '',
@@ -295,159 +295,159 @@ const Loja: React.FC = () => {
         availableForPraticinador: true,
         badge: '',
         status: 'pendente'
-      });
+      })
     }
-    setShowProductModal(true);
-  };
+    setShowProductModal(true)
+  }
 
   const handleSaveProduct = async () => {
     try {
       if (editingProduct?._id) {
-        const updated = await updateProduct(editingProduct._id, formData);
-        setProducts(prev => prev.map(p => p._id === editingProduct._id ? { ...p, ...updated.product } : p));
+        const updated = await updateProduct(editingProduct._id, formData)
+        setProducts(prev => prev.map(p => p._id === editingProduct._id ? { ...p, ...updated.product } : p))
       } else {
-        const created = await createProduct(formData);
-        setProducts(prev => [created.product as ExtendedProduct, ...prev]);
+        const created = await createProduct(formData)
+        setProducts(prev => [created.product as ExtendedProduct, ...prev])
       }
-      setShowProductModal(false);
-      setToastMessage('Produto guardado com sucesso!');
+      setShowProductModal(false)
+      setToastMessage('Produto guardado com sucesso!')
     } catch (error) {
-      console.error('Failed to save product', error);
-      setToastMessage('Erro ao guardar produto.');
+
+      setToastMessage('Erro ao guardar produto.')
     }
-  };
+  }
 
   const handleDeleteProduct = async (id: string) => {
     try {
-      await deleteProduct(id);
-      setProducts(prev => prev.filter(p => p._id !== id));
-      setShowDeleteAlert(null);
-      setToastMessage('Produto removido com sucesso!');
+      await deleteProduct(id)
+      setProducts(prev => prev.filter(p => p._id !== id))
+      setShowDeleteAlert(null)
+      setToastMessage('Produto removido com sucesso!')
     } catch (error) {
-      console.error('Failed to delete product', error);
-      setToastMessage('Erro ao remover produto.');
+
+      setToastMessage('Erro ao remover produto.')
     }
-  };
+  }
 
   const handleProductStatus = async (productId: string, status: 'aprovado' | 'rejeitado') => {
     try {
-      const updated = await updateProduct(productId, { status });
-      setProducts(prev => prev.map(p => p._id === productId ? { ...p, ...updated.product } : p));
-      setToastMessage(`Produto ${status} com sucesso!`);
+      const updated = await updateProduct(productId, { status })
+      setProducts(prev => prev.map(p => p._id === productId ? { ...p, ...updated.product } : p))
+      setToastMessage(`Produto ${status} com sucesso!`)
     } catch (error) {
-      console.error('Failed to update product status', error);
-      setToastMessage('Erro ao atualizar status do produto.');
+
+      setToastMessage('Erro ao atualizar status do produto.')
     }
-  };
+  }
 
   const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
-      const updated = await updateOrderStatus(orderId, newStatus);
-      setOrders(prev => prev.map(o => o._id === orderId ? updated.order : o));
-      setToastMessage(`Pedido ${newStatus} com sucesso!`);
+      const updated = await updateOrderStatus(orderId, newStatus)
+      setOrders(prev => prev.map(o => o._id === orderId ? updated.order : o))
+      setToastMessage(`Pedido ${newStatus} com sucesso!`)
     } catch (error) {
-      console.error('Failed to update order', error);
-      setToastMessage('Erro ao atualizar pedido.');
+
+      setToastMessage('Erro ao atualizar pedido.')
     }
-  };
+  }
 
   const addToCart = (product: ExtendedProduct) => {
-    if (!product._id) return;
+    if (!product._id) return
     setCart(prev => {
-      const existing = prev.find(item => item.product._id === product._id);
+      const existing = prev.find(item => item.product._id === product._id)
       if (existing) {
         return prev.map(item =>
           item.product._id === product._id ? { ...item, quantity: item.quantity + 1 } : item
-        );
+        )
       }
-      return [...prev, { product, quantity: 1 }];
-    });
-    setToastMessage(`"${product.name}" adicionado ao carrinho!`);
-  };
+      return [...prev, { product, quantity: 1 }]
+    })
+    setToastMessage(`"${product.name}" adicionado ao carrinho!`)
+  }
 
   const removeFromCart = (productId: string) => {
-    setCart(prev => prev.filter(item => item.product._id !== productId));
-  };
+    setCart(prev => prev.filter(item => item.product._id !== productId))
+  }
 
   const updateCartQuantity = (productId: string, quantity: number) => {
     if (quantity < 1) {
-      removeFromCart(productId);
-      return;
+      removeFromCart(productId)
+      return
     }
 
     setCart(prev => prev.map(item =>
       item.product._id === productId ? { ...item, quantity } : item
-    ));
-  };
+    ))
+  }
 
-  const cartTotal = cart.reduce((total, item) => total + item.product.price * item.quantity, 0);
+  const cartTotal = cart.reduce((total, item) => total + item.product.price * item.quantity, 0)
 
   const handleCheckout = async () => {
     if (cart.length === 0) {
-      setToastMessage('O carrinho está vazio.');
-      return;
+      setToastMessage('O carrinho está vazio.')
+      return
     }
 
-    setCheckoutLoading(true);
+    setCheckoutLoading(true)
     try {
       const items = cart.map(item => ({
         name: item.product.name,
         description: item.product.description,
         price: item.product.price,
         quantity: item.quantity,
-      }));
+      }))
 
-      const data = await createCheckoutSession({ items });
+      const data = await createCheckoutSession({ items })
       if (!data) {
-        setToastMessage('Não foi possível iniciar o pagamento.');
-        return;
+        setToastMessage('Não foi possível iniciar o pagamento.')
+        return
       }
 
-      const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+      const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
       if (!stripePublicKey) {
-        setToastMessage('Stripe público não configurado no frontend.');
-        return;
+        setToastMessage('Stripe público não configurado no frontend.')
+        return
       }
 
-      const stripe = await stripePromise;
+      const stripe = await stripePromise
       if (!stripe) {
-        setToastMessage('Erro ao carregar Stripe.');
-        return;
+        setToastMessage('Erro ao carregar Stripe.')
+        return
       }
 
       if (data.sessionId) {
-        const result = await stripe.redirectToCheckout({ sessionId: data.sessionId });
+        const result = await stripe.redirectToCheckout({ sessionId: data.sessionId })
         if (result?.error) {
-          setToastMessage(result.error.message || 'Erro ao redirecionar para Stripe.');
+          setToastMessage(result.error.message || 'Erro ao redirecionar para Stripe.')
         }
-        return;
+        return
       }
 
       if (data.url) {
-        window.location.href = data.url;
-        return;
+        window.location.href = data.url
+        return
       }
 
-      setToastMessage('Não foi possível iniciar o pagamento.');
+      setToastMessage('Não foi possível iniciar o pagamento.')
     } catch (caughtError) {
-      console.error('Erro ao iniciar checkout', caughtError);
-      const err = caughtError as any;
+
+      const err = caughtError as any
       if (err?.response?.data?.message) {
-        setToastMessage(err.response.data.message);
+        setToastMessage(err.response.data.message)
       } else {
-        setToastMessage('Erro ao iniciar o pagamento.');
+        setToastMessage('Erro ao iniciar o pagamento.')
       }
     } finally {
-      setCheckoutLoading(false);
+      setCheckoutLoading(false)
     }
-  };
+  }
 
   const filtered = products.filter(p => {
-    const matchesCategory = activeCategory === 'Todos' || p.category === activeCategory;
+    const matchesCategory = activeCategory === 'Todos' || p.category === activeCategory
     const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.description.toLowerCase().includes(search.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+      p.description.toLowerCase().includes(search.toLowerCase())
+    return matchesCategory && matchesSearch
+  })
 
   return (
     <IonPage>
@@ -924,7 +924,7 @@ const Loja: React.FC = () => {
               role: 'destructive',
               handler: () => {
                 if (showDeleteAlert) {
-                  handleDeleteProduct(showDeleteAlert);
+                  handleDeleteProduct(showDeleteAlert)
                 }
               },
             },
@@ -943,7 +943,7 @@ const Loja: React.FC = () => {
 
       <Navbar />
     </IonPage>
-  );
-};
+  )
+}
 
-export default Loja;
+export default Loja

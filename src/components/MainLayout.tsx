@@ -1,13 +1,13 @@
-import { IonFooter, IonToolbar, IonButton, IonIcon } from '@ionic/react';
-import { home, people, chatbubble, personCircleOutline, cartSharp, trophyOutline, flashOutline, listOutline, bookOutline, shieldCheckmarkOutline } from 'ionicons/icons';
-import { useLocation } from 'react-router-dom';
-import { useAuth } from '../AuthContext';
+import { IonFooter, IonToolbar, IonButton, IonIcon } from '@ionic/react'
+import { home, people, chatbubble, personCircleOutline, cartSharp, trophyOutline, flashOutline, listOutline, bookOutline, shieldCheckmarkOutline } from 'ionicons/icons'
+import { useLocation } from 'react-router-dom'
+import { useAuth } from '../AuthContext'
 
 const Navbar: React.FC = () => {
-  const location = useLocation();
-  const { user } = useAuth();
-  const isAdmin = user?.type === 'admin';
-  const isPraticinador = user?.type === 'praticinador';
+  const location = useLocation()
+  const { user } = useAuth()
+  const isAdmin = user?.type === 'admin'
+  const isPraticinador = user?.type === 'praticinador'
 
   return (
     <IonFooter>
@@ -108,7 +108,7 @@ const Navbar: React.FC = () => {
         )}
       </IonToolbar>
     </IonFooter>
-  );
-};
+  )
+}
 
-export default Navbar;
+export default Navbar

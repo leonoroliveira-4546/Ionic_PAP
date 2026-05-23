@@ -1,11 +1,11 @@
-import { useEffect, useRef } from 'react';
-import { io, Socket } from 'socket.io-client';
+import { useEffect, useRef } from 'react'
+import { io, Socket } from 'socket.io-client'
 
 const useSocket = (userId: string | undefined) => {
-  const socketRef = useRef<Socket | null>(null);
+  const socketRef = useRef<Socket | null>(null)
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) return
 
     // Create socket connection
     socketRef.current = io('http://localhost:8000', {
@@ -13,22 +13,20 @@ const useSocket = (userId: string | undefined) => {
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       reconnectionAttempts: 5
-    });
+    })
 
     // Emit join event
-    socketRef.current.emit('join', userId);
-
-    console.log('Socket connected with userId:', userId);
+    socketRef.current.emit('join', userId)
 
     // Cleanup on unmount
     return () => {
       if (socketRef.current) {
-        socketRef.current.disconnect();
+        socketRef.current.disconnect()
       }
-    };
-  }, [userId]);
+    }
+  }, [userId])
 
-  return socketRef.current;
-};
+  return socketRef.current
+}
 
-export default useSocket;
+export default useSocket
