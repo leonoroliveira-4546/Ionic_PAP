@@ -1,112 +1,112 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
 import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
   IonText, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
   IonButton, IonIcon, IonBadge, IonSpinner, IonList, IonItem, IonLabel, IonModal, IonInput, IonSelect, IonSelectOption
-} from '@ionic/react'
-import { checkmarkCircle, closeCircle, timeOutline, trophyOutline, add, create, trash, close } from 'ionicons/icons'
-import Navbar from '../../components/MainLayout'
-import { useAuth } from '../../AuthContext'
-import { predictionsApi } from '../../hooks/predictionsApi'
+} from '@ionic/react';
+import { checkmarkCircle, closeCircle, timeOutline, trophyOutline, add, create, trash, close } from 'ionicons/icons';
+import Navbar from '../../components/MainLayout';
+import { useAuth } from '../../AuthContext';
+import { predictionsApi } from '../../hooks/predictionsApi';
 
 interface Tournament {
-  id: string
-  name: string
-  date: string
-  location: string
-  status: string
-  participants: { id: string; name: string; belt: string }[]
-  winner?: string
+  id: string;
+  name: string;
+  date: string;
+  location: string;
+  status: string;
+  participants: { id: string; name: string; belt: string }[];
+  winner?: string;
 }
 
 interface Prediction {
-  tournamentId: string
-  predictedWinner: string
-  userId: string
-  pointsEarned?: number
+  tournamentId: string;
+  predictedWinner: string;
+  userId: string;
+  pointsEarned?: number;
 }
 
 const Predicoes: React.FC = () => {
-  const { user } = useAuth()
-  const isAdmin = user?.type === 'admin'
-  const { getTournaments, getMyPredictions, submitPrediction, createTournament, updateTournament, deleteTournament } = predictionsApi()
-  const [tournaments, setTournaments] = useState<Tournament[]>([])
-  const [predictions, setPredictions] = useState<Prediction[]>([])
-  const [loading, setLoading] = useState(true)
-  const [showTournamentModal, setShowTournamentModal] = useState(false)
-  const [editingTournament, setEditingTournament] = useState<any | null>(null)
-  const [tournamentForm, setTournamentForm] = useState<any>({ name: '', date: '', location: '', status: 'open', participants: [] })
-  const [savingTournament, setSavingTournament] = useState(false)
-  const [selectedPredictions, setSelectedPredictions] = useState<Record<string, string>>({})
+  const { user } = useAuth();
+  const isAdmin = user?.type === 'admin';
+  const { getTournaments, getMyPredictions, submitPrediction, createTournament, updateTournament, deleteTournament } = predictionsApi();
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [predictions, setPredictions] = useState<Prediction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showTournamentModal, setShowTournamentModal] = useState(false);
+  const [editingTournament, setEditingTournament] = useState<any | null>(null);
+  const [tournamentForm, setTournamentForm] = useState<any>({ name: '', date: '', location: '', status: 'open', participants: [] });
+  const [savingTournament, setSavingTournament] = useState(false);
+  const [selectedPredictions, setSelectedPredictions] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const loadData = async () => {
-      setLoading(true)
+      setLoading(true);
       try {
-        const tournamentsData = await getTournaments()
-        const predictionsData = await getMyPredictions()
+        const tournamentsData = await getTournaments();
+        const predictionsData = await getMyPredictions();
 
-        setTournaments(tournamentsData.tournaments || tournamentsData)
-        setPredictions(predictionsData.predictions || predictionsData)
+        setTournaments(tournamentsData.tournaments || tournamentsData);
+        setPredictions(predictionsData.predictions || predictionsData);
       } catch (error) {
-
+        console.error('Falha ao carregar predições', error);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    loadData()
-  }, [getTournaments, getMyPredictions])
+    loadData();
+  }, [getTournaments, getMyPredictions]);
 
   const handlePrediction = (tournamentId: string, participantId: string) => {
     setSelectedPredictions(prev => ({
       ...prev,
       [tournamentId]: participantId
-    }))
-  }
+    }));
+  };
 
   const submitPredictionForTournament = async (tournamentId: string) => {
-    const predictedWinner = selectedPredictions[tournamentId]
-    if (!predictedWinner) return
+    const predictedWinner = selectedPredictions[tournamentId];
+    if (!predictedWinner) return;
 
     try {
-      await submitPrediction(tournamentId, predictedWinner)
-      alert('Predição enviada com sucesso!')
-      setPredictions(prev => [...prev, { userId: user?._id || '', tournamentId, predictedWinner }])
+      await submitPrediction(tournamentId, predictedWinner);
+      alert('Predição enviada com sucesso!');
+      setPredictions(prev => [...prev, { userId: user?._id || '', tournamentId, predictedWinner }]);
     } catch (error) {
-
-      alert('Erro ao enviar predição. Tente novamente.')
+      console.error('Falha ao enviar predição', error);
+      alert('Erro ao enviar predição. Tente novamente.');
     }
-  }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'open': return 'success'
-      case 'closed': return 'warning'
-      case 'finished': return 'medium'
-      default: return 'primary'
+      case 'open': return 'success';
+      case 'closed': return 'warning';
+      case 'finished': return 'medium';
+      default: return 'primary';
     }
-  }
+  };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'open': return 'Aberto'
-      case 'closed': return 'Fechado'
-      case 'finished': return 'Finalizado'
-      default: return status
+      case 'open': return 'Aberto';
+      case 'closed': return 'Fechado';
+      case 'finished': return 'Finalizado';
+      default: return status;
     }
-  }
+  };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
+    const date = new Date(dateString);
     return date.toLocaleDateString('pt-BR', {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
-    })
-  }
+    });
+  };
 
   if (loading) {
     return (
@@ -123,7 +123,7 @@ const Predicoes: React.FC = () => {
         </IonContent>
         <Navbar />
       </IonPage>
-    )
+    );
   }
 
   return (
@@ -150,8 +150,8 @@ const Predicoes: React.FC = () => {
 
         <div className="mx-4 space-y-4 pb-24">
           {tournaments.map(tournament => {
-          const userPrediction = predictions.find(p => p.tournamentId === tournament.id)
-          const selectedWinner = selectedPredictions[tournament.id] || userPrediction?.predictedWinner
+          const userPrediction = predictions.find(p => p.tournamentId === tournament.id);
+          const selectedWinner = selectedPredictions[tournament.id] || userPrediction?.predictedWinner;
 
           return (
             <IonCard key={tournament.id} className="rounded-3xl border border-slate-200 bg-white shadow-sm">
@@ -168,9 +168,9 @@ const Predicoes: React.FC = () => {
                           <IonIcon icon={create} />
                         </IonButton>
                         <IonButton fill="clear" color="danger" onClick={async () => {
-                          const id = (tournament as any)._id || (tournament as any).id
-                          if (!id) return; if (!confirm('Remover torneio?')) return
-                          try { await deleteTournament(id); setTournaments(prev => prev.filter(x => ((x as any)._id || (x as any).id) !== id)); alert('Torneio removido'); } catch (err) {  alert('Erro ao remover torneio'); }
+                          const id = (tournament as any)._id || (tournament as any).id;
+                          if (!id) return; if (!confirm('Remover torneio?')) return;
+                          try { await deleteTournament(id); setTournaments(prev => prev.filter(x => ((x as any)._id || (x as any).id) !== id)); alert('Torneio removido'); } catch (err) { console.error(err); alert('Erro ao remover torneio'); }
                         }}>
                           <IonIcon icon={trash} />
                         </IonButton>
@@ -189,8 +189,8 @@ const Predicoes: React.FC = () => {
                   <IonText className="font-semibold text-slate-900">Participantes:</IonText>
                   <div className="mt-3 space-y-3">
                     {tournament.participants.map(participant => {
-                      const isSelected = selectedWinner === participant.id
-                      const isWinner = tournament.winner === participant.id
+                      const isSelected = selectedWinner === participant.id;
+                      const isWinner = tournament.winner === participant.id;
 
                       return (
                         <div
@@ -209,7 +209,7 @@ const Predicoes: React.FC = () => {
                             <IonIcon icon={trophyOutline} color="warning" className="text-xl" />
                           )}
                         </div>
-                      )
+                      );
                     })}
                   </div>
                 </div>
@@ -244,7 +244,7 @@ const Predicoes: React.FC = () => {
                 )}
               </IonCardContent>
             </IonCard>
-          )
+          );
         })}
 
         {tournaments.length === 0 && (
@@ -287,18 +287,18 @@ const Predicoes: React.FC = () => {
               <div className="flex gap-2">
                 <IonButton expand="block" onClick={async () => {
                   if (!tournamentForm.name.trim()) { alert('Nome obrigatório'); return; }
-                  setSavingTournament(true)
+                  setSavingTournament(true);
                   try {
                     if (editingTournament && ((editingTournament as any)._id || (editingTournament as any).id)) {
-                      const id = (editingTournament as any)._id || (editingTournament as any).id
-                      const res = await updateTournament(id, tournamentForm)
-                      if (res.success) setTournaments(prev => prev.map(x => ((x as any)._id || (x as any).id) === id ? res.tournament : x))
+                      const id = (editingTournament as any)._id || (editingTournament as any).id;
+                      const res = await updateTournament(id, tournamentForm);
+                      if (res.success) setTournaments(prev => prev.map(x => ((x as any)._id || (x as any).id) === id ? res.tournament : x));
                     } else {
-                      const res = await createTournament(tournamentForm)
-                      if (res.success) setTournaments(prev => [res.tournament, ...prev])
+                      const res = await createTournament(tournamentForm);
+                      if (res.success) setTournaments(prev => [res.tournament, ...prev]);
                     }
-                    setShowTournamentModal(false)
-                  } catch (err) {  alert('Erro ao salvar torneio'); }
+                    setShowTournamentModal(false);
+                  } catch (err) { console.error(err); alert('Erro ao salvar torneio'); }
                   finally { setSavingTournament(false); }
                 }} disabled={savingTournament}>{savingTournament ? 'A guardar...' : (editingTournament ? 'Guardar' : 'Criar')}</IonButton>
                 <IonButton expand="block" fill="clear" onClick={() => setShowTournamentModal(false)}>Cancelar</IonButton>
@@ -321,7 +321,7 @@ const Predicoes: React.FC = () => {
 
       <Navbar />
     </IonPage>
-  )
-}
+  );
+};
 
-export default Predicoes
+export default Predicoes;

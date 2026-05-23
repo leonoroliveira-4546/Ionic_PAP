@@ -1,12 +1,12 @@
-import React from 'react'
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCardSubtitle } from '@ionic/react'
+import React from 'react';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCardSubtitle } from '@ionic/react';
 
 interface CardProps {
-  title?: string
-  subtitle?: string
-  children: React.ReactNode
-  className?: string
-  onClick?: () => void
+  title?: string;
+  subtitle?: string;
+  children: React.ReactNode;
+  className?: string;
+  onClick?: () => void;
 }
 
 const Card: React.FC<CardProps> = ({ title, subtitle, children, className = '', onClick }) => {
@@ -22,7 +22,7 @@ const Card: React.FC<CardProps> = ({ title, subtitle, children, className = '', 
         {children}
       </IonCardContent>
     </IonCard>
-  )
-}
+  );
+};
 
-export default Card
+export default Card;

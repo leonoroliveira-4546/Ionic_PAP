@@ -1,33 +1,33 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
 import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
   IonText, IonSpinner, IonSearchbar, IonButton
-} from '@ionic/react'
-import { trophyOutline } from 'ionicons/icons'
-import Navbar from '../../components/MainLayout'
-import RankingItem from '../../components/RankingItem'
-import userApi from '../../hooks/userApi'
-import { User } from '../../mockData/users'
-import { useAuth } from '../../AuthContext'
+} from '@ionic/react';
+import { trophyOutline } from 'ionicons/icons';
+import Navbar from '../../components/MainLayout';
+import RankingItem from '../../components/RankingItem';
+import userApi from '../../hooks/userApi';
+import { User } from '../../mockData/users';
+import { useAuth } from '../../AuthContext';
 
-type RankingUser = User
+type RankingUser = User;
 
 const Ranking: React.FC = () => {
-  const { user } = useAuth()
-  const isAdmin = user?.type === 'admin'
-  const [generalUsers, setGeneralUsers] = useState<RankingUser[]>([])
-  const [dojoUsers, setDojoUsers] = useState<RankingUser[]>([])
-  const [filteredUsers, setFilteredUsers] = useState<RankingUser[]>([])
-  const [activeTab, setActiveTab] = useState<'general' | 'dojo'>('general')
-  const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
-  const { getRanking } = userApi()
+  const { user } = useAuth();
+  const isAdmin = user?.type === 'admin';
+  const [generalUsers, setGeneralUsers] = useState<RankingUser[]>([]);
+  const [dojoUsers, setDojoUsers] = useState<RankingUser[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<RankingUser[]>([]);
+  const [activeTab, setActiveTab] = useState<'general' | 'dojo'>('general');
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const { getRanking } = userApi();
 
   useEffect(() => {
     const loadUsers = async () => {
-      setLoading(true)
+      setLoading(true);
       try {
-        const response = await getRanking()
+        const response = await getRanking();
         const mapUsers = (list: any[]) => list.map((u: any) => ({
           _id: u._id,
           username: u.username,
@@ -39,41 +39,41 @@ const Ranking: React.FC = () => {
           belt: u.belt || 'Branca',
           points: u.points || 0,
           ranking: u.ranking || 0
-        }))
+        }));
 
-        const general = response.success ? mapUsers(response.general || []) : []
-        const dojo = response.success ? mapUsers(response.dojo || []) : []
+        const general = response.success ? mapUsers(response.general || []) : [];
+        const dojo = response.success ? mapUsers(response.dojo || []) : [];
 
-        setGeneralUsers(general)
-        setDojoUsers(dojo)
-        setFilteredUsers(activeTab === 'dojo' ? dojo : general)
+        setGeneralUsers(general);
+        setDojoUsers(dojo);
+        setFilteredUsers(activeTab === 'dojo' ? dojo : general);
       } catch (err) {
-
-        setGeneralUsers([])
-        setDojoUsers([])
-        setFilteredUsers([])
+        console.error(err);
+        setGeneralUsers([]);
+        setDojoUsers([]);
+        setFilteredUsers([]);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    loadUsers()
-  }, [getRanking])
+    loadUsers();
+  }, [getRanking]);
 
   useEffect(() => {
-    const source = activeTab === 'dojo' ? dojoUsers : generalUsers
+    const source = activeTab === 'dojo' ? dojoUsers : generalUsers;
 
     if (search.trim() === '') {
-      setFilteredUsers(source)
-      return
+      setFilteredUsers(source);
+      return;
     }
 
     const filtered = source.filter(user =>
       user.name.toLowerCase().includes(search.toLowerCase()) ||
       user.username.toLowerCase().includes(search.toLowerCase())
-    )
-    setFilteredUsers(filtered)
-  }, [search, generalUsers, dojoUsers, activeTab])
+    );
+    setFilteredUsers(filtered);
+  }, [search, generalUsers, dojoUsers, activeTab]);
 
   if (!user) { return null; }
 
@@ -92,7 +92,7 @@ const Ranking: React.FC = () => {
         </IonContent>
         <Navbar />
       </IonPage>
-    )
+    );
   }
 
   return (
@@ -174,7 +174,7 @@ const Ranking: React.FC = () => {
 
       <Navbar />
     </IonPage>
-  )
-}
+  );
+};
 
-export default Ranking
+export default Ranking;

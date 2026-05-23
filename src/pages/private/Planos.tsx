@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
 import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
   IonText, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
@@ -8,40 +8,40 @@ import {
   IonCheckbox,
   IonInput,
   IonTextarea
-} from '@ionic/react'
+} from '@ionic/react';
 import {
   checkmarkCircle,
   createOutline,
   trashOutline,
   addOutline
-} from 'ionicons/icons'
-import Navbar from '../../components/MainLayout'
-import { useAuth } from '../../AuthContext'
-import { plansApi } from '../../hooks/plansApi'
+} from 'ionicons/icons';
+import Navbar from '../../components/MainLayout';
+import { useAuth } from '../../AuthContext';
+import { plansApi } from '../../hooks/plansApi';
 
 interface Plan {
-  id: string
-  name: string
-  price: number
-  period: string
-  description: string
-  features: string[]
-  popular?: boolean
-  color: string
+  id: string;
+  name: string;
+  price: number;
+  period: string;
+  description: string;
+  features: string[];
+  popular?: boolean;
+  color: string;
 }
 
 const Planos: React.FC = () => {
-  const { getPlans, createPlan, updatePlan } = plansApi()
-  const [plans, setPlans] = useState<Plan[]>([])
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  const [showEditModal, setShowEditModal] = useState(false)
+  const { getPlans, createPlan, updatePlan } = plansApi();
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
-  const { user } = useAuth()
-  const isAdmin = user?.type === 'admin'
+  const { user } = useAuth();
+  const isAdmin = user?.type === 'admin';
 
-  const [editingPlan, setEditingPlan] = useState<Plan | null>(null)
+  const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
 
   const emptyPlan: Plan = {
     id: '',
@@ -51,41 +51,41 @@ const Planos: React.FC = () => {
     description: '',
     features: [],
     color: 'primary'
-  }
+  };
 
-  const [newPlan, setNewPlan] = useState<Plan>(emptyPlan)
+  const [newPlan, setNewPlan] = useState<Plan>(emptyPlan);
 
   useEffect(() => {
     const loadPlans = async () => {
-      setLoading(true)
+      setLoading(true);
       try {
-        const data = await getPlans()
+        const data = await getPlans();
         const mappedPlans = (data.plans || data || []).map((p: any) => ({
           ...p,
           id: p._id
-        }))
+        }));
 
-        setPlans(mappedPlans)
+        setPlans(mappedPlans);
       } catch (err) {
-
+        console.error('Failed to load plans', err);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    loadPlans()
-  }, [getPlans])
+    loadPlans();
+  }, [getPlans]);
 
-  const handleSelectPlan = (planId: string) => setSelectedPlan(planId)
+  const handleSelectPlan = (planId: string) => setSelectedPlan(planId);
 
   const handleSubscribe = (plan: Plan) => {
     if (plan.price === 0) {
-      alert('Você já tem o plano Free ativo!')
-      return
+      alert('Você já tem o plano Free ativo!');
+      return;
     }
-
-    alert(`Assinatura do plano ${plan.name} solicitada! Em breve você receberá as instruções de pagamento.`)
-  }
+    console.log('Subscribing to plan:', plan.name);
+    alert(`Assinatura do plano ${plan.name} solicitada! Em breve você receberá as instruções de pagamento.`);
+  };
 
   const handleAddPlan = async () => {
     try {
@@ -97,12 +97,12 @@ const Planos: React.FC = () => {
         features: newPlan.features,
         color: newPlan.color,
         popular: newPlan.popular || false
-      }
+      };
 
-      const response = await createPlan(payload)
+      const response = await createPlan(payload);
 
       if (response.success) {
-        setPlans(prev => [...prev, response.plan])
+        setPlans(prev => [...prev, response.plan]);
 
         setNewPlan({
           id: '',
@@ -112,18 +112,18 @@ const Planos: React.FC = () => {
           description: '',
           features: [],
           color: 'primary'
-        })
+        });
 
-        alert('Plano criado com sucesso!')
+        alert('Plano criado com sucesso!');
       }
     } catch (err) {
-
-      alert('Erro ao criar plano')
+      console.error(err);
+      alert('Erro ao criar plano');
     }
-  }
+  };
 
   const handleSaveEdit = async () => {
-    if (!editingPlan) return
+    if (!editingPlan) return;
 
     try {
       const response = await updatePlan(editingPlan.id, {
@@ -134,7 +134,7 @@ const Planos: React.FC = () => {
         features: editingPlan.features,
         color: editingPlan.color,
         popular: editingPlan.popular || false
-      })
+      });
 
       if (response.success) {
         setPlans(prev =>
@@ -143,17 +143,17 @@ const Planos: React.FC = () => {
               ? response.plan
               : p
           )
-        )
+        );
 
-        setEditingPlan(null)
+        setEditingPlan(null);
 
-        alert('Plano atualizado!')
+        alert('Plano atualizado!');
       }
     } catch (err) {
-
-      alert('Erro ao atualizar plano')
+      console.error(err);
+      alert('Erro ao atualizar plano');
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -169,7 +169,7 @@ const Planos: React.FC = () => {
           </div>
         </IonContent>
       </IonPage>
-    )
+    );
   }
 
   return (
@@ -247,11 +247,11 @@ const Planos: React.FC = () => {
                       fill="outline"
                       color="medium"
                       onClick={(e) => {
-                        e.stopPropagation()
+                        e.stopPropagation();
                           setEditingPlan({
                             ...plan
-                          })
-                        setShowEditModal(true)
+                          }); 
+                        setShowEditModal(true);
                       }}
                     >
                       <IonIcon icon={createOutline} slot="start" />
@@ -400,8 +400,8 @@ const Planos: React.FC = () => {
               <IonButton
                 expand="block"
                 onClick={async () => {
-                  await handleAddPlan()
-                  setShowCreateModal(false)
+                  await handleAddPlan();
+                  setShowCreateModal(false);
                 }}
               >
                 Criar
@@ -527,8 +527,8 @@ const Planos: React.FC = () => {
                 <IonButton
                   expand="block"
                   onClick={async () => {
-                    await handleSaveEdit()
-                    setShowEditModal(false)
+                    await handleSaveEdit();
+                    setShowEditModal(false);
                   }}
                 >
                   Salvar
@@ -550,7 +550,7 @@ const Planos: React.FC = () => {
       </IonContent>
       <Navbar />
     </IonPage>
-  )
-}
+  );
+};
 
-export default Planos
+export default Planos;

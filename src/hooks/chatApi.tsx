@@ -1,14 +1,14 @@
 import api from "../components/AxiosInstance"
-import Cookies from 'js-cookie'
+import Cookies from 'js-cookie';
 
 export const chatApi = () => {
   const fetchConversations = async () => {
-    const { data } = await api.get('/conversations')
+    const { data } = await api.get('/conversations');
     return data
-  }
+  };
 
   
-  return { fetchConversations }
-}
+  return { fetchConversations };
+};
 
-export default chatApi
+export default chatApi;

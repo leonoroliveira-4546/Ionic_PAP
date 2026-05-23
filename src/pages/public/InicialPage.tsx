@@ -1,38 +1,38 @@
-import React from "react"
-import { IonPage, IonContent, IonButton} from "@ionic/react"
-import { auth, googleProvider } from "../../firebaseConfig"
-import { signInWithPopup } from "firebase/auth"
-import { useHistory } from "react-router-dom"
-import { useAuth } from "../../AuthContext"
-import authApi from "../../hooks/authApi"
-import '../StylesPages.css'
+import React from "react";
+import { IonPage, IonContent, IonButton} from "@ionic/react";
+import { auth, googleProvider } from "../../firebaseConfig";
+import { signInWithPopup } from "firebase/auth";
+import { useHistory } from "react-router-dom";
+import { useAuth } from "../../AuthContext";
+import authApi from "../../hooks/authApi";
+import '../StylesPages.css';
 
 const InicialPage: React.FC = () => {
-  const { Login } = useAuth()
-  const { login } = authApi(Login)
-  const history = useHistory()
+  const { Login } = useAuth();
+  const { login } = authApi(Login);
+  const history = useHistory();
 
   const loginWithGoogle = async () => {
     try {
-      const result = await signInWithPopup(auth, googleProvider)
+      const result = await signInWithPopup(auth, googleProvider);
       
-      const idToken = await result.user.getIdToken()
-      const apiResult = await login(idToken)
+      const idToken = await result.user.getIdToken();
+      const apiResult = await login(idToken);
 
       if (apiResult.success) {
-        const user = apiResult.user
+        const user = apiResult.user;
         if (user.type === 'admin') {
-          history.replace('/admin')
+          history.replace('/admin');
         } else {
-          history.replace('/home')
+          history.replace('/home');
         }
       } else {
-
+        console.error(apiResult.error);
       }
     } catch (error: any) {
-
+      console.error("Erro no login: ", error.message);
     }
-  }
+  };
 
   return (
     <IonPage>
@@ -67,7 +67,7 @@ const InicialPage: React.FC = () => {
         </div>
       </IonContent>
     </IonPage>
-  )
-}
+  );
+};
 
-export default InicialPage
+export default InicialPage;

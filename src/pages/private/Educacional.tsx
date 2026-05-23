@@ -1,75 +1,75 @@
-import React, { useState, useEffect } from 'react'
-import { useAuth } from '../../AuthContext'
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../AuthContext';
 import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
   IonText, IonBadge, IonChip, IonSpinner, IonSearchbar, IonSegment, IonSegmentButton,
   IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButton, IonModal,
   IonInput, IonLabel, IonItem, IonList, IonIcon, IonSelect, IonSelectOption
-} from '@ionic/react'
-import { bookOutline, playOutline, add, trash, create, close } from 'ionicons/icons'
-import Navbar from '../../components/MainLayout'
-import { educationalApi } from '../../hooks/educationalApi'
+} from '@ionic/react';
+import { bookOutline, playOutline, add, trash, create, close } from 'ionicons/icons';
+import Navbar from '../../components/MainLayout';
+import { educationalApi } from '../../hooks/educationalApi';
 
 interface Video {
-  id: string
-  title: string
-  description: string
-  category: string
-  url: string
-  channelName: string
-  publishedAt: string
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  url: string;
+  channelName: string;
+  publishedAt: string;
 }
 
 interface GameData {
-  question: string
-  options: string[]
-  correctAnswer: string
-  points: number
+  question: string;
+  options: string[];
+  correctAnswer: string;
+  points: number;
 }
 
 interface EducationalItem {
-  _id?: string
-  title: string
-  description: string
-  category: string
-  url?: string
-  contentType: 'video' | 'game' | 'article'
-  published?: boolean
-  createdAt?: string
-  gameData?: GameData
+  _id?: string;
+  title: string;
+  description: string;
+  category: string;
+  url?: string;
+  contentType: 'video' | 'game' | 'article';
+  published?: boolean;
+  createdAt?: string;
+  gameData?: GameData;
 }
 
 interface Challenge {
-  _id?: string
-  title: string
-  description: string
-  date: string
-  dojoOnly: boolean
-  type: 'text-short' | 'text-long' | 'multiple-choice' | 'single-choice'
+  _id?: string;
+  title: string;
+  description: string;
+  date: string;
+  dojoOnly: boolean;
+  type: 'text-short' | 'text-long' | 'multiple-choice' | 'single-choice';
   options?: string[]; // Para múltipla escolha e escolha simples
-  correctAnswer?: string
-  points?: number
+  correctAnswer?: string;
+  points?: number;
 }
 
 interface ChallengeReport {
-  challengeId: string
-  title: string
-  date: string
+  challengeId: string;
+  title: string;
+  date: string;
   responses: {
-    athleteId: string
-    athleteName: string
-    response: string
-    correct?: boolean
-    pointsEarned?: number
-    timestamp?: string
-    createdAt?: string
-  }[]
+    athleteId: string;
+    athleteName: string;
+    response: string;
+    correct?: boolean;
+    pointsEarned?: number;
+    timestamp?: string;
+    createdAt?: string;
+  }[];
 }
 
-type Category = 'all' | 'historia' | 'filosofia' | 'tecnicas' | 'jogos' | 'outro'
+type Category = 'all' | 'historia' | 'filosofia' | 'tecnicas' | 'jogos' | 'outro';
 
 const Educacional: React.FC = () => {
-  const { user, Login } = useAuth()
+  const { user, Login } = useAuth();
   const {
     getEducationalContent,
     createChallenge,
@@ -82,15 +82,15 @@ const Educacional: React.FC = () => {
     createEducationalContent,
     updateChallenge,
     deleteChallenge
-  } = educationalApi()
-  const [contents, setContents] = useState<EducationalItem[]>([])
-  const [filteredContents, setFilteredContents] = useState<EducationalItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
-  const [activeCategory, setActiveCategory] = useState<Category>('all')
-  const [showContentModal, setShowContentModal] = useState(false)
-  const [showGameModal, setShowGameModal] = useState(false)
-  const [selectedContent, setSelectedContent] = useState<EducationalItem | null>(null)
+  } = educationalApi();
+  const [contents, setContents] = useState<EducationalItem[]>([]);
+  const [filteredContents, setFilteredContents] = useState<EducationalItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [activeCategory, setActiveCategory] = useState<Category>('all');
+  const [showContentModal, setShowContentModal] = useState(false);
+  const [showGameModal, setShowGameModal] = useState(false);
+  const [selectedContent, setSelectedContent] = useState<EducationalItem | null>(null);
   const [contentForm, setContentForm] = useState<EducationalItem>({
     title: '',
     description: '',
@@ -104,18 +104,18 @@ const Educacional: React.FC = () => {
       correctAnswer: '',
       points: 20
     }
-  })
-  const [gameAnswer, setGameAnswer] = useState<string>('')
-  const [gameResult, setGameResult] = useState<{ correct: boolean; pointsEarned: number } | null>(null)
-  const [savingContent, setSavingContent] = useState(false)
-  const [savingGame, setSavingGame] = useState(false)
+  });
+  const [gameAnswer, setGameAnswer] = useState<string>('');
+  const [gameResult, setGameResult] = useState<{ correct: boolean; pointsEarned: number } | null>(null);
+  const [savingContent, setSavingContent] = useState(false);
+  const [savingGame, setSavingGame] = useState(false);
   
   // Desafios do dia
-  const [dailyChallenges, setDailyChallenges] = useState<Challenge[]>([])
-  const [dailyChallenge, setDailyChallenge] = useState<Challenge | null>(null)
-  const [challengeAnswer, setChallengeAnswer] = useState<string>('')
-  const [userChallengeResponse, setUserChallengeResponse] = useState<any | null>(null)
-  const [showChallengeModal, setShowChallengeModal] = useState(false)
+  const [dailyChallenges, setDailyChallenges] = useState<Challenge[]>([]);
+  const [dailyChallenge, setDailyChallenge] = useState<Challenge | null>(null);
+  const [challengeAnswer, setChallengeAnswer] = useState<string>('');
+  const [userChallengeResponse, setUserChallengeResponse] = useState<any | null>(null);
+  const [showChallengeModal, setShowChallengeModal] = useState(false);
   const [newChallenge, setNewChallenge] = useState<Challenge>({
     title: '',
     description: '',
@@ -125,135 +125,135 @@ const Educacional: React.FC = () => {
     options: [],
     correctAnswer: '',
     points: 20
-  })
-  const [editingChallenge, setEditingChallenge] = useState<Challenge | null>(null)
-  const [showReportModal, setShowReportModal] = useState(false)
-  const [selectedChallengeReport, setSelectedChallengeReport] = useState<ChallengeReport | null>(null)
-  const isSensei = user?.type === 'sensei'
+  });
+  const [editingChallenge, setEditingChallenge] = useState<Challenge | null>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [selectedChallengeReport, setSelectedChallengeReport] = useState<ChallengeReport | null>(null);
+  const isSensei = user?.type === 'sensei';
 
   const loadChallenges = async () => {
     if (!user?.dojoId) {
-      setDailyChallenges([])
-      setDailyChallenge(null)
-      setUserChallengeResponse(null)
-      return
+      setDailyChallenges([]);
+      setDailyChallenge(null);
+      setUserChallengeResponse(null);
+      return;
     }
 
     try {
       if (isSensei) {
-        const data = await getChallengesByDojo(user.dojoId)
-        setDailyChallenges(data.challenges || [])
-        setDailyChallenge(null)
-        setUserChallengeResponse(null)
+        const data = await getChallengesByDojo(user.dojoId);
+        setDailyChallenges(data.challenges || []);
+        setDailyChallenge(null);
+        setUserChallengeResponse(null);
       } else {
-        const data = await getCurrentChallenge(user.dojoId)
-        const challenge = data.challenge || null
+        const data = await getCurrentChallenge(user.dojoId);
+        const challenge = data.challenge || null;
         if (!challenge) {
-          setDailyChallenge(null)
-          setUserChallengeResponse(null)
-          return
+          setDailyChallenge(null);
+          setUserChallengeResponse(null);
+          return;
         }
 
-        const responseData = await getUserChallengeResponse(challenge._id)
+        const responseData = await getUserChallengeResponse(challenge._id);
         if (responseData.answered) {
-          setDailyChallenge(null)
-          setUserChallengeResponse(responseData.response || null)
+          setDailyChallenge(null);
+          setUserChallengeResponse(responseData.response || null);
         } else {
-          setDailyChallenge(challenge)
-          setUserChallengeResponse(null)
+          setDailyChallenge(challenge);
+          setUserChallengeResponse(null);
         }
       }
     } catch (error) {
-
-      setDailyChallenges([])
-      setDailyChallenge(null)
-      setUserChallengeResponse(null)
+      console.error('Erro ao carregar desafios', error);
+      setDailyChallenges([]);
+      setDailyChallenge(null);
+      setUserChallengeResponse(null);
     }
-  }
+  };
 
   useEffect(() => {
-    loadChallenges()
-  }, [user?.dojoId, isSensei])
+    loadChallenges();
+  }, [user?.dojoId, isSensei]);
 
   const loadChallengeResponses = async (challengeId: string | undefined, title: string, date: string) => {
-    if (!challengeId) return
+    if (!challengeId) return;
     try {
-      const data = await getChallengeResponses(challengeId)
+      const data = await getChallengeResponses(challengeId);
       setSelectedChallengeReport({
         challengeId,
         title,
         date,
         responses: data.responses || []
-      })
-      setShowReportModal(true)
+      });
+      setShowReportModal(true);
     } catch (error) {
-
-      alert('Erro ao carregar respostas do desafio.')
+      console.error('Erro ao carregar respostas do desafio', error);
+      alert('Erro ao carregar respostas do desafio.');
     }
-  }
+  };
 
   const saveChallengeResponse = async () => {
-    if (!user?.dojoId || !dailyChallenge?._id) return
+    if (!user?.dojoId || !dailyChallenge?._id) return;
     if (!challengeAnswer.trim()) {
-      alert('Digite sua resposta antes de enviar.')
-      return
+      alert('Digite sua resposta antes de enviar.');
+      return;
     }
 
     try {
-      const data = await submitChallengeResponse(dailyChallenge._id, challengeAnswer)
+      const data = await submitChallengeResponse(dailyChallenge._id, challengeAnswer);
       if (!data.success) {
-        alert(data.message || 'Erro ao enviar resposta.')
-        return
+        alert(data.message || 'Erro ao enviar resposta.');
+        return;
       }
 
-      setUserChallengeResponse(data.resp)
-      setDailyChallenge(null)
-      window.dispatchEvent(new CustomEvent('challengeResponseSaved', { detail: { dojoId: user.dojoId, challengeId: dailyChallenge._id, athleteId: user._id } }))
+      setUserChallengeResponse(data.resp);
+      setDailyChallenge(null);
+      window.dispatchEvent(new CustomEvent('challengeResponseSaved', { detail: { dojoId: user.dojoId, challengeId: dailyChallenge._id, athleteId: user._id } }));
 
       if (data.correct && user) {
-        const updatedUser = { ...user, points: (user.points || 0) + (data.pointsEarned || 0) }
-        Login(updatedUser)
+        const updatedUser = { ...user, points: (user.points || 0) + (data.pointsEarned || 0) };
+        Login(updatedUser);
       }
 
-      alert(data.correct ? `Parabéns! Você ganhou ${data.pointsEarned} pontos.` : 'Resposta incorreta. Tente o próximo desafio.')
-      setChallengeAnswer('')
+      alert(data.correct ? `Parabéns! Você ganhou ${data.pointsEarned} pontos.` : 'Resposta incorreta. Tente o próximo desafio.');
+      setChallengeAnswer('');
     } catch (error) {
-
-      alert('Erro ao enviar resposta.')
+      console.error('Erro ao enviar resposta', error);
+      alert('Erro ao enviar resposta.');
     }
-  }
+  };
 
   const handleAddChallenge = async () => {
     if (!newChallenge.title.trim() || !newChallenge.description.trim()) {
-      alert('Preencha o título e descrição do desafio')
-      return
+      alert('Preencha o título e descrição do desafio');
+      return;
     }
 
     if (!newChallenge.correctAnswer?.trim()) {
-      alert('Defina a resposta correta do desafio.')
-      return
+      alert('Defina a resposta correta do desafio.');
+      return;
     }
 
     if (!editingChallenge?._id && dailyChallenges.length > 0) {
-      alert('Já existe um desafio ativo para o dojo. Só é permitido um único desafio.')
-      return
+      alert('Já existe um desafio ativo para o dojo. Só é permitido um único desafio.');
+      return;
     }
 
     if ((newChallenge.type === 'multiple-choice' || newChallenge.type === 'single-choice') && 
         (!newChallenge.options || newChallenge.options.length < 2)) {
-      alert('Adicione pelo menos 2 opções para este tipo de desafio')
-      return
+      alert('Adicione pelo menos 2 opções para este tipo de desafio');
+      return;
     }
 
     if ((newChallenge.type === 'multiple-choice' || newChallenge.type === 'single-choice') &&
         newChallenge.options && !newChallenge.options.includes(newChallenge.correctAnswer || '')) {
-      alert('A resposta correta deve ser uma das opções existentes.')
-      return
+      alert('A resposta correta deve ser uma das opções existentes.');
+      return;
     }
 
     if (newChallenge.points === undefined || newChallenge.points < 0) {
-      alert('Defina um valor de pontos válido para o desafio.')
-      return
+      alert('Defina um valor de pontos válido para o desafio.');
+      return;
     }
 
     try {
@@ -261,22 +261,22 @@ const Educacional: React.FC = () => {
         const data = await updateChallenge(editingChallenge._id, {
           ...newChallenge,
           dojoId: user?.dojoId
-        })
+        });
         if (!data.success) {
-          alert(data.message || 'Erro ao atualizar desafio.')
-          return
+          alert(data.message || 'Erro ao atualizar desafio.');
+          return;
         }
-        alert('Desafio atualizado com sucesso!')
+        alert('Desafio atualizado com sucesso!');
       } else {
         const data = await createChallenge({
           ...newChallenge,
           dojoId: user?.dojoId
-        })
+        });
         if (!data.success) {
-          alert(data.message || 'Erro ao criar desafio.')
-          return
+          alert(data.message || 'Erro ao criar desafio.');
+          return;
         }
-        alert('Desafio adicionado com sucesso!')
+        alert('Desafio adicionado com sucesso!');
       }
 
       setNewChallenge({
@@ -288,107 +288,107 @@ const Educacional: React.FC = () => {
         options: [],
         correctAnswer: '',
         points: 20
-      })
-      setEditingChallenge(null)
-      setShowChallengeModal(false)
-      loadChallenges()
+      });
+      setEditingChallenge(null);
+      setShowChallengeModal(false);
+      loadChallenges();
     } catch (error) {
-
-      alert('Erro ao salvar desafio.')
+      console.error('Erro ao salvar desafio', error);
+      alert('Erro ao salvar desafio.');
     }
-  }
+  };
 
   const handleDeleteChallenge = async (id: string | undefined) => {
-    if (!id) return
+    if (!id) return;
     try {
-      const data = await deleteChallenge(id)
+      const data = await deleteChallenge(id);
       if (!data.success) {
-        alert(data.message || 'Erro ao remover desafio.')
-        return
+        alert(data.message || 'Erro ao remover desafio.');
+        return;
       }
-      alert('Desafio removido!')
-      loadChallenges()
+      alert('Desafio removido!');
+      loadChallenges();
     } catch (error) {
-
-      alert('Erro ao remover desafio.')
+      console.error('Erro ao remover desafio', error);
+      alert('Erro ao remover desafio.');
     }
-  }
+  };
 
   const handleEditChallenge = (challenge: Challenge) => {
-    setEditingChallenge(challenge)
-    setNewChallenge(challenge)
-    setShowChallengeModal(true)
-  }
+    setEditingChallenge(challenge);
+    setNewChallenge(challenge);
+    setShowChallengeModal(true);
+  };
 
   const handleSaveEducationalContent = async () => {
     if (!contentForm.title.trim() || !contentForm.description.trim()) {
-      alert('Preencha título e descrição do conteúdo.')
-      return
+      alert('Preencha título e descrição do conteúdo.');
+      return;
     }
 
     if (contentForm.contentType === 'video' && !contentForm.url?.trim()) {
-      alert('Informe o link do vídeo.')
-      return
+      alert('Informe o link do vídeo.');
+      return;
     }
 
     if (contentForm.contentType === 'article' && !contentForm.url?.trim()) {
-      alert('Informe o link do artigo.')
-      return
+      alert('Informe o link do artigo.');
+      return;
     }
 
     if (contentForm.contentType === 'game') {
-      const gameData = contentForm.gameData
+      const gameData = contentForm.gameData;
       if (!gameData?.question.trim()) {
-        alert('Informe a pergunta do jogo.')
-        return
+        alert('Informe a pergunta do jogo.');
+        return;
       }
-      const validOptions = gameData?.options?.filter(option => option.trim()) || []
+      const validOptions = gameData?.options?.filter(option => option.trim()) || [];
       if (validOptions.length < 2) {
-        alert('Adicione pelo menos duas opções para o jogo.')
-        return
+        alert('Adicione pelo menos duas opções para o jogo.');
+        return;
       }
       if (!gameData.correctAnswer.trim()) {
-        alert('Informe a resposta correta do jogo.')
-        return
+        alert('Informe a resposta correta do jogo.');
+        return;
       }
       if (!validOptions.includes(gameData.correctAnswer)) {
-        alert('A resposta correta deve ser uma das opções.')
-        return
+        alert('A resposta correta deve ser uma das opções.');
+        return;
       }
     }
 
     try {
-      setSavingContent(true)
+      setSavingContent(true);
       const payload: any = {
         title: contentForm.title,
         description: contentForm.description,
         category: contentForm.category,
         contentType: contentForm.contentType,
         published: contentForm.published
-      }
+      };
 
       if (contentForm.contentType !== 'game') {
-        payload.url = contentForm.url
+        payload.url = contentForm.url;
       } else {
         payload.gameData = {
           question: contentForm.gameData?.question || '',
           options: contentForm.gameData?.options?.filter(option => option.trim()) || [],
           correctAnswer: contentForm.gameData?.correctAnswer || '',
           points: contentForm.gameData?.points || 20
-        }
+        };
       }
 
-      const data = await createEducationalContent(payload)
+      const data = await createEducationalContent(payload);
       if (!data.success) {
-        alert(data.message || 'Erro ao salvar conteúdo educativo.')
-        return
+        alert(data.message || 'Erro ao salvar conteúdo educativo.');
+        return;
       }
 
-      const updated = await getEducationalContent()
-      const loadedContents = updated.content || updated.contents || updated
-      setContents(Array.isArray(loadedContents) ? loadedContents : [])
-      setFilteredContents(Array.isArray(loadedContents) ? loadedContents : [])
-      setShowContentModal(false)
+      const updated = await getEducationalContent();
+      const loadedContents = updated.content || updated.contents || updated;
+      setContents(Array.isArray(loadedContents) ? loadedContents : []);
+      setFilteredContents(Array.isArray(loadedContents) ? loadedContents : []);
+      setShowContentModal(false);
       setContentForm({
         title: '',
         description: '',
@@ -402,68 +402,68 @@ const Educacional: React.FC = () => {
           correctAnswer: '',
           points: 20
         }
-      })
+      });
     } catch (error) {
-
-      alert('Erro ao salvar conteúdo educativo.')
+      console.error('Erro ao salvar conteúdo educativo', error);
+      alert('Erro ao salvar conteúdo educativo.');
     } finally {
-      setSavingContent(false)
+      setSavingContent(false);
     }
-  }
+  };
 
   const handleSubmitGameAnswer = async () => {
-    if (!selectedContent?._id) return
+    if (!selectedContent?._id) return;
     if (!gameAnswer.trim()) {
-      alert('Digite sua resposta antes de enviar.')
-      return
+      alert('Digite sua resposta antes de enviar.');
+      return;
     }
 
     try {
-      setSavingGame(true)
-      const data = await submitEducationalGameResponse(selectedContent._id, gameAnswer)
+      setSavingGame(true);
+      const data = await submitEducationalGameResponse(selectedContent._id, gameAnswer);
       if (!data.success) {
-        alert(data.message || 'Erro ao enviar resposta.')
-        return
+        alert(data.message || 'Erro ao enviar resposta.');
+        return;
       }
 
-      setGameResult({ correct: data.correct, pointsEarned: data.pointsEarned || 0 })
+      setGameResult({ correct: data.correct, pointsEarned: data.pointsEarned || 0 });
       if (data.correct && user) {
-        const updatedUser = { ...user, points: (user.points || 0) + (data.pointsEarned || 0) }
-        Login(updatedUser)
+        const updatedUser = { ...user, points: (user.points || 0) + (data.pointsEarned || 0) };
+        Login(updatedUser);
       }
     } catch (error) {
-
-      alert('Erro ao enviar resposta do jogo.')
+      console.error('Erro ao enviar resposta do jogo', error);
+      alert('Erro ao enviar resposta do jogo.');
     } finally {
-      setSavingGame(false)
+      setSavingGame(false);
     }
-  }
+  };
 
   useEffect(() => {
     const loadContents = async () => {
-      setLoading(true)
+      setLoading(true);
       try {
-        const data = await getEducationalContent()
-        const loadedContents = data.content || data.contents || data
+        const data = await getEducationalContent();
+        const loadedContents = data.content || data.contents || data;
         const educationalContents = (Array.isArray(loadedContents) ? loadedContents : [])
-          .filter((item: EducationalItem) => ['historia', 'filosofia', 'tecnicas', 'jogos', 'outro'].includes(item.category))
-        setContents(educationalContents)
-        setFilteredContents(educationalContents)
+          .filter((item: EducationalItem) => ['historia', 'filosofia', 'tecnicas', 'jogos', 'outro'].includes(item.category));
+        setContents(educationalContents);
+        setFilteredContents(educationalContents);
       } catch (error) {
-
+        console.error('Falha ao carregar conteúdo educacional', error);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    loadContents()
-  }, [getEducationalContent])
+    loadContents();
+  }, [getEducationalContent]);
 
   useEffect(() => {
-    let filtered = contents
+    let filtered = contents;
 
     if (activeCategory !== 'all') {
-      filtered = filtered.filter(item => item.category === activeCategory)
+      filtered = filtered.filter(item => item.category === activeCategory);
     }
 
     if (search.trim() !== '') {
@@ -471,17 +471,17 @@ const Educacional: React.FC = () => {
         item.title.toLowerCase().includes(search.toLowerCase()) ||
         item.description.toLowerCase().includes(search.toLowerCase()) ||
         (item.url?.toLowerCase().includes(search.toLowerCase()) ?? false)
-      )
+      );
     }
 
     filtered = [...filtered].sort((a, b) => {
-      const aDate = new Date(a.createdAt || '').getTime() || 0
-      const bDate = new Date(b.createdAt || '').getTime() || 0
-      return bDate - aDate
-    })
+      const aDate = new Date(a.createdAt || '').getTime() || 0;
+      const bDate = new Date(b.createdAt || '').getTime() || 0;
+      return bDate - aDate;
+    });
 
-    setFilteredContents(filtered)
-  }, [search, activeCategory, contents])
+    setFilteredContents(filtered);
+  }, [search, activeCategory, contents]);
 
   const categories = [
     { value: 'all', label: 'Todos' },
@@ -490,7 +490,7 @@ const Educacional: React.FC = () => {
     { value: 'tecnicas', label: 'Técnicas' },
     { value: 'jogos', label: 'Jogos' },
     { value: 'outro', label: 'Outro' }
-  ]
+  ];
 
   if (loading) {
     return (
@@ -507,7 +507,7 @@ const Educacional: React.FC = () => {
         </IonContent>
         <Navbar />
       </IonPage>
-    )
+    );
   }
 
   return (
@@ -527,7 +527,7 @@ const Educacional: React.FC = () => {
         <div className="mx-4 grid gap-4">
           {user?.type === 'admin' && (
             <IonButton expand="block" className="rounded-full bg-primary text-white" onClick={() => {
-              setSelectedContent(null)
+              setSelectedContent(null);
               setContentForm({
                 title: '',
                 description: '',
@@ -541,8 +541,8 @@ const Educacional: React.FC = () => {
                   correctAnswer: '',
                   points: 20
                 }
-              })
-              setShowContentModal(true)
+              });
+              setShowContentModal(true);
             }}>
               <IonIcon slot="start" icon={add} />
               Novo conteúdo educativo
@@ -581,14 +581,14 @@ const Educacional: React.FC = () => {
                 button
                 onClick={() => {
                   if (item.contentType === 'game') {
-                    setSelectedContent(item)
-                    setGameAnswer('')
-                    setGameResult(null)
-                    setShowGameModal(true)
-                    return
+                    setSelectedContent(item);
+                    setGameAnswer('');
+                    setGameResult(null);
+                    setShowGameModal(true);
+                    return;
                   }
                   if (item.url) {
-                    window.open(item.url, '_blank')
+                    window.open(item.url, '_blank');
                   }
                 }}
                 className="rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/70"
@@ -689,11 +689,11 @@ const Educacional: React.FC = () => {
                     <IonInput
                       value={contentForm.gameData?.question}
                       onIonChange={e => {
-                        const gameData = contentForm.gameData || { question: '', options: ['', ''], correctAnswer: '', points: 20 }
+                        const gameData = contentForm.gameData || { question: '', options: ['', ''], correctAnswer: '', points: 20 };
                         setContentForm({
                           ...contentForm,
                           gameData: { ...gameData, question: e.detail.value || '' }
-                        })
+                        });
                       }}
                       placeholder="Pergunta do jogo"
                     />
@@ -706,19 +706,19 @@ const Educacional: React.FC = () => {
                           value={option}
                           placeholder={`Opção ${index + 1}`}
                           onIonChange={e => {
-                            const gameData = contentForm.gameData || { question: '', options: ['', ''], correctAnswer: '', points: 20 }
-                            const options = [...(gameData.options || [])]
-                            options[index] = e.detail.value || ''
-                            setContentForm({ ...contentForm, gameData: { ...gameData, options } })
+                            const gameData = contentForm.gameData || { question: '', options: ['', ''], correctAnswer: '', points: 20 };
+                            const options = [...(gameData.options || [])];
+                            options[index] = e.detail.value || '';
+                            setContentForm({ ...contentForm, gameData: { ...gameData, options } });
                           }}
                         />
                         <IonButton
                           fill="clear"
                           color="danger"
                           onClick={() => {
-                            const gameData = contentForm.gameData || { question: '', options: ['', ''], correctAnswer: '', points: 20 }
-                            const options = (gameData.options || []).filter((_, i) => i !== index)
-                            setContentForm({ ...contentForm, gameData: { ...gameData, options } })
+                            const gameData = contentForm.gameData || { question: '', options: ['', ''], correctAnswer: '', points: 20 };
+                            const options = (gameData.options || []).filter((_, i) => i !== index);
+                            setContentForm({ ...contentForm, gameData: { ...gameData, options } });
                           }}
                         >
                           <IonIcon slot="icon-only" icon={trash} />
@@ -729,9 +729,9 @@ const Educacional: React.FC = () => {
                       expand="block"
                       fill="outline"
                       onClick={() => {
-                        const gameData = contentForm.gameData || { question: '', options: ['', ''], correctAnswer: '', points: 20 }
-                        const options = [...(gameData.options || []), '']
-                        setContentForm({ ...contentForm, gameData: { ...gameData, options } })
+                        const gameData = contentForm.gameData || { question: '', options: ['', ''], correctAnswer: '', points: 20 };
+                        const options = [...(gameData.options || []), ''];
+                        setContentForm({ ...contentForm, gameData: { ...gameData, options } });
                       }}
                     >
                       <IonIcon slot="start" icon={add} />
@@ -743,8 +743,8 @@ const Educacional: React.FC = () => {
                     <IonInput
                       value={contentForm.gameData?.correctAnswer}
                       onIonChange={e => {
-                        const gameData = contentForm.gameData || { question: '', options: ['', ''], correctAnswer: '', points: 20 }
-                        setContentForm({ ...contentForm, gameData: { ...gameData, correctAnswer: e.detail.value || '' } })
+                        const gameData = contentForm.gameData || { question: '', options: ['', ''], correctAnswer: '', points: 20 };
+                        setContentForm({ ...contentForm, gameData: { ...gameData, correctAnswer: e.detail.value || '' } });
                       }}
                       placeholder="Resposta correta"
                     />
@@ -755,8 +755,8 @@ const Educacional: React.FC = () => {
                       type="number"
                       value={(contentForm.gameData?.points ?? 20).toString()}
                       onIonChange={e => {
-                        const gameData = contentForm.gameData || { question: '', options: ['', ''], correctAnswer: '', points: 20 }
-                        setContentForm({ ...contentForm, gameData: { ...gameData, points: Number(e.detail.value) || 0 } })
+                        const gameData = contentForm.gameData || { question: '', options: ['', ''], correctAnswer: '', points: 20 };
+                        setContentForm({ ...contentForm, gameData: { ...gameData, points: Number(e.detail.value) || 0 } });
                       }}
                       placeholder="20"
                     />
@@ -836,7 +836,7 @@ const Educacional: React.FC = () => {
               <div className="flex flex-wrap gap-2">
                 {dailyChallenges.length === 0 && (
                   <IonButton size="small" className="rounded-full bg-primary text-white" onClick={() => {
-                    setEditingChallenge(null)
+                    setEditingChallenge(null);
                     setNewChallenge({
                       title: '',
                       description: '',
@@ -846,8 +846,8 @@ const Educacional: React.FC = () => {
                       options: [],
                       correctAnswer: '',
                       points: 20
-                    })
-                    setShowChallengeModal(true)
+                    });
+                    setShowChallengeModal(true);
                   }}>
                     <IonIcon slot="start" icon={add} />
                     Novo
@@ -864,7 +864,7 @@ const Educacional: React.FC = () => {
                       'text-long': '📄 Resposta Longa',
                       'single-choice': '☑️ Escolha Simples',
                       'multiple-choice': '☑️ Múltipla Escolha'
-                    }[challenge.type]
+                    }[challenge.type];
 
                     return (
                       <div key={challenge._id} className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
@@ -892,7 +892,7 @@ const Educacional: React.FC = () => {
                           </div>
                         </div>
                       </div>
-                    )
+                    );
                   })}
                 </div>
               ) : (
@@ -903,8 +903,8 @@ const Educacional: React.FC = () => {
         )}
 
         <IonModal isOpen={showChallengeModal} onDidDismiss={() => {
-          setShowChallengeModal(false)
-          setEditingChallenge(null)
+          setShowChallengeModal(false);
+          setEditingChallenge(null);
           setNewChallenge({
             title: '',
             description: '',
@@ -914,7 +914,7 @@ const Educacional: React.FC = () => {
             options: [],
             correctAnswer: '',
             points: 20
-          })
+          });
         }}>
           <IonHeader>
             <IonToolbar>
@@ -989,14 +989,14 @@ const Educacional: React.FC = () => {
                         value={option}
                         placeholder={`Opção ${index + 1}`}
                         onIonChange={(e) => {
-                          const updated = [...(newChallenge.options || [])]
-                          updated[index] = e.detail.value || ''
-                          setNewChallenge({...newChallenge, options: updated})
+                          const updated = [...(newChallenge.options || [])];
+                          updated[index] = e.detail.value || '';
+                          setNewChallenge({...newChallenge, options: updated});
                         }}
                       />
                       <IonButton fill="clear" color="danger" onClick={() => {
-                        const updated = newChallenge.options?.filter((_, i) => i !== index) || []
-                        setNewChallenge({...newChallenge, options: updated})
+                        const updated = newChallenge.options?.filter((_, i) => i !== index) || [];
+                        setNewChallenge({...newChallenge, options: updated});
                       }}>
                         <IonIcon slot="icon-only" icon={trash} />
                       </IonButton>
@@ -1020,8 +1020,8 @@ const Educacional: React.FC = () => {
                     />
                   </IonItem>
                   <IonButton expand="block" fill="outline" onClick={() => {
-                    const updated = [...(newChallenge.options || []), '']
-                    setNewChallenge({...newChallenge, options: updated})
+                    const updated = [...(newChallenge.options || []), ''];
+                    setNewChallenge({...newChallenge, options: updated});
                   }}>
                     <IonIcon slot="start" icon={add} />
                     Adicionar Opção
@@ -1160,7 +1160,7 @@ const Educacional: React.FC = () => {
 
       <Navbar />
     </IonPage>
-  )
-}
+  );
+};
 
-export default Educacional
+export default Educacional;
