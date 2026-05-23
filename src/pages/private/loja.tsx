@@ -416,7 +416,7 @@ const Loja: React.FC = () => {
       }
 
       if (data.sessionId) {
-        const result = await stripe.redirectToCheckout({ sessionId: data.sessionId });
+        const result = await (stripe as any).redirectToCheckout({ sessionId: data.sessionId });
         if (result?.error) {
           setToastMessage(result.error.message || 'Erro ao redirecionar para Stripe.');
         }
